@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-primary: #3b82f6;
+    --brand-dark: #1e3a8a;
+    --surface-bg: #f8fafc;
+    --text-main: #0f172a;
+  }
+  
+  .dark {
+    --brand-primary: #3b82f6;
+    --brand-dark: #60a5fa;
+    --surface-bg: #020617;
+    --text-main: #f1f5f9;
+  }
+
+  /* Form elemanlarının seçilebilir ve yazılabilir olmasını sağla */
+  input, textarea, select {
+    @apply select-text touch-auto;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}
+
+@layer utilities {
+  /* Özel Scrollbar — Dokunmatik ekran için daha kalın ve belirgin */
+  .pos-scrollbar::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .pos-scrollbar::-webkit-scrollbar-track {
+    background: theme('colors.surface.100');
+    border-radius: 8px;
+  }
+
+  .dark .pos-scrollbar::-webkit-scrollbar-track {
+    background: theme('colors.surface.800');
+  }
+
+  .pos-scrollbar::-webkit-scrollbar-thumb {
+    background: theme('colors.surface.400');
+    border-radius: 8px;
+    border: 3px solid theme('colors.surface.100');
+  }
+
+  .dark .pos-scrollbar::-webkit-scrollbar-thumb {
+    background: theme('colors.surface.600');
+    border: 3px solid theme('colors.surface.800');
+  }
+
+  .pos-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.brand.500');
+  }
+
+  /* Cam Efekti (Glassmorphism) */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-surface-900/70 backdrop-blur-md border border-white/20 dark:border-surface-700/30;
+  }
+
+  /* Dokunmatik Geri Bildirim Efekti (Ripple/Scale) */
+  .touch-feedback {
+    @apply transition-transform active:scale-95 cursor-pointer;
+  }
+  
+  /* Seçim engelleme (kullanıcı arayüzü genelinde) */
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* Kiosk Modu Ekran Koruyucu (opsiyonel) */
+.screen-saver-active {
+  animation: pulse-soft 2s infinite;
+}

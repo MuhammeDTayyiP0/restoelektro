@@ -1,0 +1,46 @@
+# Electron Builder paketleme yapılandırması
+appId: com.etibolresto.pos
+productName: ETİBOL RESTO
+copyright: Copyright © 2024 ETİBOL RESTO
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.*'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+
+# Native modüller için asar arşivleme ayarı
+asarUnpack:
+  - '**/*.{node,dll}'
+  - node_modules/better-sqlite3/**
+  - node_modules/serialport/**
+
+# Windows yapılandırması
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+  icon: resources/icon.ico
+  artifactName: '${productName}-${version}-${arch}.${ext}'
+
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  shortcutName: RestoElektro POS
+  installerLanguages:
+    - tr_TR
+  language: 1055  # Türkçe dil kodu
+
+# Linux yapılandırması (opsiyonel)
+linux:
+  target:
+    - AppImage
+  category: Office

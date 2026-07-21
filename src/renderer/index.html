@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Güvenlik Politikası: Sadece izin verilen kaynaklardan yükleme yap (Electron için) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+    
+    <title>ETİBOL RESTO</title>
+    
+    <!-- Google Fonts: Modern ve okunaklı fontlar -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Geliştirme aşamasında lokal font kullanılacak, şimdilik sans-serif -->
+  </head>
+  <body class="bg-surface-50 dark:bg-surface-950 text-slate-900 dark:text-slate-100 overflow-hidden select-none touch-none font-sans antialiased">
+    <!-- 
+      touch-none: Çift tıklama ile zoom yapmayı engeller
+      select-none: Metin seçimini engeller (POS ekranında istenmez)
+      overflow-hidden: Tarayıcı varsayılan kaydırma çubuklarını gizler (Özel scrollbar kullanılacak)
+    -->
+    <div id="root" class="w-full h-full min-h-screen"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
