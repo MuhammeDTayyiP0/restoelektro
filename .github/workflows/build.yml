@@ -37,7 +37,10 @@ jobs:
         # Electron için derlenecektir.
 
       - name: Build Application (Windows 7 Uyumlu - x64 & ia32)
-        run: npm run dist
+        run: npm run dist -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Auto Publish Release
         uses: softprops/action-gh-release@v2
