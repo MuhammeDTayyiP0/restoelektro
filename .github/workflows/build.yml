@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: '18.19.1' # Node 18.20+ versiyonlarında Windows spawn EINVAL hatası olduğu için eski sürüme sabitliyoruz
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Python 3.12'de distutils kaldırıldığı için eski node-gyp hata veriyor, 3.11 kullanıyoruz.
+
       - name: Install Dependencies
         run: npm install
         # Not: package.json içindeki "postinstall": "electron-builder install-app-deps"
