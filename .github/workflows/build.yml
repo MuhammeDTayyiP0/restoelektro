@@ -13,6 +13,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-2022
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -36,12 +38,15 @@ jobs:
 
       - name: Build Application (Windows 7 Uyumlu - x64 & ia32)
         run: npm run dist
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Github API limitlerine takılmamak için
 
-      - name: Upload Setup Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Auto Publish Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ETIBOL-RESTO-Windows-Setup
-          path: dist/*.exe
-          retention-days: 7
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "ETİBOL RESTO v1.0.${{ github.run_number }}"
+          files: dist/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

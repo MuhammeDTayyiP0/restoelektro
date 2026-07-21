@@ -38,6 +38,14 @@ nsis:
   installerLanguages:
     - tr_TR
   language: 1055  # Türkçe dil kodu
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
+  deleteAppDataOnUninstall: false
+  displayLanguageSelector: false
 
 # Linux yapılandırması (opsiyonel)
 linux:
