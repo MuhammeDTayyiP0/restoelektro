@@ -1,5 +1,5 @@
 import React from 'react'
-import { Menu, Wifi, Battery, Clock, WifiOff, Maximize, Minimize, Moon, Sun, X } from 'lucide-react'
+import { Menu, Wifi, Battery, Clock, WifiOff, Maximize, Minimize, Moon, Sun, X, Minus } from 'lucide-react'
 import { useUIStore } from '../../stores/useUIStore'
 import { useAuthStore } from '../../stores/useAuthStore'
 
@@ -34,6 +34,15 @@ export function Header() {
       setTamEkran(durum)
     } catch (e) {
       console.error('Tam ekran hatası', e)
+    }
+  }
+
+  const handleKucult = async () => {
+    try {
+      // @ts-ignore
+      await window.api.pencere.kucult()
+    } catch (e) {
+      console.error('Küçültme hatası', e)
     }
   }
 
@@ -97,6 +106,14 @@ export function Header() {
           className="p-2 text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full touch-feedback"
         >
           {karanlikTema ? <Sun size={22} /> : <Moon size={22} />}
+        </button>
+
+        {/* Simge Durumuna Küçült */}
+        <button 
+          onClick={handleKucult}
+          className="p-2 text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full touch-feedback hidden sm:block"
+        >
+          <Minus size={22} />
         </button>
 
         {/* Tam Ekran */}
