@@ -99,6 +99,9 @@ async function uygulamaBaslat(): Promise<void> {
   }
 }
 
+// Windows 7 ve eski POS cihazlarındaki GPU (Ekran Kartı) hatalarını/beyaz ekran sorununu engeller
+app.disableHardwareAcceleration()
+
 // Electron hazır olduğunda uygulamayı başlat
 app.whenReady().then(uygulamaBaslat)
 
