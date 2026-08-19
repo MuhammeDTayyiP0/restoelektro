@@ -511,32 +511,24 @@ function varsayilanVerileriEkle(): void {
     db!.prepare('INSERT INTO kasa (ad) VALUES (?)').run('Ana Kasa')
     db!.prepare('INSERT INTO kasa (ad) VALUES (?)').run('Bar Kasası')
 
-    // Varsayılan bölümler
-    db!.prepare('INSERT INTO bolum (ad) VALUES (?)').run('Salon')
-    db!.prepare('INSERT INTO bolum (ad) VALUES (?)').run('Bahçe')
-    db!.prepare('INSERT INTO bolum (ad) VALUES (?)').run('Teras')
-    db!.prepare('INSERT INTO bolum (ad) VALUES (?)').run('Bar')
+    // Varsayılan bölümler ve masalar
+    const defaultBolumler = [
+      { ad: 'Salon', sira: 1, harf: 'S', adet: 20 },
+      { ad: 'Dış', sira: 2, harf: 'D', adet: 20 },
+      { ad: 'Teras', sira: 3, harf: 'T', adet: 20 },
+      { ad: 'Bar', sira: 4, harf: 'B', adet: 20 }
+    ];
 
-    // Varsayılan masalar — Salon
-    for (let i = 1; i <= 12; i++) {
-      db!.prepare(`
-        INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(1, `M${i}`, 4, ((i - 1) % 4) * 120 + 50, Math.floor((i - 1) / 4) * 120 + 50)
-    }
-    // Bahçe masaları
-    for (let i = 1; i <= 8; i++) {
-      db!.prepare(`
-        INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(2, `B${i}`, 6, ((i - 1) % 4) * 120 + 50, Math.floor((i - 1) / 4) * 120 + 50)
-    }
-    // Bar masaları
-    for (let i = 1; i <= 6; i++) {
-      db!.prepare(`
-        INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(4, `BR${i}`, 2, (i - 1) * 100 + 50, 50)
+    for (const b of defaultBolumler) {
+      const result = db!.prepare('INSERT INTO bolum (ad, sira) VALUES (?, ?)').run(b.ad, b.sira);
+      const bolumId = result.lastInsertRowid;
+      
+      for (let i = 1; i <= b.adet; i++) {
+        db!.prepare(`
+          INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y, sira)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(bolumId, `${b.harf}${i}`, 4, ((i - 1) % 5) * 120 + 50, Math.floor((i - 1) / 5) * 120 + 50, i);
+      }
     }
 
     // Varsayılan kategoriler
