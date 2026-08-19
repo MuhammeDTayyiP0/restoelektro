@@ -155,7 +155,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       JOIN bolum b ON b.id = m.bolum_id
       LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
       WHERE m.aktif = 1
-      ORDER BY b.ad, m.numara
+      ORDER BY b.sira ASC, b.ad ASC, m.sira ASC, m.numara ASC
     `).all()
     res.json(masalar)
   })
