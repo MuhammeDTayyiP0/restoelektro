@@ -28,7 +28,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   // Durum Yönetimi
   const [girilenTutar, setGirilenTutar] = useState<string>('')
   const [odemeIslemi, setOdemeIslemi] = useState(false)
-  const [seciliSiparisIdleri, setSeciliSiparisIdleri] = useState<number[]>([])
+  const [seciliMiktarlar, setSeciliMiktarlar] = useState<Record<number, number>>({})
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
 
   // Hesaplamalar
@@ -48,17 +48,23 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
 
     // Alman Usulü (Seçili Ürünler) hesaplaması
     let seciliUrunlerToplami = 0;
+    const seciliSiparisIdleri = Object.keys(seciliMiktarlar).map(Number);
+    
     if (seciliSiparisIdleri.length > 0 && aktifHesap && aktifHesap.siparisler) {
       const siparisler = aktifHesap.siparisler;
       seciliSiparisIdleri.forEach(id => {
         const siparis = siparisler.find((s) => s.id === id);
-        if (siparis && siparis.durum !== 'iptal' && !siparis.ikram) {
-          seciliUrunlerToplami += siparis.toplam_fiyat;
+        const secilenMiktar = seciliMiktarlar[id] || 0;
+        if (siparis && siparis.durum !== 'iptal' && !siparis.ikram && secilenMiktar > 0) {
+          const birimFiyat = siparis.toplam_fiyat / siparis.miktar;
+          seciliUrunlerToplami += birimFiyat * secilenMiktar;
         }
       });
     }
 
-    let odenecekHedefTutar = seciliSiparisIdleri.length > 0 
+    const seciliIdSayisi = Object.values(seciliMiktarlar).filter(m => m > 0).length;
+
+    let odenecekHedefTutar = seciliIdSayisi > 0 
       ? Math.min(seciliUrunlerToplami, kalanGenelNet) 
       : kalanGenelNet;
 
@@ -69,11 +75,12 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       odenenTutar,
       kalanGenelNet,
       odenecekHedefTutar,
-      almanUsuluAktif: seciliSiparisIdleri.length > 0
+      almanUsuluAktif: seciliIdSayisi > 0,
+      seciliIdSayisi
     }
-  }, [aktifHesap, toplamTutar, seciliSiparisIdleri])
+  }, [aktifHesap, toplamTutar, seciliMiktarlar])
 
-  const { genelNetTutar, odenenTutar, kalanGenelNet, odenecekHedefTutar, almanUsuluAktif } = hesaplamalar
+  const { genelNetTutar, odenenTutar, kalanGenelNet, odenecekHedefTutar, almanUsuluAktif, seciliIdSayisi } = hesaplamalar
 
   // Tutar Giriş İşleyicisi
   const handleTutarGirisi = (deger: string) => {
@@ -92,13 +99,19 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     setGirilenTutar(miktar.toString())
   }
 
-  const handleSiparisSec = (id: number) => {
-    setSeciliSiparisIdleri(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(pId => pId !== id)
+  const handleSiparisSec = (siparis: any) => {
+    setSeciliMiktarlar(prev => {
+      const id = siparis.id;
+      const current = prev[id] || 0;
+      const next = current + 1;
+      
+      const updated = { ...prev };
+      if (next > siparis.miktar) {
+        delete updated[id];
       } else {
-        return [...prev, id]
+        updated[id] = next;
       }
+      return updated;
     })
     setGirilenTutar('') // Ürün seçimi değiştiğinde girilen tutarı sıfırla
   }
@@ -106,10 +119,15 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   const tumunuSecToggle = () => {
     if (aktifHesap && aktifHesap.siparisler) {
       const gecerliSiparisler = aktifHesap.siparisler.filter((s) => s.durum !== 'iptal' && !s.ikram);
-      if (seciliSiparisIdleri.length === gecerliSiparisler.length && gecerliSiparisler.length > 0) {
-        setSeciliSiparisIdleri([]);
+      
+      if (seciliIdSayisi === gecerliSiparisler.length && gecerliSiparisler.length > 0) {
+        setSeciliMiktarlar({});
       } else {
-        setSeciliSiparisIdleri(gecerliSiparisler.map((s) => s.id));
+        const yeniSecimler: Record<number, number> = {};
+        gecerliSiparisler.forEach(s => {
+          yeniSecimler[s.id] = s.miktar;
+        });
+        setSeciliMiktarlar(yeniSecimler);
       }
     }
     setGirilenTutar('');
@@ -153,7 +171,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
           const guncelHesap = await ipcInvoke<any>(HESAP_KANALLARI.DETAY, aktifHesap.id)
           hesapAyarla(guncelHesap, guncelHesap.masa_id)
           setGirilenTutar('')
-          setSeciliSiparisIdleri([]) // Kısmi ödeme sonrası seçimleri sıfırla
+          setSeciliMiktarlar({}) // Kısmi ödeme sonrası seçimleri sıfırla
         }
       } else {
         error('Ödeme Başarısız', response.hata || 'Bilinmeyen bir hata oluştu')
@@ -165,9 +183,27 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     }
   }
 
-  // İndirim Modal
   const handleIndirim = () => {
     setIndirimModalAcik(true);
+  }
+
+  const indirimIptal = async () => {
+    if (!aktifHesap) return;
+    try {
+      const response = await ipcInvoke<any>(HESAP_KANALLARI.INDIRIM_UYGULA, {
+        hesap_id: aktifHesap.id,
+        indirim_tipi: 'tutar',
+        deger: 0,
+        aciklama: 'İptal'
+      })
+      if (response && response.basarili) {
+        success('Başarılı', 'İndirim iptal edildi.');
+        const guncelHesap = await ipcInvoke<any>(HESAP_KANALLARI.DETAY, aktifHesap.id)
+        hesapAyarla(guncelHesap, guncelHesap.masa_id)
+      }
+    } catch (err: any) {
+      error('Hata', err.message)
+    }
   }
 
   return (
@@ -188,27 +224,28 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
               <p className="text-xs text-surface-500">Masa {aktifHesap?.masa_id || 'Yok'} • Hesap No: {aktifHesap?.hesap_no}</p>
             </div>
             <Button variant="outline" size="sm" onClick={tumunuSecToggle} className="text-xs">
-              {seciliSiparisIdleri.length > 0 ? 'Seçimleri Temizle' : 'Tümünü Seç'}
+              {seciliIdSayisi > 0 ? 'Seçimleri Temizle' : 'Tümünü Seç'}
             </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 pos-scrollbar">
             {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal').map((siparis) => {
-              const isSelected = seciliSiparisIdleri.includes(siparis.id);
+              const secilenMiktar = seciliMiktarlar[siparis.id] || 0;
+              const isSelected = secilenMiktar > 0;
               const isIkram = Boolean(siparis.ikram);
               return (
                 <div 
                   key={siparis.id}
-                  onClick={() => !isIkram && handleSiparisSec(siparis.id)}
+                  onClick={() => !isIkram && handleSiparisSec(siparis)}
                   className={clsx(
-                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all cursor-pointer",
+                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all cursor-pointer select-none",
                     isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale" : 
                     isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={clsx("w-5 h-5 rounded flex items-center justify-center border", isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
-                      {isSelected && <CheckCircle2 size={14} />}
+                    <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs", isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
+                      {isSelected ? secilenMiktar : ''}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-surface-900 dark:text-white text-sm">
@@ -245,8 +282,13 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             
             <div className="flex gap-2 mt-4">
               <Button variant="outline" className="flex-1 font-semibold" onClick={handleIndirim} leftIcon={<Tag size={16}/>}>
-                İndirim Uygula
+                {hesaplamalar.indirimTutar > 0 ? 'İndirimi Değiştir' : 'İndirim Uygula'}
               </Button>
+              {hesaplamalar.indirimTutar > 0 && (
+                <Button variant="danger" className="font-semibold px-4" onClick={indirimIptal}>
+                  İptal Et
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -282,7 +324,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
               </span>
               {almanUsuluAktif && !girilenTutar && (
                 <span className="text-xs text-brand-600 font-medium mt-2 flex items-center gap-1">
-                  <SplitSquareHorizontal size={12}/> {seciliSiparisIdleri.length} ürün seçili
+                  <SplitSquareHorizontal size={12}/> {seciliIdSayisi} ürün seçili
                 </span>
               )}
             </div>
