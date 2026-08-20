@@ -14,7 +14,7 @@ interface NumpadProps {
   actionButton?: React.ReactNode // 'Tamam' veya 'Ekle' gibi ekstra bir buton
 }
 
-export function Numpad({
+export const Numpad = React.memo(function Numpad({
   onKeyPress,
   onClear,
   value = '',
@@ -74,4 +74,4 @@ export function Numpad({
       )}
     </div>
   )
-}
+})

@@ -50,7 +50,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/60 animate-fade-in"
         onClick={() => closeOnOverlayClick && onClose()}
       />
       
@@ -58,7 +58,7 @@ export function Modal({
       <div 
         ref={modalRef}
         className={clsx(
-          'relative w-full bg-white dark:bg-surface-900 rounded-pos-lg shadow-pos-lg flex flex-col overflow-hidden animate-scale-in border border-surface-200 dark:border-surface-800 m-4',
+          'relative w-full bg-white dark:bg-surface-900 rounded-pos-lg shadow-pos-lg flex flex-col overflow-hidden animate-scale-in border border-surface-200 dark:border-surface-800 m-4 will-change-transform',
           sizes[size],
           size === 'full' && 'max-h-[95vh]'
         )}
