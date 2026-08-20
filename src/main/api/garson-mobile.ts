@@ -678,7 +678,9 @@ function sepetMiktarPrompt(id, birim) {
   if (idx === -1) return;
   const newVal = window.prompt('Yeni miktar girin ('+birim+'):', sepet[idx].miktar);
   if (newVal !== null) {
-    const parsed = parseFloat(newVal.replace(',', '.'));
+    const birimUpper = birim ? birim.toUpperCase() : '';
+    const isKesirli = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper);
+    const parsed = isKesirli ? parseFloat(newVal.replace(',', '.')) : parseInt(newVal, 10);
     if (!isNaN(parsed) && parsed > 0) {
       sepet[idx].miktar = parsed;
       sepetGuncelle();

@@ -114,7 +114,7 @@ function tablolariOlustur(): void {
         kisaltma TEXT,
         fiyat REAL NOT NULL,
         kdv_orani REAL DEFAULT 10,
-        birim TEXT DEFAULT 'adet',
+        birim TEXT DEFAULT 'Porsiyon',
         resim_yolu TEXT,
         yazici_grup TEXT DEFAULT 'mutfak',
         aktif INTEGER DEFAULT 1,
@@ -452,6 +452,7 @@ function tablolariOlustur(): void {
     try { db!.exec('ALTER TABLE bolum ADD COLUMN sira INTEGER DEFAULT 0') } catch (e) { /* sütun zaten var */ }
     try { db!.exec('ALTER TABLE masa ADD COLUMN sira INTEGER DEFAULT 0') } catch (e) { /* sütun zaten var */ }
     try { db!.exec('ALTER TABLE siparis ADD COLUMN porsiyon REAL DEFAULT 1') } catch (e) { /* sütun zaten var */ }
+    try { db!.exec("UPDATE urun SET birim = 'Porsiyon' WHERE birim = 'adet' OR birim = 'Adet' OR birim IS NULL") } catch (e) { }
 
     console.log('✅ Tüm tablolar ve indeksler oluşturuldu')
   })

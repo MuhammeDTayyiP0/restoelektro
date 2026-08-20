@@ -534,7 +534,8 @@ export default function PosCart() {
               }}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  const parsed = parseFloat(girilenMiktar)
+                  const isKesirli = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((miktarSoranKalem.urun.birim || '').toUpperCase());
+                  const parsed = isKesirli ? parseFloat(girilenMiktar) : parseInt(girilenMiktar, 10);
                   if (!isNaN(parsed) && parsed > 0) {
                     handleMiktarDegistir(miktarSoranKalem.id, parsed)
                     setMiktarSoranKalem(null)
@@ -550,17 +551,17 @@ export default function PosCart() {
                   ['1', '2', '3'],
                   ['4', '5', '6'],
                   ['7', '8', '9'],
-                  ['C', '0', ','],
+                  ['C', '0', ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((miktarSoranKalem?.urun?.birim || '').toUpperCase()) ? ',' : ''],
                   ['⌫']
                 ]}
                 onKeyPress={(key) => {
                   if (key === '⌫') {
                     setGirilenMiktar(prev => prev.slice(0, -1))
                   } else if (key === ',') {
-                    if (!girilenMiktar.includes('.')) {
+                    if (['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((miktarSoranKalem?.urun?.birim || '').toUpperCase()) && !girilenMiktar.includes('.')) {
                       setGirilenMiktar(prev => prev + '.')
                     }
-                  } else if (key !== 'C') {
+                  } else if (key !== 'C' && key !== '') {
                     setGirilenMiktar(prev => prev === '0' ? key : prev + key)
                   }
                 }}
@@ -573,7 +574,8 @@ export default function PosCart() {
               <Button 
                 variant="primary" 
                 onClick={() => {
-                  const parsed = parseFloat(girilenMiktar)
+                  const isKesirli = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((miktarSoranKalem?.urun?.birim || '').toUpperCase());
+                  const parsed = isKesirli ? parseFloat(girilenMiktar) : parseInt(girilenMiktar, 10);
                   if (!isNaN(parsed) && parsed > 0) {
                     handleMiktarDegistir(miktarSoranKalem.id, parsed)
                     setMiktarSoranKalem(null)

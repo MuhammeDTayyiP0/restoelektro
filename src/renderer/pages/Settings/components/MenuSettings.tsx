@@ -28,7 +28,7 @@ export default function MenuSettings() {
   const [urunFiyat, setUrunFiyat] = useState('')
   const [urunKategoriId, setUrunKategoriId] = useState('')
   const [urunBarkod, setUrunBarkod] = useState('')
-  const [urunBirim, setUrunBirim] = useState('Adet')
+  const [urunBirim, setUrunBirim] = useState('Porsiyon')
 
   const verileriGetir = async () => {
     try {
@@ -169,7 +169,7 @@ export default function MenuSettings() {
             setUrunAd(''); 
             setUrunFiyat(''); 
             setUrunBarkod('');
-            setUrunBirim('Adet');
+            setUrunBirim('Porsiyon');
             setUrunKategoriId(seciliKategoriId ? String(seciliKategoriId) : (kategoriler.length > 0 ? String(kategoriler[0].id) : ''));
             setUrunModalAcik(true) 
           }}>
@@ -186,7 +186,7 @@ export default function MenuSettings() {
               
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-surface-900/90 rounded-md shadow-sm">
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { 
-                  setDuzenlenenUrun(urun); setUrunAd(urun.ad); setUrunFiyat(urun.fiyat.toString()); setUrunBarkod(urun.barkod || ''); setUrunBirim(urun.birim || 'Adet'); setUrunKategoriId(urun.kategori_id.toString()); setUrunModalAcik(true) 
+                  setDuzenlenenUrun(urun); setUrunAd(urun.ad); setUrunFiyat(urun.fiyat.toString()); setUrunBarkod(urun.barkod || ''); setUrunBirim(urun.birim || 'Porsiyon'); setUrunKategoriId(urun.kategori_id.toString()); setUrunModalAcik(true) 
                 }}>
                   <Edit2 size={14} />
                 </Button>
