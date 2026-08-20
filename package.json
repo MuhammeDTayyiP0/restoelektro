@@ -1,6 +1,6 @@
 {
   "name": "etibol-pos",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "ETİBOL POS — Profesyonel Restoran Yönetim & POS Uygulaması",
   "main": "./out/main/index.js",
   "author": "ETİBOL POS",
