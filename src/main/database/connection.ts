@@ -591,7 +591,7 @@ function varsayilanVerileriEkle(): void {
 
     // Varsayılan ayarlar
     const ayarlar = [
-      { anahtar: 'isletme_adi', deger: 'ETİBOL RESTO', aciklama: 'İşletme adı' },
+      { anahtar: 'isletme_adi', deger: 'ETİBOL POS', aciklama: 'İşletme adı' },
       { anahtar: 'vergi_no', deger: '', aciklama: 'Vergi numarası' },
       { anahtar: 'adres', deger: '', aciklama: 'İşletme adresi' },
       { anahtar: 'telefon', deger: '', aciklama: 'İşletme telefonu' },

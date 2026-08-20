@@ -1,7 +1,7 @@
 # Electron Builder paketleme yapılandırması
-appId: com.etibolresto.pos
-productName: ETİBOL RESTO
-copyright: Copyright © 2024 ETİBOL RESTO
+appId: com.etibol.pos
+productName: ETİBOL POS
+copyright: Copyright © 2024 ETİBOL POS
 
 directories:
   buildResources: resources
@@ -30,11 +30,16 @@ win:
   icon: resources/icon.ico
   artifactName: '${productName}-${version}-${arch}.${ext}'
 
+publish:
+  - provider: github
+    owner: MuhammeDTayyiP0
+    repo: restoelektro
+
 nsis:
   oneClick: false
   perMachine: true
   allowToChangeInstallationDirectory: true
-  shortcutName: RestoElektro POS
+  shortcutName: ETİBOL POS
   installerLanguages:
     - tr_TR
   language: 1055  # Türkçe dil kodu

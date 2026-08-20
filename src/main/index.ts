@@ -9,6 +9,7 @@ import { is } from '@electron-toolkit/utils'
 import { veritabaniBaslat, veritabaniKapat } from './database/connection'
 import { ipcHandlerlariniKaydet } from './ipc/index'
 import { apiSunucusunuBaslat } from './api/server'
+import { autoUpdater } from 'electron-updater'
 
 // Ana pencere referansı
 let anaPencere: BrowserWindow | null = null
@@ -72,7 +73,7 @@ function pencereOlustur(): void {
  */
 async function uygulamaBaslat(): Promise<void> {
   try {
-    console.log('🚀 ETİBOL RESTO başlatılıyor...')
+    console.log('🚀 ETİBOL POS başlatılıyor...')
 
     // 1. Veritabanını başlat ve migration'ları çalıştır
     console.log('📦 Veritabanı bağlantısı kuruluyor...')
@@ -91,7 +92,10 @@ async function uygulamaBaslat(): Promise<void> {
 
     // 4. Ana pencereyi oluştur
     pencereOlustur()
-    console.log('✅ ETİBOL RESTO hazır!')
+    console.log('✅ ETİBOL POS hazır!')
+
+    // 5. Güncellemeleri kontrol et
+    autoUpdater.checkForUpdatesAndNotify()
 
   } catch (hata) {
     console.error('❌ Uygulama başlatma hatası:', hata)
