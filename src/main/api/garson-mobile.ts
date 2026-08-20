@@ -17,7 +17,7 @@ export function garsonMobilHTML(): string {
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; touch-action: manipulation; }
     :root {
       --brand: #4f46e5; --brand-dark: #3730a3; --brand-light: #818cf8; --brand-glow: rgba(79, 70, 229, 0.4);
       --bg: #0b0f19; --surface: #151b2b; --surface-glass: rgba(21, 27, 43, 0.7);
