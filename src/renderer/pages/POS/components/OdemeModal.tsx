@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { formatPara } from '../../../utils/formatters'
@@ -102,6 +102,19 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   const [seciliMiktarlar, setSeciliMiktarlar] = useState<Record<number, number>>({})
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
   const [aktifSiparisMiktar, setAktifSiparisMiktar] = useState<any>(null)
+  const [listReady, setListReady] = useState(false)
+
+  // Ağır listeyi modal animasyonundan sonra render etmek için
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => setListReady(true), 200)
+      return () => clearTimeout(timer)
+    } else {
+      setListReady(false)
+      setGirilenTutar('')
+      setSeciliMiktarlar({})
+    }
+  }, [isOpen])
 
   // Hesaplamalar
   const gecerliTutar = parseFloat(girilenTutar) || 0
@@ -325,54 +338,67 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 pos-scrollbar">
-            {/* Ödenecek Ürünler */}
-            {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal' && s.durum !== 'odendi').map((siparis) => {
-              const secilenMiktar = seciliMiktarlar[siparis.id] || 0;
-              const isIkram = Boolean(siparis.ikram);
-              
-              return (
-                <SiparisItemRow 
-                  key={siparis.id}
-                  siparis={siparis}
-                  secilenMiktar={secilenMiktar}
-                  isIkram={isIkram}
-                  onMiktarDegistir={handleSiparisMiktarDegistir}
-                  onMiktarAyarla={setAktifSiparisMiktar}
-                />
-              )
-            })}
-
-            {/* Ödenen Ürünler */}
-            {aktifHesap?.siparisler?.some((s) => s.durum === 'odendi') && (
-              <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-800">
-                <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3 px-1">Ödenen Ürünler</h4>
-                {aktifHesap.siparisler.filter(s => s.durum === 'odendi').map((siparis) => (
-                  <div 
-                    key={siparis.id}
-                    className="flex items-center justify-between p-3 mb-2 rounded-xl border border-transparent bg-surface-100/50 dark:bg-surface-800/30 opacity-60 grayscale select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded flex items-center justify-center border border-surface-300"></div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-surface-900 dark:text-white text-sm line-through">
-                          {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
-                        </span>
-                        {siparis.varyant_adi && <span className="text-xs text-surface-500 line-through">{siparis.varyant_adi}</span>}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Ödendi</span>
-                      <div className="font-bold text-surface-500 shrink-0 line-through">
-                        {formatPara(siparis.toplam_fiyat)}
-                      </div>
-                    </div>
+          {useMemo(() => (
+            <div className="flex-1 overflow-y-auto p-2 pos-scrollbar relative">
+              {!listReady ? (
+                <div className="absolute inset-0 flex items-center justify-center text-surface-400">
+                  <div className="animate-pulse flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm font-medium">Siparişler Yükleniyor...</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ) : (
+                <>
+                  {/* Ödenecek Ürünler */}
+                  {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal' && s.durum !== 'odendi').map((siparis) => {
+                    const secilenMiktar = seciliMiktarlar[siparis.id] || 0;
+                    const isIkram = Boolean(siparis.ikram);
+                    
+                    return (
+                      <SiparisItemRow 
+                        key={siparis.id}
+                        siparis={siparis}
+                        secilenMiktar={secilenMiktar}
+                        isIkram={isIkram}
+                        onMiktarDegistir={handleSiparisMiktarDegistir}
+                        onMiktarAyarla={setAktifSiparisMiktar}
+                      />
+                    )
+                  })}
+
+                  {/* Ödenen Ürünler */}
+                  {aktifHesap?.siparisler?.some((s) => s.durum === 'odendi') && (
+                    <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-800">
+                      <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3 px-1">Ödenen Ürünler</h4>
+                      {aktifHesap.siparisler.filter(s => s.durum === 'odendi').map((siparis) => (
+                        <div 
+                          key={siparis.id}
+                          className="flex items-center justify-between p-3 mb-2 rounded-xl border border-transparent bg-surface-100/50 dark:bg-surface-800/30 opacity-60 grayscale select-none"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded flex items-center justify-center border border-surface-300"></div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-surface-900 dark:text-white text-sm line-through">
+                                {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
+                              </span>
+                              {siparis.varyant_adi && <span className="text-xs text-surface-500 line-through">{siparis.varyant_adi}</span>}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Ödendi</span>
+                            <div className="font-bold text-surface-500 shrink-0 line-through">
+                              {formatPara(siparis.toplam_fiyat)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ), [aktifHesap, seciliMiktarlar, handleSiparisMiktarDegistir, setAktifSiparisMiktar, listReady])}
 
           {/* Adisyon Genel Toplamları */}
           <div className="p-4 bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-800">
