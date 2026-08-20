@@ -7,6 +7,7 @@ import type { Urun } from '../../../../common/types/menu.types'
 import { SearchInput } from '../../../components/ui/SearchInput'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
+import { Numpad } from '../../../components/ui/Numpad'
 
 export default function PosMenu() {
   const { seciliKategoriId, kategoriSec } = usePosStore(state => ({
@@ -168,6 +169,31 @@ export default function PosMenu() {
               }}
               className="px-4 py-3 border rounded-pos bg-white dark:bg-surface-950 dark:border-surface-700 focus:border-brand-500 text-2xl font-bold text-center outline-none" 
             />
+
+            <div className="flex justify-center w-full my-2">
+              <Numpad
+                layout={[
+                  ['1', '2', '3'],
+                  ['4', '5', '6'],
+                  ['7', '8', '9'],
+                  ['C', '0', ','],
+                  ['⌫']
+                ]}
+                onKeyPress={(key) => {
+                  if (key === '⌫') {
+                    setGirilenMiktar(prev => prev.slice(0, -1))
+                  } else if (key === ',') {
+                    if (!girilenMiktar.includes('.')) {
+                      setGirilenMiktar(prev => prev + '.')
+                    }
+                  } else if (key !== 'C') {
+                    setGirilenMiktar(prev => prev === '0' ? key : prev + key)
+                  }
+                }}
+                onClear={() => setGirilenMiktar('0')}
+              />
+            </div>
+
             <div className="flex gap-2 justify-end mt-2">
               <Button variant="ghost" onClick={() => setMiktarSoranUrun(null)}>İptal</Button>
               <Button 

@@ -55,6 +55,7 @@ export function Numpad({
                   }}
                   className={clsx(
                     'text-pos-xl font-medium',
+                    row.length === 1 && 'col-span-3',
                     !isClear && !isBackspace && 'bg-white dark:bg-surface-800'
                   )}
                 >
