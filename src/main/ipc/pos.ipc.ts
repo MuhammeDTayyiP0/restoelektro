@@ -291,7 +291,7 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
                   `).run(item.miktar, odenenToplamFiyat, item.id);
                 } else {
                   // Tamamı ödendi
-                  db.prepare('UPDATE siparis SET durum = "odendi" WHERE id = ?').run(item.id);
+                  db.prepare(`UPDATE siparis SET durum = 'odendi' WHERE id = ?`).run(item.id);
                 }
               }
             }
