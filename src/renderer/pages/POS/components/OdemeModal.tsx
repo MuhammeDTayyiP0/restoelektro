@@ -4,13 +4,14 @@ import { Button } from '../../../components/ui/Button'
 import { formatPara } from '../../../utils/formatters'
 import { usePosStore } from '../../../stores/usePosStore'
 import { useAuthStore } from '../../../stores/useAuthStore'
-import { ipcInvoke } from '../../../hooks/useIPC'
+import { useIPC, ipcInvoke } from '../../../hooks/useIPC'
 import { HESAP_KANALLARI } from '../../../../common/ipc-channels'
 import { useToast } from '../../../components/ui/Toast'
 import { useNavigate } from 'react-router-dom'
 import { Numpad } from '../../../components/ui/Numpad'
-import { Banknote, CreditCard, Users, CheckSquare, Square, Utensils } from 'lucide-react'
+import { Banknote, CreditCard, Percent, Tag, CheckCircle2, SplitSquareHorizontal } from 'lucide-react'
 import { clsx } from 'clsx'
+import IndirimModal from './IndirimModal'
 
 interface OdemeModalProps {
   isOpen: boolean
@@ -18,57 +19,68 @@ interface OdemeModalProps {
   toplamTutar: number
 }
 
-type OdemeModu = 'tumu' | 'kisi' | 'secili' | 'manuel'
-
 export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalProps) {
   const { aktifHesap, hesapAyarla } = usePosStore()
   const { personel } = useAuthStore()
   const { success, error } = useToast()
   const navigate = useNavigate()
 
-  const [odemeIslemi, setOdemeIslemi] = useState(false)
-  const [odemeModu, setOdemeModu] = useState<OdemeModu>('tumu')
-  const [kisiSayisi, setKisiSayisi] = useState(2)
-  const [seciliKalemler, setSeciliKalemler] = useState<Set<number>>(new Set())
+  // Durum Yönetimi
   const [girilenTutar, setGirilenTutar] = useState<string>('')
+  const [odemeIslemi, setOdemeIslemi] = useState(false)
+  const [seciliSiparisIdleri, setSeciliSiparisIdleri] = useState<number[]>([])
+  const [indirimModalAcik, setIndirimModalAcik] = useState(false)
 
-  // Siparişleri filtrele (iptal olmayanlar ve ikram olmayanlar tahsilata dahil edilir)
-  const gecerliSiparisler = useMemo(() => {
-    return aktifHesap?.siparisler?.filter((s: any) => s.ikram === 0 && s.durum !== 'iptal') || []
-  }, [aktifHesap])
+  // Hesaplamalar
+  const gecerliTutar = parseFloat(girilenTutar) || 0
+  
+  const hesaplamalar = useMemo(() => {
+    // Toplam, İndirim, Net ve Ödenen
+    const toplamHesapTutar = aktifHesap?.toplam_tutar || toplamTutar
+    const indirimTutar = aktifHesap?.indirim_tutar || 0
+    const genelNetTutar = aktifHesap?.net_tutar || Math.max(0, toplamTutar - indirimTutar)
+    
+    // Geçmiş ödemelerin toplamı
+    const odenenTutar = aktifHesap?.odemeler?.reduce((acc: number, o: any) => acc + o.tutar, 0) || 0
+    
+    // Toplam kalan net tutar
+    const kalanGenelNet = Math.max(0, genelNetTutar - odenenTutar)
 
-  const toplamHesapTutar = aktifHesap?.net_tutar || toplamTutar
-  const odenenTutar = aktifHesap?.odemeler?.reduce((acc: number, o: any) => acc + o.tutar, 0) || 0
-  const odenecekNet = Math.max(0, toplamHesapTutar - odenenTutar)
-
-  // Alınacak Tutarı Hesapla
-  const hesaplananTutar = useMemo(() => {
-    if (odemeModu === 'manuel') return parseFloat(girilenTutar) || 0
-    if (odemeModu === 'tumu') return odenecekNet
-    if (odemeModu === 'kisi') return odenecekNet / kisiSayisi
-    if (odemeModu === 'secili') {
-      let tot = 0
-      gecerliSiparisler.forEach((s: any) => {
-        if (seciliKalemler.has(s.id)) tot += s.toplam_fiyat
-      })
-      return tot
+    // Alman Usulü (Seçili Ürünler) hesaplaması
+    let seciliUrunlerToplami = 0;
+    if (seciliSiparisIdleri.length > 0 && aktifHesap && aktifHesap.siparisler) {
+      const siparisler = aktifHesap.siparisler;
+      seciliSiparisIdleri.forEach(id => {
+        const siparis = siparisler.find((s) => s.id === id);
+        if (siparis && siparis.durum !== 'iptal' && !siparis.ikram) {
+          seciliUrunlerToplami += siparis.toplam_fiyat;
+        }
+      });
     }
-    return odenecekNet
-  }, [odemeModu, girilenTutar, odenecekNet, kisiSayisi, seciliKalemler, gecerliSiparisler])
 
-  const gecerliTutar = hesaplananTutar
+    let odenecekHedefTutar = seciliSiparisIdleri.length > 0 
+      ? Math.min(seciliUrunlerToplami, kalanGenelNet) 
+      : kalanGenelNet;
 
+    return {
+      toplamHesapTutar,
+      indirimTutar,
+      genelNetTutar,
+      odenenTutar,
+      kalanGenelNet,
+      odenecekHedefTutar,
+      almanUsuluAktif: seciliSiparisIdleri.length > 0
+    }
+  }, [aktifHesap, toplamTutar, seciliSiparisIdleri])
+
+  const { genelNetTutar, odenenTutar, kalanGenelNet, odenecekHedefTutar, almanUsuluAktif } = hesaplamalar
+
+  // Tutar Giriş İşleyicisi
   const handleTutarGirisi = (deger: string) => {
-    setOdemeModu('manuel')
     if (deger === 'C' || deger === 'clear') {
       setGirilenTutar('')
-      setOdemeModu('tumu')
     } else if (deger === '⌫' || deger === 'backspace') {
-      setGirilenTutar(prev => {
-        const yeni = prev.slice(0, -1)
-        if (!yeni) setOdemeModu('tumu')
-        return yeni
-      })
+      setGirilenTutar(prev => prev.slice(0, -1))
     } else if (deger === '.') {
       if (!girilenTutar.includes('.')) setGirilenTutar(prev => prev + '.')
     } else {
@@ -76,37 +88,45 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     }
   }
 
-  const toggleKalem = (id: number) => {
-    setOdemeModu('secili')
-    setGirilenTutar('')
-    setSeciliKalemler(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      
-      // Eğer hepsi seçildiyse Tümü moduna geç
-      if (next.size === gecerliSiparisler.length) {
-        setOdemeModu('tumu')
-        return new Set()
+  const hizliTutar = (miktar: number) => {
+    setGirilenTutar(miktar.toString())
+  }
+
+  const handleSiparisSec = (id: number) => {
+    setSeciliSiparisIdleri(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(pId => pId !== id)
+      } else {
+        return [...prev, id]
       }
-      return next
     })
+    setGirilenTutar('') // Ürün seçimi değiştiğinde girilen tutarı sıfırla
   }
 
-  const setTumu = () => {
-    setOdemeModu('tumu')
-    setGirilenTutar('')
-    setSeciliKalemler(new Set())
+  const tumunuSecToggle = () => {
+    if (aktifHesap && aktifHesap.siparisler) {
+      const gecerliSiparisler = aktifHesap.siparisler.filter((s) => s.durum !== 'iptal' && !s.ikram);
+      if (seciliSiparisIdleri.length === gecerliSiparisler.length && gecerliSiparisler.length > 0) {
+        setSeciliSiparisIdleri([]);
+      } else {
+        setSeciliSiparisIdleri(gecerliSiparisler.map((s) => s.id));
+      }
+    }
+    setGirilenTutar('');
   }
 
-  const odemeAl = async (tip: string) => {
+  // Ödeme Alma
+  const odemeAl = async (tip: 'nakit' | 'kredi_karti') => {
     if (!aktifHesap) {
       error('Hata', 'Ödeme alınacak aktif bir hesap yok!')
       return
     }
 
-    if (gecerliTutar <= 0) {
-      error('Uyarı', 'Lütfen 0\'dan büyük bir tutar girin.')
+    // Alınacak tutarı belirle (Girilen varsa o, yoksa hedef tutar)
+    const tutar = gecerliTutar > 0 ? gecerliTutar : odenecekHedefTutar
+
+    if (tutar <= 0) {
+      error('Uyarı', 'Geçerli bir tutar girin veya ürün seçin.')
       return
     }
 
@@ -116,7 +136,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
         {
           hesap_id: aktifHesap.id,
           odeme_tipi: tip,
-          tutar: gecerliTutar,
+          tutar: tutar,
           personel_id: personel?.id || 1
         }
       ])
@@ -132,10 +152,8 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
           // Hesabı güncel tutarla tekrar çekmek lazım
           const guncelHesap = await ipcInvoke<any>(HESAP_KANALLARI.DETAY, aktifHesap.id)
           hesapAyarla(guncelHesap, guncelHesap.masa_id)
-          // UI reset
           setGirilenTutar('')
-          setOdemeModu('tumu')
-          setSeciliKalemler(new Set())
+          setSeciliSiparisIdleri([]) // Kısmi ödeme sonrası seçimleri sıfırla
         }
       } else {
         error('Ödeme Başarısız', response.hata || 'Bilinmeyen bir hata oluştu')
@@ -147,216 +165,191 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     }
   }
 
-  // Dinamik Hızlı Tutar Seçenekleri (Toplam bakiyeye göre akıllı öneriler)
-  const hizliTutarlar = useMemo(() => {
-    const defaultVals = [50, 100, 200, 500]
-    if (odenecekNet > 0) {
-      const usteYuvarla = Math.ceil(odenecekNet / 50) * 50
-      let dinamik = [odenecekNet] // Tümü
-      if (usteYuvarla > odenecekNet) dinamik.push(usteYuvarla)
-      if (usteYuvarla + 50 > odenecekNet) dinamik.push(usteYuvarla + 50)
-      if (usteYuvarla + 100 > odenecekNet) dinamik.push(usteYuvarla + 100)
-      return Array.from(new Set([...dinamik, ...defaultVals])).sort((a,b) => a-b).filter(v => v >= odenecekNet).slice(0, 4)
-    }
-    return defaultVals
-  }, [odenecekNet])
+  // İndirim Modal
+  const handleIndirim = () => {
+    setIndirimModalAcik(true);
+  }
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Ödeme Tahsilatı"
-      size="full"
+      title="Ödeme Paneli"
+      size="full" // Genişletilmiş ekran
     >
-      <div className="flex h-full -m-6 overflow-hidden bg-surface-50 dark:bg-surface-950 rounded-b-pos-lg">
+      <div className="flex flex-col lg:flex-row h-full max-h-[85vh] overflow-hidden bg-surface-50 dark:bg-surface-950 -m-4">
         
-        {/* SOL PANEL: Adisyon Özeti */}
-        <div className="w-1/3 flex flex-col border-r border-surface-200 dark:border-surface-800 bg-white/50 dark:bg-surface-900/50">
-           <div className="p-4 border-b border-surface-200 dark:border-surface-800 flex justify-between items-center shadow-sm z-10 bg-white dark:bg-surface-900">
-             <h3 className="font-bold text-surface-700 dark:text-surface-300">Sipariş Özeti</h3>
-             <Button variant="ghost" size="sm" onClick={() => {
-                if (seciliKalemler.size === gecerliSiparisler.length) {
-                   setTumu()
-                } else {
-                   setSeciliKalemler(new Set(gecerliSiparisler.map((s: any) => s.id)))
-                   setOdemeModu('secili')
-                   setGirilenTutar('')
-                }
-             }}>
-               Tümünü Seç
-             </Button>
-           </div>
-           <div className="flex-1 overflow-y-auto pos-scrollbar p-3">
-             {gecerliSiparisler.map((s: any) => {
-               const secili = seciliKalemler.has(s.id)
-               return (
-                 <div 
-                   key={s.id} 
-                   onClick={() => toggleKalem(s.id)} 
-                   className={clsx(
-                     "flex items-center p-4 mb-3 rounded-2xl cursor-pointer border-2 transition-all hover:shadow-md", 
-                     secili ? "bg-brand-50 border-brand-400 dark:bg-brand-900/30 dark:border-brand-600 shadow-sm" : "bg-white border-transparent shadow-sm hover:border-surface-300 dark:bg-surface-800 dark:hover:border-surface-600"
-                   )}
-                 >
-                    <div className={clsx("mr-4 transition-colors", secili ? "text-brand-500" : "text-surface-300")}>
-                      {secili ? <CheckSquare size={28} /> : <Square size={28} />}
+        {/* SOL KOLON: ADİSYON ÖZETİ VE ALMAN USULÜ */}
+        <div className="flex flex-col w-full lg:w-5/12 xl:w-1/3 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800">
+          
+          <div className="flex items-center justify-between p-4 border-b border-surface-200 dark:border-surface-800 bg-surface-100/50 dark:bg-surface-800/50">
+            <div>
+              <h3 className="font-bold text-surface-900 dark:text-white text-lg">Adisyon Özeti</h3>
+              <p className="text-xs text-surface-500">Masa {aktifHesap?.masa_id || 'Yok'} • Hesap No: {aktifHesap?.hesap_no}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={tumunuSecToggle} className="text-xs">
+              {seciliSiparisIdleri.length > 0 ? 'Seçimleri Temizle' : 'Tümünü Seç'}
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 pos-scrollbar">
+            {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal').map((siparis) => {
+              const isSelected = seciliSiparisIdleri.includes(siparis.id);
+              const isIkram = Boolean(siparis.ikram);
+              return (
+                <div 
+                  key={siparis.id}
+                  onClick={() => !isIkram && handleSiparisSec(siparis.id)}
+                  className={clsx(
+                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all cursor-pointer",
+                    isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale" : 
+                    isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={clsx("w-5 h-5 rounded flex items-center justify-center border", isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
+                      {isSelected && <CheckCircle2 size={14} />}
                     </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-pos-base text-surface-900 dark:text-white">
-                        {s.porsiyon && s.porsiyon !== 1 ? `${s.porsiyon === 2 ? 'Duble (2)' : s.porsiyon} ` : ''}{s.urun_adi}
-                      </div>
-                      <div className="text-sm text-surface-500 font-medium">
-                        {s.miktar} {s.urun_birim || 'Adet'} x {formatPara(s.birim_fiyat)}
-                      </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-surface-900 dark:text-white text-sm">
+                        {siparis.miktar}x {siparis.urun_adi}
+                      </span>
+                      {siparis.varyant_adi && <span className="text-xs text-surface-500">{siparis.varyant_adi}</span>}
+                      {isIkram && <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded inline-block w-max mt-1">İkram</span>}
                     </div>
-                    <div className="font-black text-pos-lg text-surface-900 dark:text-white">
-                      {formatPara(s.toplam_fiyat)}
-                    </div>
-                 </div>
-               )
-             })}
-           </div>
-           
-           {/* Ödenenler Listesi */}
-           {aktifHesap?.odemeler && aktifHesap.odemeler.length > 0 && (
-             <div className="p-4 border-t border-surface-200 dark:border-surface-800 bg-surface-100 dark:bg-surface-950 z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-               <h4 className="text-xs font-black text-surface-500 uppercase mb-3 tracking-wider">Geçmiş Tahsilatlar</h4>
-               <div className="max-h-32 overflow-y-auto pos-scrollbar pr-2">
-                 {aktifHesap.odemeler.map((o: any) => (
-                   <div key={o.id} className="flex justify-between items-center text-sm mb-2 bg-white dark:bg-surface-900 p-2 rounded-lg border border-surface-200 dark:border-surface-800">
-                     <div className="flex flex-col">
-                       <span className="font-bold text-surface-700 dark:text-surface-300 capitalize">{o.odeme_tipi.replace('_', ' ')}</span>
-                       <span className="text-xs text-surface-400">{new Date(o.odeme_zamani).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
-                     </div>
-                     <span className="font-black text-green-600 dark:text-green-400">{formatPara(o.tutar)}</span>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           )}
+                  </div>
+                  <div className="font-bold text-surface-900 dark:text-white">
+                    {formatPara(siparis.toplam_fiyat)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Adisyon Genel Toplamları */}
+          <div className="p-4 bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-800">
+            <div className="flex justify-between items-center text-sm text-surface-600 dark:text-surface-400 mb-1">
+              <span>Ara Toplam</span>
+              <span>{formatPara(aktifHesap?.toplam_tutar || 0)}</span>
+            </div>
+            {hesaplamalar.indirimTutar > 0 && (
+              <div className="flex justify-between items-center text-sm text-red-500 mb-1 font-medium">
+                <span>İndirim</span>
+                <span>-{formatPara(hesaplamalar.indirimTutar)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-pos-lg font-bold text-surface-900 dark:text-white mb-2 pt-2 border-t border-surface-200 dark:border-surface-700">
+              <span>Genel Toplam</span>
+              <span>{formatPara(genelNetTutar)}</span>
+            </div>
+            
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1 font-semibold" onClick={handleIndirim} leftIcon={<Tag size={16}/>}>
+                İndirim Uygula
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* ORTA PANEL: Kalan / Parçalı Ödeme İşlemleri */}
-        <div className="flex-1 flex flex-col border-r border-surface-200 dark:border-surface-800 p-8 bg-white dark:bg-surface-950">
-           <div className="bg-gradient-to-br from-brand-500 to-brand-700 p-8 rounded-3xl text-center mb-8 shadow-lg shadow-brand-500/20 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-black opacity-10 rounded-full blur-xl"></div>
+        {/* SAĞ KOLON: ÖDEME İŞLEMLERİ */}
+        <div className="flex flex-col flex-1 p-6 lg:p-8 bg-surface-50 dark:bg-surface-950">
+          
+          {/* Tutar Panoları */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white dark:bg-surface-900 rounded-2xl p-5 border border-surface-200 dark:border-surface-800 shadow-sm flex flex-col justify-center">
+              <span className="text-surface-500 font-medium text-sm mb-1 uppercase tracking-wider">Kalan Toplam Hesap</span>
+              <span className="text-3xl lg:text-4xl font-black text-brand-600 dark:text-brand-400">
+                {formatPara(kalanGenelNet)}
+              </span>
+              {odenenTutar > 0 && (
+                <span className="text-xs text-green-600 font-medium mt-2 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded w-max">
+                  {formatPara(odenenTutar)} ödendi
+                </span>
+              )}
+            </div>
+
+            <div className={clsx(
+              "rounded-2xl p-5 border shadow-sm flex flex-col justify-center transition-colors",
+              almanUsuluAktif || girilenTutar
+                ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700 ring-2 ring-brand-500"
+                : "bg-surface-100 dark:bg-surface-800 border-surface-200 dark:border-surface-700"
+            )}>
+              <span className="text-surface-500 font-medium text-sm mb-1 uppercase tracking-wider">
+                Tahsil Edilecek
+              </span>
+              <span className="text-3xl lg:text-5xl font-black text-surface-900 dark:text-white">
+                {girilenTutar ? formatPara(parseFloat(girilenTutar)) : formatPara(odenecekHedefTutar)}
+              </span>
+              {almanUsuluAktif && !girilenTutar && (
+                <span className="text-xs text-brand-600 font-medium mt-2 flex items-center gap-1">
+                  <SplitSquareHorizontal size={12}/> {seciliSiparisIdleri.length} ürün seçili
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col xl:flex-row gap-6 flex-1">
+            {/* Numpad ve Hızlı Tutarlar */}
+            <div className="flex-1 flex flex-col gap-4">
+              <div className="grid grid-cols-4 gap-2">
+                <Button variant="outline" onClick={() => hizliTutar(odenecekHedefTutar)} className="col-span-2 font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">
+                  {almanUsuluAktif ? 'Seçili Tutar' : 'Kalanın Tamamı'}
+                </Button>
+                <Button variant="outline" onClick={() => hizliTutar(50)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">50₺</Button>
+                <Button variant="outline" onClick={() => hizliTutar(100)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">100₺</Button>
+                <Button variant="outline" onClick={() => hizliTutar(200)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">200₺</Button>
+                <Button variant="outline" onClick={() => hizliTutar(500)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">500₺</Button>
+                <Button variant="outline" onClick={() => hizliTutar(1000)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">1000₺</Button>
+                <Button variant="outline" onClick={() => hizliTutar(2000)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">2000₺</Button>
+              </div>
+
+              <div className="flex-1 bg-white dark:bg-surface-900 rounded-3xl p-4 border border-surface-200 dark:border-surface-800 flex items-center justify-center">
+                <Numpad onKeyPress={handleTutarGirisi} />
+              </div>
               
-              <div className="text-brand-100 font-semibold mb-1 relative z-10 text-lg uppercase tracking-wider">Kalan Bakiye</div>
-              <div className="text-6xl font-black relative z-10 drop-shadow-sm">
-                 {formatPara(odenecekNet)}
-              </div>
-           </div>
-
-           <h3 className="font-bold text-pos-xl text-surface-800 dark:text-surface-200 mb-6">Tahsilat Yöntemi</h3>
-           <div className="grid grid-cols-2 gap-4 mb-8">
-              <Button 
-                variant={odemeModu === 'tumu' ? 'primary' : 'outline'} 
-                className={clsx("h-20 text-xl font-bold rounded-2xl border-2 transition-all", odemeModu === 'tumu' ? "shadow-md shadow-brand-500/20" : "hover:border-brand-300")}
-                onClick={setTumu}
-              >
-                 Tümünü Öde
-              </Button>
-              <Button 
-                variant={odemeModu === 'kisi' ? 'primary' : 'outline'} 
-                className={clsx("h-20 text-xl font-bold rounded-2xl border-2 transition-all", odemeModu === 'kisi' ? "shadow-md shadow-brand-500/20" : "hover:border-brand-300")}
-                leftIcon={<Users size={24} />}
-                onClick={() => {
-                   setOdemeModu('kisi')
-                   setGirilenTutar('')
-                }}
-              >
-                 Alman Usulü
-              </Button>
-           </div>
-
-           {odemeModu === 'kisi' && (
-              <div className="bg-surface-50 dark:bg-surface-900 p-8 rounded-3xl border border-surface-200 dark:border-surface-800 mb-8 flex flex-col items-center animate-scale-in">
-                 <span className="text-surface-500 font-bold mb-6 text-lg uppercase tracking-wider">Kişi Sayısı</span>
-                 <div className="flex items-center gap-6">
-                    <Button variant="outline" className="w-20 h-20 rounded-full text-4xl font-bold shadow-sm" onClick={() => setKisiSayisi(Math.max(2, kisiSayisi - 1))}>-</Button>
-                    <span className="text-6xl font-black w-24 text-center text-brand-600 dark:text-brand-400">{kisiSayisi}</span>
-                    <Button variant="outline" className="w-20 h-20 rounded-full text-4xl font-bold shadow-sm" onClick={() => setKisiSayisi(kisiSayisi + 1)}>+</Button>
+              {gecerliTutar > kalanGenelNet && (
+                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-2xl border border-amber-200 dark:border-amber-800 flex items-center justify-between shadow-sm animate-fade-in">
+                   <span className="font-medium text-lg">Para Üstü:</span>
+                   <span className="text-2xl font-black">{formatPara(gecerliTutar - kalanGenelNet)}</span>
                  </div>
-              </div>
-           )}
+              )}
+            </div>
 
-           <div className="mt-auto bg-surface-100 dark:bg-surface-800/50 p-8 rounded-3xl border-2 border-surface-200 dark:border-surface-700 text-center relative overflow-hidden">
-              <div className="text-surface-500 font-bold mb-2 text-lg uppercase tracking-wider">Tahsil Edilecek Tutar</div>
-              <div className={clsx("text-5xl font-black transition-colors", gecerliTutar > 0 ? "text-brand-600 dark:text-brand-400" : "text-surface-900 dark:text-white")}>
-                 {formatPara(gecerliTutar)}
-              </div>
-           </div>
-        </div>
-
-        {/* SAĞ PANEL: Numpad ve Ödeme Tipleri */}
-        <div className="w-[420px] p-8 bg-surface-50 dark:bg-surface-900 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-10 relative">
-           
-           {/* Hızlı Tutar Butonları (Dinamik) */}
-           <div className="grid grid-cols-4 gap-3 mb-8">
-              {hizliTutarlar.map((hizli, index) => (
-                 <Button 
-                   key={index} 
-                   variant="outline" 
-                   className={clsx("font-black text-lg h-16 rounded-xl border-2 transition-all hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700", hizli === gecerliTutar && "bg-brand-100 border-brand-400 text-brand-800")}
-                   onClick={() => {
-                     setOdemeModu('manuel')
-                     setGirilenTutar(hizli.toString())
-                   }}
-                 >
-                    {hizli === odenecekNet ? 'TÜMÜ' : hizli}
-                 </Button>
-              ))}
-           </div>
-
-           {/* Numpad */}
-           <div className="bg-white dark:bg-surface-950 p-6 rounded-[2rem] border border-surface-200 dark:border-surface-800 shadow-sm mb-6">
-             <Numpad onKeyPress={handleTutarGirisi} />
-           </div>
-
-           {/* Para Üstü Uyarı */}
-           {gecerliTutar > odenecekNet && (
-             <div className="mb-6 p-5 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400 rounded-2xl border-2 border-amber-200 dark:border-amber-800/50 flex items-center justify-between animate-scale-in shadow-sm">
-               <span className="font-bold text-lg uppercase tracking-wide">Para Üstü</span>
-               <span className="text-3xl font-black">{formatPara(gecerliTutar - odenecekNet)}</span>
-             </div>
-           )}
-
-           {/* Ödeme Tipleri */}
-           <div className="grid grid-cols-2 gap-4 mt-auto">
-             <Button 
-               variant="success" 
-               className="h-24 flex-col gap-2 text-pos-base font-black shadow-lg shadow-green-500/20 rounded-2xl"
-               onClick={() => odemeAl('nakit')}
-               disabled={odemeIslemi || gecerliTutar <= 0}
-             >
-               <Banknote size={32} />
-               NAKİT
-             </Button>
-             <Button 
-               variant="primary" 
-               className="h-24 flex-col gap-2 text-pos-base font-black shadow-lg shadow-brand-500/20 rounded-2xl"
-               onClick={() => odemeAl('kredi_karti')}
-               disabled={odemeIslemi || gecerliTutar <= 0}
-             >
-               <CreditCard size={32} />
-               KREDİ KARTI
-             </Button>
-             <Button 
-               variant="outline" 
-               className="h-16 flex-col gap-1 text-sm font-bold col-span-2 text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-900/30 rounded-2xl border-2"
-               onClick={() => odemeAl('yemek_karti')}
-               disabled={odemeIslemi || gecerliTutar <= 0}
-             >
-               <div className="flex items-center gap-2">
-                 <Utensils size={20} />
-                 <span>YEMEK KARTI (Sodexo vb.)</span>
-               </div>
-             </Button>
-           </div>
+            {/* Ödeme Tipleri */}
+            <div className="w-full xl:w-56 flex flex-col gap-3 justify-end shrink-0">
+              <Button 
+                variant="success" 
+                size="lg" 
+                className="h-24 xl:h-32 text-2xl font-bold rounded-2xl shadow-md flex-col gap-2"
+                onClick={() => odemeAl('nakit')}
+                disabled={odemeIslemi}
+              >
+                <Banknote size={36} />
+                Nakit
+              </Button>
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="h-24 xl:h-32 text-2xl font-bold rounded-2xl shadow-md flex-col gap-2"
+                onClick={() => odemeAl('kredi_karti')}
+                disabled={odemeIslemi}
+              >
+                <CreditCard size={36} />
+                Kredi Kartı
+              </Button>
+            </div>
+          </div>
         </div>
 
       </div>
+      
+      {indirimModalAcik && (
+        <IndirimModal 
+          isOpen={indirimModalAcik}
+          onClose={() => setIndirimModalAcik(false)}
+          toplamTutar={toplamTutar}
+        />
+      )}
     </Modal>
   )
 }
