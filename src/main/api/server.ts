@@ -179,7 +179,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     }
 
     const siparisler = db.prepare(`
-      SELECT s.id, s.urun_id, s.miktar, s.birim_fiyat, s.toplam_fiyat, s.notlar, s.durum, s.ikram,
+      SELECT s.id, s.urun_id, s.miktar, s.birim_fiyat, s.toplam_fiyat, s.notlar, s.durum, s.ikram, s.porsiyon,
              u.ad as urun_adi
       FROM siparis s
       JOIN urun u ON u.id = s.urun_id
@@ -241,17 +241,19 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
         const urun = db.prepare('SELECT ad, fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
         if (!urun) continue
 
+        const porsiyon = sip.porsiyon || 1;
         yazdirSiparisler.push({
           urun_adi: urun.ad,
           miktar: sip.miktar || 1,
           notlar: sip.notlar || '',
-          ikram: sip.ikram || false
+          ikram: sip.ikram || false,
+          porsiyon: porsiyon
         })
 
         db.prepare(`
-          INSERT INTO siparis (hesap_id, urun_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, yazici_grup, ikram, ikram_onaylayan_id)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(hesap.id, sip.urun_id, sip.miktar || 1, urun.fiyat, urun.fiyat * (sip.miktar || 1), personelId, sip.notlar || null, urun.yazici_grup, sip.ikram ? 1 : 0, sip.ikram ? personelId : null)
+          INSERT INTO siparis (hesap_id, urun_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, yazici_grup, ikram, ikram_onaylayan_id, porsiyon)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(hesap.id, sip.urun_id, sip.miktar || 1, urun.fiyat, urun.fiyat * (sip.miktar || 1) * porsiyon, personelId, sip.notlar || null, urun.yazici_grup, sip.ikram ? 1 : 0, sip.ikram ? personelId : null, porsiyon)
       }
 
       // Hesap toplamını güncelle

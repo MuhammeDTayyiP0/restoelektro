@@ -275,6 +275,7 @@ let aktifMasa = null;
 let sepet = [];
 let sadeceAcik = false;
 let seciliBolum = null;
+let aktifPorsiyon = 1;
 
 // ===== LOGIN =====
 function pinPadOlustur() {
@@ -466,10 +467,11 @@ async function masaDetayCiz(masaId) {
       let iptalClass = s.durum === 'iptal' ? 'text-decoration: line-through; opacity: 0.4;' : '';
       let durumRenk = s.durum === 'bekliyor' ? 'var(--warning)' : (s.durum === 'hazir' ? 'var(--success)' : 'var(--text3)');
       let ikramEtiketi = s.ikram ? '<span style="background:var(--brand); color:white; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:800; margin-left:8px;">İKRAM</span>' : '';
+      let porsiyonOnek = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 2 ? 'Duble (2)' : s.porsiyon) + ' Porsiyon ') : '';
       
       html += '<div class="siparis-row" style="'+iptalClass+'">';
       html += '<div style="flex:1">';
-      html += '<div style="font-weight:700; font-size:15px; margin-bottom:4px;">'+s.miktar+' '+(s.urun_birim || 'Adet')+' <span style="color:var(--text3)">x</span> '+s.urun_adi+ikramEtiketi+'</div>';
+      html += '<div style="font-weight:700; font-size:15px; margin-bottom:4px;">'+s.miktar+' '+(s.urun_birim || 'Adet')+' <span style="color:var(--text3)">x</span> '+porsiyonOnek+s.urun_adi+ikramEtiketi+'</div>';
       if (s.notlar) html += '<div style="font-size:12px; font-weight:600; color:var(--warning); margin-bottom:8px;">Not: '+s.notlar+'</div>';
       
       if (s.durum !== 'iptal') {
@@ -516,6 +518,14 @@ function siparisEkraniCiz() {
     html += '<button class="kat-tab '+cls+'" onclick="kategoriSec('+k.id+')">'+k.ad+'</button>';
   });
   html += '</div>';
+
+  html += '<div style="display:flex; background:var(--surface); border:1px solid var(--surface2); border-radius:16px; margin-bottom:20px; padding:6px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);">';
+  [1, 1.5, 2].forEach(p => {
+    const label = p === 1 ? '1 Porsiyon' : (p === 1.5 ? '1.5 Porsiyon' : '2 (Duble)');
+    const act = aktifPorsiyon === p ? 'background:linear-gradient(135deg, var(--brand-light), var(--brand)); color:white; box-shadow:0 6px 20px var(--brand-glow); transform:scale(1.02);' : 'background:transparent; color:var(--text3);';
+    html += '<button style="flex:1; border:none; border-radius:12px; padding:14px 4px; font-weight:800; font-size:13px; letter-spacing:0.5px; cursor:pointer; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); ' + act + '" onclick="porsiyonSec(' + p + ')">' + label + '</button>';
+  });
+  html += '</div>';
   
   const urunler = menu.urunler.filter(u => u.kategori_id === aktifKategori);
   html += '<div class="urun-grid">';
@@ -529,6 +539,11 @@ function siparisEkraniCiz() {
 
 function kategoriSec(id) {
   aktifKategori = id;
+  siparisEkraniCiz();
+}
+
+function porsiyonSec(p) {
+  aktifPorsiyon = p;
   siparisEkraniCiz();
 }
 
@@ -551,11 +566,11 @@ function sepeteEkle(urunId, ad, fiyat, birim) {
     baslangicMiktari = parsed;
   }
 
-  const mevcut = sepet.find(s => s.urun_id === urunId && !s.notlar && !s.ikram);
+  const mevcut = sepet.find(s => s.urun_id === urunId && !s.notlar && !s.ikram && s.porsiyon === aktifPorsiyon);
   if (mevcut) { 
     mevcut.miktar += baslangicMiktari; 
   } else { 
-    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, birim, miktar: baslangicMiktari, notlar: '', ikram: false }); 
+    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, birim, miktar: baslangicMiktari, notlar: '', ikram: false, porsiyon: aktifPorsiyon }); 
   }
   sepetGuncelle();
   
@@ -569,7 +584,7 @@ function sepeteEkle(urunId, ad, fiyat, birim) {
 
 function sepetGuncelle() {
   const adet = sepet.reduce((a,s) => a + s.miktar, 0);
-  const tutar = sepet.reduce((a,s) => a + (s.ikram ? 0 : s.fiyat * s.miktar), 0);
+  const tutar = sepet.reduce((a,s) => a + (s.ikram ? 0 : s.fiyat * s.miktar * (s.porsiyon || 1)), 0);
   document.getElementById('sepetAdet').textContent = adet;
   document.getElementById('sepetTutar').textContent = '₺' + tutar.toFixed(0);
   if (adet > 0) {
@@ -611,11 +626,12 @@ function sepetListeCiz() {
   let html = '';
   sepet.forEach((s) => {
     let ikramEtiketi = s.ikram ? '<span style="background:var(--brand); color:white; padding:2px 6px; border-radius:6px; font-size:10px; margin-left:8px; font-weight:800;">İKRAM</span>' : '';
-    let fiyatMetni = s.ikram ? '<span style="text-decoration:line-through;color:var(--text3)">₺'+(s.fiyat*s.miktar).toFixed(0)+'</span>' : '₺'+(s.fiyat*s.miktar).toFixed(0);
+    let porsiyonOnek = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 2 ? 'Duble (2)' : s.porsiyon) + ' Porsiyon ') : '';
+    let fiyatMetni = s.ikram ? '<span style="text-decoration:line-through;color:var(--text3)">₺'+(s.fiyat*s.miktar*(s.porsiyon||1)).toFixed(0)+'</span>' : '₺'+(s.fiyat*s.miktar*(s.porsiyon||1)).toFixed(0);
     
     html += '<div class="sepet-item">';
     html += '  <div class="sepet-item-header">';
-    html += '    <div class="sepet-item-ad">'+s.ad+ikramEtiketi+'</div>';
+    html += '    <div class="sepet-item-ad">'+porsiyonOnek+s.ad+ikramEtiketi+'</div>';
     html += '    <div class="sepet-item-fiyat">'+fiyatMetni+'</div>';
     html += '  </div>';
     html += '  <div class="sepet-actions">';
@@ -678,7 +694,7 @@ async function siparisGonder() {
   try {
     const res = await apiFetch('/api/garson/siparis', {
       method: 'POST',
-      body: JSON.stringify({ masa_id: aktifMasa.id, siparisler: sepet.map(s => ({ urun_id: s.urun_id, miktar: s.miktar, notlar: s.notlar, ikram: s.ikram })) })
+      body: JSON.stringify({ masa_id: aktifMasa.id, siparisler: sepet.map(s => ({ urun_id: s.urun_id, miktar: s.miktar, notlar: s.notlar, ikram: s.ikram, porsiyon: s.porsiyon })) })
     });
     if (res && res.basarili) {
       toast('Sipariş mutfağa gönderildi! ✓');
