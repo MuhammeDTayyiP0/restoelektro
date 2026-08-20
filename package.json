@@ -1,6 +1,6 @@
 {
   "name": "etibol-pos",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "ETİBOL POS — Profesyonel Restoran Yönetim & POS Uygulaması",
   "main": "./out/main/index.js",
   "author": "ETİBOL POS",
@@ -13,7 +13,7 @@
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
-    "build:setup": "npm run pack && node build/build-installer.js",
+    "build:setup": "npm run build && electron-builder",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"

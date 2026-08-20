@@ -35,15 +35,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ETIBOL_POS_Setup
-          path: dist/ETIBOL_POS_Setup_2.0.0.exe
+          path: dist/ETIBOL_POS_Setup_2.0.2.exe
 
-      - name: Create GitHub Release (2.0.0 Sürümü Oluştur)
+      - name: Create GitHub Release (2.0.2 Sürümü Oluştur)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.0.0
-          name: ETİBOL POS v2.0.0
+          tag_name: v2.0.2
+          name: ETİBOL POS v2.0.2
           draft: false
           prerelease: false
-          files: dist/ETIBOL_POS_Setup_2.0.0.exe
+          files: dist/ETIBOL_POS_Setup_2.0.2.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

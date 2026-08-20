@@ -1,13 +1,13 @@
 [Setup]
 AppId=com.etibol.pos
 AppName=ETİBOL POS
-AppVersion=2.0.0
+AppVersion=2.0.2
 AppPublisher=ETİBOL POS
 AppCopyright=Copyright (C) 2024 ETİBOL POS
 DefaultDirName={autopf}\ETIBOL POS
 DefaultGroupName=ETİBOL POS
 DisableProgramGroupPage=yes
-OutputBaseFilename=ETIBOL_POS_Setup_2.0.0
+OutputBaseFilename=ETIBOL_POS_Setup_2.0.2
 OutputDir=..\dist
 Compression=lzma2/ultra64
 SolidCompression=yes

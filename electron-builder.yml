@@ -23,9 +23,16 @@ asarUnpack:
 # Windows yapılandırması
 win:
   target:
-    - target: dir
+    - target: nsis
   icon: resources/icon.ico
-  artifactName: '${productName}-${version}-${arch}.${ext}'
+  artifactName: 'ETIBOL_POS_Setup_${version}.${ext}'
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: "ETİBOL POS"
 
 publish:
   - provider: github
