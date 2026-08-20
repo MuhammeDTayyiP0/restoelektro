@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { Tabs } from '../../components/ui/Tabs'
-import { Settings as SettingsIcon, Users, BookOpen, LayoutGrid, Printer } from 'lucide-react'
+import { Settings as SettingsIcon, Users, BookOpen, LayoutGrid, Printer, QrCode } from 'lucide-react'
 import StaffSettings from './components/StaffSettings'
 import GeneralSettings from './components/GeneralSettings'
 import MenuSettings from './components/MenuSettings'
 import TableSettings from './components/TableSettings'
 import PrinterTemplateSettings from './components/PrinterTemplateSettings'
+import QRMenuSettings from './components/QRMenuSettings'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('menu') // Default to menu for now
@@ -33,6 +34,7 @@ export default function SettingsPage() {
             tabs={[
               { id: 'menu', label: 'Menü Yönetimi', icon: <BookOpen size={18} /> },
               { id: 'tables', label: 'Masa Düzeni', icon: <LayoutGrid size={18} /> },
+              { id: 'qrmenu', label: 'QR Menü', icon: <QrCode size={18} /> },
               { id: 'staff', label: 'Personeller', icon: <Users size={18} /> },
               { id: 'templates', label: 'Fiş Tasarımı', icon: <Printer size={18} /> },
               { id: 'general', label: 'Genel Ayarlar', icon: <SettingsIcon size={18} /> }
@@ -43,6 +45,7 @@ export default function SettingsPage() {
         <div className="flex-1 overflow-y-auto p-6 pos-scrollbar">
           { activeTab === 'menu' && <MenuSettings /> }
           { activeTab === 'tables' && <TableSettings /> }
+          { activeTab === 'qrmenu' && <QRMenuSettings /> }
           { activeTab === 'staff' && <StaffSettings /> }
           { activeTab === 'templates' && <PrinterTemplateSettings /> }
           { activeTab === 'general' && <GeneralSettings /> }

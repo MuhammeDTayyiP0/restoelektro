@@ -12,6 +12,7 @@ import { networkInterfaces } from 'os'
 import { veritabaniGetir } from '../database/connection'
 import { BrowserWindow, app } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
+import { qrMenuHTML } from './qrmenu-mobile'
 import path from 'path'
 
 const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
@@ -54,6 +55,13 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   app.get('/garson', (_req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.send(garsonMobilHTML())
+  })
+
+  // ===== QR MENÜ ARAYÜZÜ =====
+  // Müşteriler http://<bilgisayar-ip>:3847/qrmenu adresine gidince açılır
+  app.get('/qrmenu', (_req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(qrMenuHTML())
   })
 
   // PIN ile giriş (mobil garsonlar için)
