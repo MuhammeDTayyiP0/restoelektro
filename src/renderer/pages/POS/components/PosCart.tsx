@@ -21,8 +21,9 @@ export default function PosCart() {
   const navigate = useNavigate()
   
   const [seciliKalemId, setSeciliKalemId] = useState<string | null>(null)
-  const [miktarModalAcik, setMiktarModalAcik] = useState(false)
   const [odemeModalAcik, setOdemeModalAcik] = useState(false)
+  const [miktarSoranKalem, setMiktarSoranKalem] = useState<any>(null)
+  const [girilenMiktar, setGirilenMiktar] = useState('')
   const [siparisGonderiliyor, setSiparisGonderiliyor] = useState(false)
   const [notDuzenlenenKalemId, setNotDuzenlenenKalemId] = useState<string | null>(null)
   const [geciciNot, setGeciciNot] = useState('')
@@ -368,13 +369,8 @@ export default function PosCart() {
                         className="w-12 text-center text-lg font-bold"
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          const newVal = window.prompt(`Yeni miktar girin (${kalem.urun.birim || 'Adet'}):`, kalem.miktar.toString())
-                          if (newVal !== null) {
-                            const parsed = parseFloat(newVal.replace(',', '.'))
-                            if (!isNaN(parsed) && parsed > 0) {
-                              handleMiktarDegistir(kalem.id, parsed)
-                            }
-                          }
+                          setGirilenMiktar(kalem.miktar.toString())
+                          setMiktarSoranKalem(kalem)
                         }}
                         title="Miktarı el ile gir"
                       >
@@ -513,6 +509,56 @@ export default function PosCart() {
           onClose={() => setOdemeModalAcik(false)} 
           toplamTutar={toplamTutar} 
         />
+      )}
+
+      {/* Miktar Modalı */}
+      {miktarSoranKalem && (
+        <Modal 
+          isOpen={!!miktarSoranKalem} 
+          onClose={() => setMiktarSoranKalem(null)} 
+          title="Miktar Girin"
+        >
+          <div className="flex flex-col gap-4 py-2">
+            <div className="text-surface-700 dark:text-surface-300 font-bold text-center">
+              {miktarSoranKalem.urun.ad} ({miktarSoranKalem.urun.birim || 'Adet'})
+            </div>
+            <input 
+              type="text" 
+              inputMode="decimal"
+              autoFocus
+              value={girilenMiktar} 
+              onChange={e => {
+                const val = e.target.value.replace(/[^0-9.,]/g, '')
+                setGirilenMiktar(val.replace(',', '.'))
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const parsed = parseFloat(girilenMiktar)
+                  if (!isNaN(parsed) && parsed > 0) {
+                    handleMiktarDegistir(miktarSoranKalem.id, parsed)
+                    setMiktarSoranKalem(null)
+                  }
+                }
+              }}
+              className="px-4 py-3 border rounded-pos bg-white dark:bg-surface-950 dark:border-surface-700 focus:border-brand-500 text-2xl font-bold text-center outline-none" 
+            />
+            <div className="flex gap-2 justify-end mt-2">
+              <Button variant="ghost" onClick={() => setMiktarSoranKalem(null)}>İptal</Button>
+              <Button 
+                variant="primary" 
+                onClick={() => {
+                  const parsed = parseFloat(girilenMiktar)
+                  if (!isNaN(parsed) && parsed > 0) {
+                    handleMiktarDegistir(miktarSoranKalem.id, parsed)
+                    setMiktarSoranKalem(null)
+                  }
+                }}
+              >
+                Uygula
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )

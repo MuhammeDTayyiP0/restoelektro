@@ -541,11 +541,21 @@ function masalaraGeri() {
 
 // ===== SEPET & NOTLAR =====
 function sepeteEkle(urunId, ad, fiyat, birim) {
+  let baslangicMiktari = 1;
+  const birimUpper = birim ? birim.toUpperCase() : '';
+  if (birimUpper === 'KG' || birimUpper === 'GRAM' || birimUpper === 'LITRE' || birimUpper === 'LT') {
+    const newVal = window.prompt('Miktar girin ('+(birim || 'KG')+'):', '1');
+    if (newVal === null) return;
+    const parsed = parseFloat(newVal.replace(',', '.'));
+    if (isNaN(parsed) || parsed <= 0) return;
+    baslangicMiktari = parsed;
+  }
+
   const mevcut = sepet.find(s => s.urun_id === urunId && !s.notlar && !s.ikram);
   if (mevcut) { 
-    mevcut.miktar++; 
+    mevcut.miktar += baslangicMiktari; 
   } else { 
-    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, birim, miktar: 1, notlar: '', ikram: false }); 
+    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, birim, miktar: baslangicMiktari, notlar: '', ikram: false }); 
   }
   sepetGuncelle();
   

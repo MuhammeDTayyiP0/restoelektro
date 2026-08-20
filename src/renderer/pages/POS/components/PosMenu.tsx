@@ -5,6 +5,8 @@ import { usePosStore } from '../../../stores/usePosStore'
 import { formatPara } from '../../../utils/formatters'
 import type { Urun } from '../../../../common/types/menu.types'
 import { SearchInput } from '../../../components/ui/SearchInput'
+import { Modal } from '../../../components/ui/Modal'
+import { Button } from '../../../components/ui/Button'
 
 export default function PosMenu() {
   const { seciliKategoriId, kategoriSec } = usePosStore(state => ({
@@ -15,6 +17,8 @@ export default function PosMenu() {
   const { sepeteEkle } = usePosStore()
 
   const [aramaMetni, setAramaMetni] = useState('')
+  const [miktarSoranUrun, setMiktarSoranUrun] = useState<Urun | null>(null)
+  const [girilenMiktar, setGirilenMiktar] = useState('1')
 
   // Görüntülenecek ürünleri filtrele
   const gosterilenUrunler = useMemo(() => {
@@ -31,9 +35,13 @@ export default function PosMenu() {
   }, [tumUrunler, seciliKategoriId, aramaMetni])
 
   const urunTikla = (urun: Urun) => {
-    // Burada varyant/opsiyon seçimi için bir Modal açılabilir. 
-    // Şimdilik doğrudan sepete ekliyoruz.
-    sepeteEkle(urun)
+    const birimUpper = urun.birim ? urun.birim.toUpperCase() : ''
+    if (['KG', 'GRAM', 'LITRE', 'LT'].includes(birimUpper)) {
+      setGirilenMiktar('1')
+      setMiktarSoranUrun(urun)
+    } else {
+      sepeteEkle(urun, 1)
+    }
   }
 
   return (
@@ -123,11 +131,61 @@ export default function PosMenu() {
         
         {gosterilenUrunler.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-surface-400">
-            <p className="text-pos-xl font-medium">Bu kategoride ürün bulunmuyor.</p>
+            <div className="text-6xl mb-2 opacity-50">🔍</div>
+            <p className="text-pos-lg font-medium">Kriterlere uygun ürün bulunamadı.</p>
           </div>
         )}
       </div>
 
+      {/* Miktar Modalı */}
+      {miktarSoranUrun && (
+        <Modal 
+          isOpen={!!miktarSoranUrun} 
+          onClose={() => setMiktarSoranUrun(null)} 
+          title="Miktar Girin"
+        >
+          <div className="flex flex-col gap-4 py-2">
+            <div className="text-surface-700 dark:text-surface-300 font-bold text-center">
+              {miktarSoranUrun.ad} ({miktarSoranUrun.birim || 'KG'})
+            </div>
+            <input 
+              type="text" 
+              inputMode="decimal"
+              autoFocus
+              value={girilenMiktar} 
+              onChange={e => {
+                const val = e.target.value.replace(/[^0-9.,]/g, '')
+                setGirilenMiktar(val.replace(',', '.'))
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const parsed = parseFloat(girilenMiktar)
+                  if (!isNaN(parsed) && parsed > 0) {
+                    sepeteEkle(miktarSoranUrun, parsed)
+                    setMiktarSoranUrun(null)
+                  }
+                }
+              }}
+              className="px-4 py-3 border rounded-pos bg-white dark:bg-surface-950 dark:border-surface-700 focus:border-brand-500 text-2xl font-bold text-center outline-none" 
+            />
+            <div className="flex gap-2 justify-end mt-2">
+              <Button variant="ghost" onClick={() => setMiktarSoranUrun(null)}>İptal</Button>
+              <Button 
+                variant="primary" 
+                onClick={() => {
+                  const parsed = parseFloat(girilenMiktar)
+                  if (!isNaN(parsed) && parsed > 0) {
+                    sepeteEkle(miktarSoranUrun, parsed)
+                    setMiktarSoranUrun(null)
+                  }
+                }}
+              >
+                Ekle
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
