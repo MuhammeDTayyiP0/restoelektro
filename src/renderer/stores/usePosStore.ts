@@ -15,6 +15,7 @@ export interface SepetKalemi {
   miktar: number
   notlar: string
   ikram: boolean
+  porsiyon: number
 }
 
 interface PosState {
@@ -28,7 +29,7 @@ interface PosState {
   kategoriSec: (id: number | null) => void
   
   // Sepet İşlemleri
-  sepeteEkle: (urun: Urun, miktar?: number, varyant?: UrunVaryant, opsiyonlar?: UrunOpsiyonu[], notlar?: string) => void
+  sepeteEkle: (urun: Urun, miktar?: number, porsiyon?: number, varyant?: UrunVaryant, opsiyonlar?: UrunOpsiyonu[], notlar?: string) => void
   sepettenCikar: (id: string) => void
   sepetMiktarGuncelle: (id: string, miktar: number) => void
   sepetNotGuncelle: (id: string, notlar: string) => void
@@ -53,11 +54,12 @@ export const usePosStore = create<PosState>((set, get) => ({
   
   kategoriSec: (id) => set({ seciliKategoriId: id }),
   
-  sepeteEkle: (urun, miktar = 1, varyant, opsiyonlar = [], notlar = '') => set((state) => {
-    // Aynı ürün (ve varyant/opsiyon) var mı kontrol et
+  sepeteEkle: (urun, miktar = 1, porsiyon = 1, varyant, opsiyonlar = [], notlar = '') => set((state) => {
+    // Aynı ürün (ve varyant/opsiyon/porsiyon) var mı kontrol et
     const varolanIndeks = state.sepet.findIndex(k => 
       k.urun.id === urun.id && 
       k.varyant?.id === varyant?.id && 
+      k.porsiyon === porsiyon &&
       JSON.stringify(k.opsiyonlar) === JSON.stringify(opsiyonlar) &&
       k.notlar === notlar
     )
@@ -80,7 +82,8 @@ export const usePosStore = create<PosState>((set, get) => ({
           opsiyonlar,
           miktar,
           notlar,
-          ikram: false
+          ikram: false,
+          porsiyon
         }
       ]
     }

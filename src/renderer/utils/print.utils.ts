@@ -93,7 +93,10 @@ export function generateMutfakHtml(
   if (siparisler && siparisler.length > 0) {
     html += `<div class="section-title">[ YENİ SİPARİŞLER ]</div>`;
     for (const siparis of siparisler) {
-      const urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
+      let urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
+      if (siparis.porsiyon && siparis.porsiyon !== 1) {
+        urunAdi = `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} PORSİYON ` + urunAdi;
+      }
       const miktar = siparis.miktar || 1;
       const varyantAd = siparis.varyant?.ad || siparis.varyant_adi || '';
       
@@ -118,7 +121,10 @@ export function generateMutfakHtml(
   if (iptaller && iptaller.length > 0) {
     html += `<div class="section-title" style="color: #000; background: #eee;">[ İPTAL EDİLENLER ]</div>`;
     for (const iptal of iptaller) {
-      const urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
+      let urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
+      if (iptal.porsiyon && iptal.porsiyon !== 1) {
+        urunAdi = `${iptal.porsiyon === 2 ? 'Duble (2)' : iptal.porsiyon} PORSİYON ` + urunAdi;
+      }
       const miktar = iptal.miktar || 1;
       const varyantAd = iptal.varyant?.ad || iptal.varyant_adi || '';
       
@@ -214,11 +220,15 @@ export function generateAdisyonHtml(
   for (const siparis of gecerliSiparisler) {
     const isIkram = siparis.ikram === 1;
     const fiyatStr = isIkram ? 'IKRAM' : formatPara(siparis.toplam_fiyat);
+    let urunAdi = siparis.urun_adi;
+    if (siparis.porsiyon && siparis.porsiyon !== 1) {
+      urunAdi = `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} Porsiyon ` + urunAdi;
+    }
     
     html += `
       <div class="item">
         <div class="item-details">
-          <span class="item-name">${siparis.miktar}x ${siparis.urun_adi}</span>
+          <span class="item-name">${siparis.miktar}x ${urunAdi}</span>
           ${siparis.varyant_adi ? `<span class="item-sub">[${siparis.varyant_adi}]</span>` : ''}
         </div>
         ${config.showPrices ? `

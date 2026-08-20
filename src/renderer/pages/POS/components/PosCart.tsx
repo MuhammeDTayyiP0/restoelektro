@@ -34,7 +34,7 @@ export default function PosCart() {
     let kalemFiyati = kalem.urun.fiyat
     if (kalem.varyant) kalemFiyati += kalem.varyant.ek_fiyat
     kalem.opsiyonlar.forEach(opt => { kalemFiyati += opt.ek_fiyat })
-    return toplam + (kalemFiyati * kalem.miktar)
+    return toplam + (kalemFiyati * kalem.miktar * (kalem.porsiyon || 1))
   }, 0)
 
   const handleMiktarDegistir = (id: string, miktar: number) => {
@@ -86,7 +86,8 @@ export default function PosCart() {
           opsiyon_idleri: k.opsiyonlar.map(o => o.id),
           miktar: k.miktar,
           notlar: k.notlar,
-          ikram: k.ikram
+          ikram: k.ikram,
+          porsiyon: k.porsiyon
         }))
         siparisRes = await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_EKLE, mevcutHesapId, personel?.id || 1, yeniSiparisler)
         if (!siparisRes || !siparisRes.basarili) {
@@ -231,7 +232,7 @@ export default function PosCart() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className={clsx("text-pos-base font-bold text-surface-900 dark:text-white", iptalEdilecekSiparisler.includes(siparis.id) && "line-through opacity-70")}>
-                          {siparis.urun_adi}
+                          {siparis.porsiyon && siparis.porsiyon !== 1 ? `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} Porsiyon ` : ''}{siparis.urun_adi}
                         </span>
                         {iptalEdilecekSiparisler.includes(siparis.id) && <span className="text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded uppercase tracking-wide">İptal Bekliyor</span>}
                         {!iptalEdilecekSiparisler.includes(siparis.id) && siparis.durum === 'bekliyor' && <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-wide">Bekliyor</span>}
@@ -324,7 +325,7 @@ export default function PosCart() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <span className="text-pos-base font-bold text-surface-900 dark:text-white">
-                        {kalem.urun.ad}
+                        {kalem.porsiyon && kalem.porsiyon !== 1 ? `${kalem.porsiyon === 2 ? 'Duble (2)' : kalem.porsiyon} Porsiyon ` : ''}{kalem.urun.ad}
                       </span>
                       {kalem.ikram && (
                         <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded uppercase tracking-wide flex items-center gap-1">
@@ -345,10 +346,10 @@ export default function PosCart() {
                   
                   <div className="flex flex-col items-end">
                     <span className={clsx("text-pos-base font-bold text-surface-900 dark:text-white", kalem.ikram && "line-through text-surface-400")}>
-                      {formatPara((kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0)) * kalem.miktar)}
+                      {formatPara((kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0)) * kalem.miktar * (kalem.porsiyon || 1))}
                     </span>
                     <span className="text-sm text-surface-500">
-                      {kalem.miktar} {kalem.urun.birim || 'Adet'} x {formatPara(kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0))}
+                      {kalem.miktar} {kalem.urun.birim || 'Adet'} x {formatPara((kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0)) * (kalem.porsiyon || 1))}
                     </span>
                   </div>
                 </div>

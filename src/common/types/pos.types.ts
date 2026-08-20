@@ -57,6 +57,7 @@ export interface Siparis {
   ikram: boolean
   ikram_onaylayan_id: number | null
   yazici_grup: string
+  porsiyon?: number
   // İlişkili veriler
   urun_adi?: string
   varyant_adi?: string
@@ -92,6 +93,7 @@ export interface YeniSiparis {
   miktar: number
   notlar?: string
   ikram?: boolean
+  porsiyon?: number
   opsiyon_idleri?: number[]
 }
 

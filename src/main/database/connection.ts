@@ -243,6 +243,7 @@ function tablolariOlustur(): void {
         ikram INTEGER DEFAULT 0,
         ikram_onaylayan_id INTEGER,
         yazici_grup TEXT DEFAULT 'mutfak',
+        porsiyon REAL DEFAULT 1,
         FOREIGN KEY (hesap_id) REFERENCES hesap(id),
         FOREIGN KEY (urun_id) REFERENCES urun(id),
         FOREIGN KEY (varyant_id) REFERENCES urun_varyant(id),
@@ -450,6 +451,7 @@ function tablolariOlustur(): void {
     // Migrations
     try { db!.exec('ALTER TABLE bolum ADD COLUMN sira INTEGER DEFAULT 0') } catch (e) { /* sütun zaten var */ }
     try { db!.exec('ALTER TABLE masa ADD COLUMN sira INTEGER DEFAULT 0') } catch (e) { /* sütun zaten var */ }
+    try { db!.exec('ALTER TABLE siparis ADD COLUMN porsiyon REAL DEFAULT 1') } catch (e) { /* sütun zaten var */ }
 
     console.log('✅ Tüm tablolar ve indeksler oluşturuldu')
   })

@@ -20,6 +20,7 @@ export default function PosMenu() {
   const [aramaMetni, setAramaMetni] = useState('')
   const [miktarSoranUrun, setMiktarSoranUrun] = useState<Urun | null>(null)
   const [girilenMiktar, setGirilenMiktar] = useState('1')
+  const [aktifPorsiyon, setAktifPorsiyon] = useState<number>(1)
 
   // Görüntülenecek ürünleri filtrele
   const gosterilenUrunler = useMemo(() => {
@@ -41,15 +42,15 @@ export default function PosMenu() {
       setGirilenMiktar('1')
       setMiktarSoranUrun(urun)
     } else {
-      sepeteEkle(urun, 1)
+      sepeteEkle(urun, 1, aktifPorsiyon)
     }
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-surface-50 dark:bg-surface-950">
       
-      {/* Üst Kısım: Arama ve Hızlı Filtreler */}
-      <div className="p-4 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 shadow-sm shrink-0">
+      {/* Üst Kısım: Arama, Porsiyon ve Hızlı Filtreler */}
+      <div className="p-4 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 shadow-sm shrink-0 flex gap-4">
         <SearchInput 
           value={aramaMetni}
           onChange={(val) => {
@@ -57,8 +58,26 @@ export default function PosMenu() {
             if (val && seciliKategoriId) kategoriSec(null) // Arama yaparken kategori filtresini kaldır
           }}
           placeholder="Ürün adı veya barkod ara..."
-          className="h-14 text-lg"
+          className="h-14 text-lg flex-1"
         />
+        
+        {/* Porsiyon Seçici */}
+        <div className="flex bg-surface-100 dark:bg-surface-800 p-1 rounded-pos-lg shadow-inner h-14 w-[300px]">
+          {[1, 1.5, 2].map((p) => (
+            <button
+              key={p}
+              onClick={() => setAktifPorsiyon(p)}
+              className={clsx(
+                'flex-1 flex items-center justify-center font-bold text-lg rounded-pos transition-all touch-feedback',
+                aktifPorsiyon === p 
+                  ? 'bg-white dark:bg-surface-700 text-brand-600 dark:text-brand-400 shadow-sm' 
+                  : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-200/50 dark:hover:bg-surface-700/50'
+              )}
+            >
+              {p === 1 ? '1x' : p === 1.5 ? '1.5x' : '2x (Duble)'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Kategoriler (Yatay Kaydırılabilir) */}
@@ -162,7 +181,7 @@ export default function PosMenu() {
                 if (e.key === 'Enter') {
                   const parsed = parseFloat(girilenMiktar)
                   if (!isNaN(parsed) && parsed > 0) {
-                    sepeteEkle(miktarSoranUrun, parsed)
+                    sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon)
                     setMiktarSoranUrun(null)
                   }
                 }
@@ -201,7 +220,7 @@ export default function PosMenu() {
                 onClick={() => {
                   const parsed = parseFloat(girilenMiktar)
                   if (!isNaN(parsed) && parsed > 0) {
-                    sepeteEkle(miktarSoranUrun, parsed)
+                    sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon)
                     setMiktarSoranUrun(null)
                   }
                 }}

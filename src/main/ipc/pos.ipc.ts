@@ -159,15 +159,16 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
             if (varyant) birimFiyat += varyant.fiyat_farki
           }
 
-          const toplamFiyat = birimFiyat * sip.miktar
+          const porsiyon = sip.porsiyon || 1
+          const toplamFiyat = birimFiyat * sip.miktar * porsiyon
 
           const sonuc = db.prepare(`
-            INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup, porsiyon)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).run(
             hesapId, sip.urun_id, sip.varyant_id || null, sip.miktar,
             birimFiyat, toplamFiyat, personelId, sip.notlar || null,
-            sip.ikram ? 1 : 0, urun.yazici_grup
+            sip.ikram ? 1 : 0, urun.yazici_grup, porsiyon
           )
 
           eklenenler.push(Number(sonuc.lastInsertRowid))
