@@ -198,7 +198,7 @@ begin
   
   // Progress bar (ilerleme cubugu) - renklerini sistem uzerinden degistiremiyoruz
   // ama arka plana bir panel koyarak daha koyu gorunmesini saglayabiliriz
-  WizardForm.ProgressGauge.Parent.Color := DARK_BG;
+  // WizardForm.ProgressGauge.Parent.Color := DARK_BG; // Inno Setup bu kontrolde Color desteklemiyor
   
   // ==============================================
   // ALT BUTON PANELI
