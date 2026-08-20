@@ -1,5 +1,5 @@
 [Setup]
-AppId={{com.etibol.pos}
+AppId=com.etibol.pos
 AppName=ETİBOL POS
 AppVersion=2.0.0
 AppPublisher=ETİBOL POS
@@ -14,7 +14,7 @@ SolidCompression=yes
 SetupIconFile=..\resources\icon.ico
 UninstallDisplayIcon={app}\ETİBOL POS.exe
 ArchitecturesInstallIn64BitMode=x64
-MinVersion=6.1.7601 ; Windows 7 SP1 uyumluluğu
+MinVersion=6.1.7601
 WizardStyle=modern
 
 ; Koyu tema için özel eklenti kullanımı gerekirse buraya eklenebilir. Şimdilik Windows'un kendi modern tasarımını kullanıyoruz.
