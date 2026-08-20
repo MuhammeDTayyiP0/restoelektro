@@ -37,7 +37,7 @@ export interface Hesap {
 }
 
 /** Sipariş durumu */
-export type SiparisDurumu = 'bekliyor' | 'hazirlaniyor' | 'hazir' | 'teslim' | 'iptal'
+export type SiparisDurumu = 'bekliyor' | 'hazirlaniyor' | 'hazir' | 'teslim' | 'odendi' | 'iptal'
 
 /** Sipariş veri yapısı */
 export interface Siparis {
@@ -86,7 +86,7 @@ export interface Odeme {
   notlar: string | null
 }
 
-/** Yeni sipariş eklerken kullanılan veri yapısı */
+/** Yeni sipariş eklendiğinde gelen veriler */
 export interface YeniSiparis {
   urun_id: number
   varyant_id?: number

@@ -267,8 +267,35 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           db.prepare(`
             INSERT INTO odeme (hesap_id, odeme_tipi, tutar, personel_id, referans_no, notlar)
             VALUES (?, ?, ?, ?, ?, ?)
-          `).run(odeme.hesap_id, odeme.odeme_tipi, odeme.tutar, odeme.personel_id, odeme.referans_no || null, odeme.notlar || null)
+          `).run(odeme.hesap_id, odeme.odeme_tipi, odeme.tutar, odeme.personel_id || null, odeme.referans_no || null, odeme.notlar || null)
           toplamOdeme += odeme.tutar
+
+          // Sipariş bazlı (Alman Usulü) ödeme varsa siparişleri böl ve 'odendi' olarak işaretle
+          if (odeme.odenen_siparisler && odeme.odenen_siparisler.length > 0) {
+            for (const item of odeme.odenen_siparisler) {
+              const siparis = db.prepare(`SELECT miktar, toplam_fiyat FROM siparis WHERE id = ? AND durum != 'iptal'`).get(item.id) as any;
+              if (siparis && siparis.miktar > 0) {
+                if (item.miktar < siparis.miktar) {
+                  // Siparişi böl (kalan miktar güncellenir)
+                  const birimFiyat = siparis.toplam_fiyat / siparis.miktar;
+                  const yeniMiktar = siparis.miktar - item.miktar;
+                  const yeniToplamFiyat = yeniMiktar * birimFiyat;
+                  db.prepare('UPDATE siparis SET miktar = ?, toplam_fiyat = ? WHERE id = ?').run(yeniMiktar, yeniToplamFiyat, item.id);
+                  
+                  // Ödenen kısmı yeni satır olarak 'odendi' durumuyla ekle
+                  const odenenToplamFiyat = item.miktar * birimFiyat;
+                  db.prepare(`
+                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup)
+                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup 
+                    FROM siparis WHERE id = ?
+                  `).run(item.miktar, odenenToplamFiyat, item.id);
+                } else {
+                  // Tamamı ödendi
+                  db.prepare('UPDATE siparis SET durum = "odendi" WHERE id = ?').run(item.id);
+                }
+              }
+            }
+          }
         }
 
         // Hesap net tutarını kontrol et
@@ -288,9 +315,9 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
             db.prepare("UPDATE masa SET durum = 'bos' WHERE id = ?").run(hesap.masa_id)
           }
 
-          // Tüm siparişleri "teslim" yap
+          // Kalan açık siparişleri "teslim" yap (iptal veya zaten ödenmiş olanlar hariç)
           db.prepare(`
-            UPDATE siparis SET durum = 'teslim' WHERE hesap_id = ? AND durum != 'iptal'
+            UPDATE siparis SET durum = 'teslim' WHERE hesap_id = ? AND durum != 'iptal' AND durum != 'odendi'
           `).run(hesapId)
 
           // Kasa hareketi ekle

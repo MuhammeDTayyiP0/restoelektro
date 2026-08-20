@@ -12,6 +12,7 @@ import { Numpad } from '../../../components/ui/Numpad'
 import { Banknote, CreditCard, Percent, Tag, CheckCircle2, SplitSquareHorizontal } from 'lucide-react'
 import { clsx } from 'clsx'
 import IndirimModal from './IndirimModal'
+import MiktarModal from './MiktarModal'
 
 interface OdemeModalProps {
   isOpen: boolean
@@ -30,6 +31,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   const [odemeIslemi, setOdemeIslemi] = useState(false)
   const [seciliMiktarlar, setSeciliMiktarlar] = useState<Record<number, number>>({})
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
+  const [aktifSiparisMiktar, setAktifSiparisMiktar] = useState<any>(null)
 
   // Hesaplamalar
   const gecerliTutar = parseFloat(girilenTutar) || 0
@@ -55,7 +57,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       seciliSiparisIdleri.forEach(id => {
         const siparis = siparisler.find((s) => s.id === id);
         const secilenMiktar = seciliMiktarlar[id] || 0;
-        if (siparis && siparis.durum !== 'iptal' && !siparis.ikram && secilenMiktar > 0) {
+        if (siparis && siparis.durum !== 'iptal' && siparis.durum !== 'odendi' && !siparis.ikram && secilenMiktar > 0) {
           const birimFiyat = siparis.toplam_fiyat / siparis.miktar;
           seciliUrunlerToplami += birimFiyat * secilenMiktar;
         }
@@ -99,26 +101,45 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     setGirilenTutar(miktar.toString())
   }
 
-  const handleSiparisSec = (siparis: any) => {
+  const handleSiparisMiktarDegistir = (siparis: any, degisim: number, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
     setSeciliMiktarlar(prev => {
       const id = siparis.id;
       const current = prev[id] || 0;
-      const next = current + 1;
+      const next = current + degisim;
       
       const updated = { ...prev };
-      if (next > siparis.miktar) {
+      if (next <= 0) {
         delete updated[id];
-      } else {
+      } else if (next <= siparis.miktar) {
         updated[id] = next;
       }
       return updated;
     })
-    setGirilenTutar('') // Ürün seçimi değiştiğinde girilen tutarı sıfırla
+    setGirilenTutar('')
+  }
+
+  const handleSiparisMiktarAyarla = (siparis: any, miktar: number) => {
+    setSeciliMiktarlar(prev => {
+      const id = siparis.id;
+      const updated = { ...prev };
+      if (miktar <= 0) {
+        delete updated[id];
+      } else if (miktar <= siparis.miktar) {
+        updated[id] = miktar;
+      } else {
+        updated[id] = siparis.miktar;
+      }
+      return updated;
+    })
+    setGirilenTutar('')
   }
 
   const tumunuSecToggle = () => {
     if (aktifHesap && aktifHesap.siparisler) {
-      const gecerliSiparisler = aktifHesap.siparisler.filter((s) => s.durum !== 'iptal' && !s.ikram);
+      const gecerliSiparisler = aktifHesap.siparisler.filter((s) => s.durum !== 'iptal' && s.durum !== 'odendi' && !s.ikram);
       
       if (seciliIdSayisi === gecerliSiparisler.length && gecerliSiparisler.length > 0) {
         setSeciliMiktarlar({});
@@ -148,6 +169,11 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       return
     }
 
+    // Kısmi ödeme varsa, seçilen siparişleri mape dönüştür
+    const odenenSiparisler = Object.entries(seciliMiktarlar)
+      .filter(([id, miktar]) => miktar > 0)
+      .map(([id, miktar]) => ({ id: Number(id), miktar: Number(miktar) }));
+
     setOdemeIslemi(true)
     try {
       const response = await ipcInvoke<any>(HESAP_KANALLARI.ODEME_AL, [
@@ -155,7 +181,8 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
           hesap_id: aktifHesap.id,
           odeme_tipi: tip,
           tutar: tutar,
-          personel_id: personel?.id || 1
+          personel_id: personel?.id || 1,
+          odenen_siparisler: odenenSiparisler
         }
       ])
 
@@ -229,38 +256,97 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 pos-scrollbar">
-            {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal').map((siparis) => {
+            {/* Ödenecek Ürünler */}
+            {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal' && s.durum !== 'odendi').map((siparis) => {
               const secilenMiktar = seciliMiktarlar[siparis.id] || 0;
               const isSelected = secilenMiktar > 0;
               const isIkram = Boolean(siparis.ikram);
+              
               return (
                 <div 
                   key={siparis.id}
-                  onClick={() => !isIkram && handleSiparisSec(siparis)}
+                  onClick={() => !isIkram && handleSiparisMiktarDegistir(siparis, secilenMiktar < siparis.miktar ? 1 : -secilenMiktar)}
                   className={clsx(
-                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all cursor-pointer select-none",
-                    isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale" : 
-                    isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700"
+                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all select-none",
+                    isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale cursor-default" : 
+                    "cursor-pointer " + (isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700")
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs", isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
+                    <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs shrink-0", isIkram ? "border-surface-300" : isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
                       {isSelected ? secilenMiktar : ''}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-surface-900 dark:text-white text-sm">
-                        {siparis.miktar}x {siparis.urun_adi}
+                        {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
+                        {isIkram && <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase">İkram</span>}
                       </span>
                       {siparis.varyant_adi && <span className="text-xs text-surface-500">{siparis.varyant_adi}</span>}
-                      {isIkram && <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded inline-block w-max mt-1">İkram</span>}
                     </div>
                   </div>
-                  <div className="font-bold text-surface-900 dark:text-white">
-                    {formatPara(siparis.toplam_fiyat)}
+                  
+                  <div className="flex items-center gap-4">
+                    {!isIkram && siparis.miktar > 1 && (
+                      <div className="flex items-center gap-1 border border-surface-200 dark:border-surface-700 rounded-lg p-0.5 bg-white dark:bg-surface-900 shadow-sm" onClick={e => e.stopPropagation()}>
+                         <button 
+                           className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                           disabled={secilenMiktar <= 0}
+                           onClick={() => handleSiparisMiktarDegistir(siparis, -1)}
+                         >
+                           -
+                         </button>
+                         <button 
+                           className="w-8 h-6 text-center text-xs font-bold bg-surface-50 dark:bg-surface-800 border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded p-0 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                           onClick={() => setAktifSiparisMiktar(siparis)}
+                         >
+                           {secilenMiktar === 0 ? '0' : secilenMiktar}
+                         </button>
+                         <button 
+                           className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                           disabled={secilenMiktar >= siparis.miktar}
+                           onClick={() => handleSiparisMiktarDegistir(siparis, 1)}
+                         >
+                           +
+                         </button>
+                      </div>
+                    )}
+                    <div className="font-bold text-surface-900 dark:text-white shrink-0">
+                      {formatPara(siparis.toplam_fiyat)}
+                    </div>
                   </div>
                 </div>
               )
             })}
+
+            {/* Ödenen Ürünler */}
+            {aktifHesap?.siparisler?.some((s) => s.durum === 'odendi') && (
+              <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-800">
+                <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3 px-1">Ödenen Ürünler</h4>
+                {aktifHesap.siparisler.filter(s => s.durum === 'odendi').map((siparis) => (
+                  <div 
+                    key={siparis.id}
+                    className="flex items-center justify-between p-3 mb-2 rounded-xl border border-transparent bg-surface-100/50 dark:bg-surface-800/30 opacity-60 grayscale select-none"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded flex items-center justify-center border border-surface-300"></div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-surface-900 dark:text-white text-sm line-through">
+                          {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
+                        </span>
+                        {siparis.varyant_adi && <span className="text-xs text-surface-500 line-through">{siparis.varyant_adi}</span>}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Ödendi</span>
+                      <div className="font-bold text-surface-500 shrink-0 line-through">
+                        {formatPara(siparis.toplam_fiyat)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Adisyon Genel Toplamları */}
@@ -390,6 +476,19 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
           isOpen={indirimModalAcik}
           onClose={() => setIndirimModalAcik(false)}
           toplamTutar={toplamTutar}
+        />
+      )}
+
+      {aktifSiparisMiktar && (
+        <MiktarModal 
+          isOpen={!!aktifSiparisMiktar}
+          onClose={() => setAktifSiparisMiktar(null)}
+          onConfirm={(miktar) => {
+            handleSiparisMiktarAyarla(aktifSiparisMiktar, miktar)
+          }}
+          maxMiktar={aktifSiparisMiktar.miktar}
+          urunAdi={aktifSiparisMiktar.urun_adi || 'Ürün'}
+          mevcutMiktar={seciliMiktarlar[aktifSiparisMiktar.id] || 0}
         />
       )}
     </Modal>
