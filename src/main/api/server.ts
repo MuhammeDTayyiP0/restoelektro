@@ -10,7 +10,7 @@ import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { networkInterfaces } from 'os'
 import { veritabaniGetir } from '../database/connection'
-import { BrowserWindow, app } from 'electron'
+import { BrowserWindow, app as electronApp } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
 import path from 'path'
@@ -45,7 +45,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
 
   // Favicon (Resources klasöründeki icon.ico)
   app.get('/favicon.ico', (_req, res) => {
-    const isDev = !app.isPackaged
+    const isDev = !electronApp.isPackaged
     const rsPath = isDev ? path.join(process.cwd(), 'resources') : process.resourcesPath
     res.sendFile(path.join(rsPath, 'icon.ico'))
   })
