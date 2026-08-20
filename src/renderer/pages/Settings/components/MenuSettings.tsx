@@ -28,6 +28,7 @@ export default function MenuSettings() {
   const [urunFiyat, setUrunFiyat] = useState('')
   const [urunKategoriId, setUrunKategoriId] = useState('')
   const [urunBarkod, setUrunBarkod] = useState('')
+  const [urunBirim, setUrunBirim] = useState('Adet')
 
   const verileriGetir = async () => {
     try {
@@ -81,12 +82,12 @@ export default function MenuSettings() {
     try {
       if (duzenlenenUrun) {
         await ipcInvoke(MENU_KANALLARI.URUN_GUNCELLE, duzenlenenUrun.id, { 
-          ad: urunAd, fiyat: Number(urunFiyat), kategori_id: Number(urunKategoriId), barkod: urunBarkod 
+          ad: urunAd, fiyat: Number(urunFiyat), kategori_id: Number(urunKategoriId), barkod: urunBarkod, birim: urunBirim 
         })
         success('Başarılı', 'Ürün güncellendi.')
       } else {
         await ipcInvoke(MENU_KANALLARI.URUN_EKLE, { 
-          ad: urunAd, fiyat: Number(urunFiyat), kategori_id: Number(urunKategoriId), barkod: urunBarkod 
+          ad: urunAd, fiyat: Number(urunFiyat), kategori_id: Number(urunKategoriId), barkod: urunBarkod, birim: urunBirim 
         })
         success('Başarılı', 'Yeni ürün eklendi.')
       }
@@ -168,6 +169,7 @@ export default function MenuSettings() {
             setUrunAd(''); 
             setUrunFiyat(''); 
             setUrunBarkod('');
+            setUrunBirim('Adet');
             setUrunKategoriId(seciliKategoriId ? String(seciliKategoriId) : (kategoriler.length > 0 ? String(kategoriler[0].id) : ''));
             setUrunModalAcik(true) 
           }}>
@@ -184,7 +186,7 @@ export default function MenuSettings() {
               
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-surface-900/90 rounded-md shadow-sm">
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { 
-                  setDuzenlenenUrun(urun); setUrunAd(urun.ad); setUrunFiyat(urun.fiyat.toString()); setUrunBarkod(urun.barkod || ''); setUrunKategoriId(urun.kategori_id.toString()); setUrunModalAcik(true) 
+                  setDuzenlenenUrun(urun); setUrunAd(urun.ad); setUrunFiyat(urun.fiyat.toString()); setUrunBarkod(urun.barkod || ''); setUrunBirim(urun.birim || 'Adet'); setUrunKategoriId(urun.kategori_id.toString()); setUrunModalAcik(true) 
                 }}>
                   <Edit2 size={14} />
                 </Button>
@@ -250,6 +252,18 @@ export default function MenuSettings() {
             <select required value={urunKategoriId} onChange={e => setUrunKategoriId(e.target.value)} className="px-4 py-2.5 border rounded-pos bg-white dark:bg-surface-950 dark:border-surface-700 focus:border-brand-500 outline-none cursor-pointer">
               <option value="" disabled>Seçiniz...</option>
               {kategoriler.map(k => <option key={k.id} value={k.id}>{k.ad}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-surface-700 dark:text-surface-300">Ölçü Birimi</label>
+            <select required value={urunBirim} onChange={e => setUrunBirim(e.target.value)} className="px-4 py-2.5 border rounded-pos bg-white dark:bg-surface-950 dark:border-surface-700 focus:border-brand-500 outline-none cursor-pointer">
+              <option value="Adet">Adet</option>
+              <option value="Porsiyon">Porsiyon</option>
+              <option value="Tane">Tane</option>
+              <option value="KG">KG</option>
+              <option value="Gram">Gram</option>
+              <option value="Litre">Litre</option>
+              <option value="Dilim">Dilim</option>
             </select>
           </div>
           <div className="flex flex-col gap-2">

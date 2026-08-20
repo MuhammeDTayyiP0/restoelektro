@@ -247,7 +247,7 @@ export default function PosCart() {
                         {formatPara(siparis.toplam_fiyat)}
                       </span>
                       <span className={clsx("text-sm text-surface-500", iptalEdilecekSiparisler.includes(siparis.id) && "line-through opacity-70")}>
-                        {siparis.miktar} x {formatPara(siparis.birim_fiyat)}
+                        {siparis.miktar} {siparis.urun_birim || 'Adet'} x {formatPara(siparis.birim_fiyat)}
                       </span>
                     </div>
                   </div>
@@ -347,7 +347,7 @@ export default function PosCart() {
                       {formatPara((kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0)) * kalem.miktar)}
                     </span>
                     <span className="text-sm text-surface-500">
-                      {kalem.miktar} x {formatPara(kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0))}
+                      {kalem.miktar} {kalem.urun.birim || 'Adet'} x {formatPara(kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0))}
                     </span>
                   </div>
                 </div>
@@ -366,7 +366,17 @@ export default function PosCart() {
                       </Button>
                       <button 
                         className="w-12 text-center text-lg font-bold"
-                        onClick={(e) => { e.stopPropagation(); setMiktarModalAcik(true) }}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          const newVal = window.prompt(`Yeni miktar girin (${kalem.urun.birim || 'Adet'}):`, kalem.miktar.toString())
+                          if (newVal !== null) {
+                            const parsed = parseFloat(newVal.replace(',', '.'))
+                            if (!isNaN(parsed) && parsed > 0) {
+                              handleMiktarDegistir(kalem.id, parsed)
+                            }
+                          }
+                        }}
+                        title="Miktarı el ile gir"
                       >
                         {kalem.miktar}
                       </button>

@@ -26,7 +26,7 @@ export interface Urun {
   kisaltma: string | null
   fiyat: number
   kdv_orani: number
-  birim: 'adet' | 'porsiyon' | 'kg' | 'lt'
+  birim: 'Adet' | 'Porsiyon' | 'Tane' | 'KG' | 'Gram' | 'Litre' | 'Dilim'
   resim_yolu: string | null
   yazici_grup: 'mutfak' | 'bar' | 'tatli' | 'direkt'
   aktif: boolean

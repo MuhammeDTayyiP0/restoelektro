@@ -97,7 +97,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       veri.kategori_id, veri.barkod || null, veri.ad, veri.kisaltma || null,
-      veri.fiyat, veri.kdv_orani || 10, veri.birim || 'adet',
+      veri.fiyat, veri.kdv_orani || 10, veri.birim || 'Adet',
       veri.resim_yolu || null, veri.yazici_grup || 'mutfak'
     )
     return { basarili: true, id: sonuc.lastInsertRowid }
@@ -113,6 +113,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     if (veri.barkod !== undefined) { alanlar.push('barkod = ?'); degerler.push(veri.barkod) }
     if (veri.kdv_orani !== undefined) { alanlar.push('kdv_orani = ?'); degerler.push(veri.kdv_orani) }
     if (veri.yazici_grup) { alanlar.push('yazici_grup = ?'); degerler.push(veri.yazici_grup) }
+    if (veri.birim) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
     alanlar.push('updated_at = CURRENT_TIMESTAMP')
     degerler.push(id)
     if (alanlar.length > 1) {

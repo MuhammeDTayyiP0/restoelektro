@@ -212,7 +212,7 @@ function arayuzCiz() {
           \${resimHtml}
           <div class="urun-detay">
             <div class="urun-ad">\${u.ad}</div>
-            <div class="urun-fiyat">₺\${Number(u.fiyat).toFixed(2)}</div>
+            <div class="urun-fiyat">₺\${Number(u.fiyat).toFixed(2)} / \${u.birim || 'Adet'}</div>
           </div>
         </div>
       \`;

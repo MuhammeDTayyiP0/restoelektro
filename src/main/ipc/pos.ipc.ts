@@ -108,7 +108,7 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
 
     // Siparişleri getir
     hesap.siparisler = db.prepare(`
-      SELECT s.*, u.ad as urun_adi, v.ad as varyant_adi, k.ad as kategori_adi
+      SELECT s.*, u.ad as urun_adi, u.birim as urun_birim, v.ad as varyant_adi, k.ad as kategori_adi
       FROM siparis s
       JOIN urun u ON u.id = s.urun_id
       LEFT JOIN urun_varyant v ON v.id = s.varyant_id

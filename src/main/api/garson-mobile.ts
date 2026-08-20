@@ -469,7 +469,7 @@ async function masaDetayCiz(masaId) {
       
       html += '<div class="siparis-row" style="'+iptalClass+'">';
       html += '<div style="flex:1">';
-      html += '<div style="font-weight:700; font-size:15px; margin-bottom:4px;">'+s.miktar+'<span style="color:var(--text3)">x</span> '+s.urun_adi+ikramEtiketi+'</div>';
+      html += '<div style="font-weight:700; font-size:15px; margin-bottom:4px;">'+s.miktar+' '+(s.urun_birim || 'Adet')+' <span style="color:var(--text3)">x</span> '+s.urun_adi+ikramEtiketi+'</div>';
       if (s.notlar) html += '<div style="font-size:12px; font-weight:600; color:var(--warning); margin-bottom:8px;">Not: '+s.notlar+'</div>';
       
       if (s.durum !== 'iptal') {
@@ -520,7 +520,7 @@ function siparisEkraniCiz() {
   const urunler = menu.urunler.filter(u => u.kategori_id === aktifKategori);
   html += '<div class="urun-grid">';
   urunler.forEach(u => {
-    html += '<div class="urun-card" onclick="sepeteEkle('+u.id+',\\''+u.ad.replace(/'/g,"\\\\'")+'\\',' +u.fiyat+')"><div class="urun-ad">'+u.ad+'</div><div class="urun-fiyat">₺'+Number(u.fiyat).toFixed(0)+'</div></div>';
+    html += '<div class="urun-card" onclick="sepeteEkle('+u.id+',\\''+u.ad.replace(/'/g,"\\\\'")+'\\','+u.fiyat+',\\''+(u.birim||'Adet')+'\\')"><div class="urun-ad">'+u.ad+'</div><div class="urun-fiyat">₺'+Number(u.fiyat).toFixed(0)+' / '+(u.birim||'Adet')+'</div></div>';
   });
   html += '</div>';
   
@@ -540,12 +540,12 @@ function masalaraGeri() {
 }
 
 // ===== SEPET & NOTLAR =====
-function sepeteEkle(urunId, ad, fiyat) {
+function sepeteEkle(urunId, ad, fiyat, birim) {
   const mevcut = sepet.find(s => s.urun_id === urunId && !s.notlar && !s.ikram);
   if (mevcut) { 
     mevcut.miktar++; 
   } else { 
-    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, miktar: 1, notlar: '', ikram: false }); 
+    sepet.push({ id: Math.random().toString(36).substring(7), urun_id: urunId, ad, fiyat, birim, miktar: 1, notlar: '', ikram: false }); 
   }
   sepetGuncelle();
   
@@ -611,7 +611,7 @@ function sepetListeCiz() {
     html += '  <div class="sepet-actions">';
     html += '    <div class="sepet-miktar">';
     html += '      <button onclick="sepetMiktar(\\''+s.id+'\\',-1)">−</button>';
-    html += '      <span>'+s.miktar+'</span>';
+    html += '      <span onclick="sepetMiktarPrompt(\\''+s.id+'\\', \\''+(s.birim||'Adet')+'\\')" style="min-width:40px; text-align:center;">'+s.miktar+' '+(s.birim||'Adet')+'</span>';
     html += '      <button onclick="sepetMiktar(\\''+s.id+'\\',1)">+</button>';
     html += '    </div>';
     html += '    <input class="not-input" id="not_input_'+s.id+'" placeholder="Örn: Acısız" value="'+(s.notlar||'')+'" onchange="sepetNotGuncelle(this, \\''+s.id+'\\')">';
@@ -645,6 +645,20 @@ function sepetMiktar(id, delta) {
   if (sepet[idx].miktar <= 0) sepet.splice(idx, 1);
   sepetGuncelle();
   sepetListeCiz();
+}
+
+function sepetMiktarPrompt(id, birim) {
+  const idx = sepet.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const newVal = window.prompt('Yeni miktar girin ('+birim+'):', sepet[idx].miktar);
+  if (newVal !== null) {
+    const parsed = parseFloat(newVal.replace(',', '.'));
+    if (!isNaN(parsed) && parsed > 0) {
+      sepet[idx].miktar = parsed;
+      sepetGuncelle();
+      sepetListeCiz();
+    }
+  }
 }
 
 async function siparisGonder() {
