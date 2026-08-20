@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { formatPara } from '../../../utils/formatters'
@@ -13,6 +13,76 @@ import { Banknote, CreditCard, Percent, Tag, CheckCircle2, SplitSquareHorizontal
 import { clsx } from 'clsx'
 import IndirimModal from './IndirimModal'
 import MiktarModal from './MiktarModal'
+
+const SiparisItemRow = React.memo(({ 
+  siparis, 
+  secilenMiktar, 
+  isIkram, 
+  onMiktarDegistir, 
+  onMiktarAyarla 
+}: { 
+  siparis: any, 
+  secilenMiktar: number, 
+  isIkram: boolean, 
+  onMiktarDegistir: (siparis: any, degisim: number, e?: React.MouseEvent) => void,
+  onMiktarAyarla: (siparis: any) => void 
+}) => {
+  const isSelected = secilenMiktar > 0;
+  
+  return (
+    <div 
+      onClick={() => !isIkram && onMiktarDegistir(siparis, secilenMiktar < siparis.miktar ? 1 : -secilenMiktar)}
+      className={clsx(
+        "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all select-none",
+        isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale cursor-default" : 
+        "cursor-pointer " + (isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700")
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs shrink-0", isIkram ? "border-surface-300" : isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
+          {isSelected ? secilenMiktar : ''}
+        </div>
+        <div className="flex flex-col">
+          <span className="font-bold text-surface-900 dark:text-white text-sm">
+            {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
+            {isIkram && <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase">İkram</span>}
+          </span>
+          {siparis.varyant_adi && <span className="text-xs text-surface-500">{siparis.varyant_adi}</span>}
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-4">
+        {!isIkram && siparis.miktar > 1 && (
+          <div className="flex items-center gap-1 border border-surface-200 dark:border-surface-700 rounded-lg p-0.5 bg-white dark:bg-surface-900 shadow-sm" onClick={e => e.stopPropagation()}>
+             <button 
+               className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+               disabled={secilenMiktar <= 0}
+               onClick={(e) => onMiktarDegistir(siparis, -1, e)}
+             >
+               -
+             </button>
+             <button 
+               className="w-8 h-6 text-center text-xs font-bold bg-surface-50 dark:bg-surface-800 border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded p-0 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+               onClick={(e) => { e.stopPropagation(); onMiktarAyarla(siparis); }}
+             >
+               {secilenMiktar === 0 ? '0' : secilenMiktar}
+             </button>
+             <button 
+               className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+               disabled={secilenMiktar >= siparis.miktar}
+               onClick={(e) => onMiktarDegistir(siparis, 1, e)}
+             >
+               +
+             </button>
+          </div>
+        )}
+        <div className="font-bold text-surface-900 dark:text-white shrink-0">
+          {formatPara(siparis.toplam_fiyat)}
+        </div>
+      </div>
+    </div>
+  )
+});
 
 interface OdemeModalProps {
   isOpen: boolean
@@ -101,7 +171,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     setGirilenTutar(miktar.toString())
   }
 
-  const handleSiparisMiktarDegistir = (siparis: any, degisim: number, event?: React.MouseEvent) => {
+  const handleSiparisMiktarDegistir = useCallback((siparis: any, degisim: number, event?: React.MouseEvent) => {
     if (event) {
       event.stopPropagation();
     }
@@ -119,7 +189,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       return updated;
     })
     setGirilenTutar('')
-  }
+  }, []);
 
   const handleSiparisMiktarAyarla = (siparis: any, miktar: number) => {
     setSeciliMiktarlar(prev => {
@@ -259,62 +329,17 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             {/* Ödenecek Ürünler */}
             {aktifHesap?.siparisler?.filter((s) => s.durum !== 'iptal' && s.durum !== 'odendi').map((siparis) => {
               const secilenMiktar = seciliMiktarlar[siparis.id] || 0;
-              const isSelected = secilenMiktar > 0;
               const isIkram = Boolean(siparis.ikram);
               
               return (
-                <div 
+                <SiparisItemRow 
                   key={siparis.id}
-                  onClick={() => !isIkram && handleSiparisMiktarDegistir(siparis, secilenMiktar < siparis.miktar ? 1 : -secilenMiktar)}
-                  className={clsx(
-                    "flex items-center justify-between p-3 mb-2 rounded-xl border transition-all select-none",
-                    isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale cursor-default" : 
-                    "cursor-pointer " + (isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700")
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs shrink-0", isIkram ? "border-surface-300" : isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
-                      {isSelected ? secilenMiktar : ''}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-surface-900 dark:text-white text-sm">
-                        {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
-                        {isIkram && <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase">İkram</span>}
-                      </span>
-                      {siparis.varyant_adi && <span className="text-xs text-surface-500">{siparis.varyant_adi}</span>}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    {!isIkram && siparis.miktar > 1 && (
-                      <div className="flex items-center gap-1 border border-surface-200 dark:border-surface-700 rounded-lg p-0.5 bg-white dark:bg-surface-900 shadow-sm" onClick={e => e.stopPropagation()}>
-                         <button 
-                           className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
-                           disabled={secilenMiktar <= 0}
-                           onClick={() => handleSiparisMiktarDegistir(siparis, -1)}
-                         >
-                           -
-                         </button>
-                         <button 
-                           className="w-8 h-6 text-center text-xs font-bold bg-surface-50 dark:bg-surface-800 border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded p-0 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
-                           onClick={() => setAktifSiparisMiktar(siparis)}
-                         >
-                           {secilenMiktar === 0 ? '0' : secilenMiktar}
-                         </button>
-                         <button 
-                           className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
-                           disabled={secilenMiktar >= siparis.miktar}
-                           onClick={() => handleSiparisMiktarDegistir(siparis, 1)}
-                         >
-                           +
-                         </button>
-                      </div>
-                    )}
-                    <div className="font-bold text-surface-900 dark:text-white shrink-0">
-                      {formatPara(siparis.toplam_fiyat)}
-                    </div>
-                  </div>
-                </div>
+                  siparis={siparis}
+                  secilenMiktar={secilenMiktar}
+                  isIkram={isIkram}
+                  onMiktarDegistir={handleSiparisMiktarDegistir}
+                  onMiktarAyarla={setAktifSiparisMiktar}
+                />
               )
             })}
 

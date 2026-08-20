@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
+import { clsx } from 'clsx'
 
 interface MiktarModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ interface MiktarModalProps {
 
 export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, urunAdi, mevcutMiktar = 0 }: MiktarModalProps) {
   const [girilenDeger, setGirilenDeger] = useState<string>(mevcutMiktar > 0 ? mevcutMiktar.toString() : '')
+  const [hataAnimasyonu, setHataAnimasyonu] = useState(false)
 
   // Reset value when modal opens
   useEffect(() => {
@@ -23,16 +25,21 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
   }, [isOpen, mevcutMiktar])
 
   const handleTutarGirisi = (tus: string) => {
+    setHataAnimasyonu(false); // Tuşa basıldığında önceki hatayı temizle
+    
     if (tus === 'C' || tus === 'clear') {
       setGirilenDeger('')
     } else if (tus === '⌫' || tus === 'backspace') {
       setGirilenDeger(prev => prev.slice(0, -1))
     } else if (tus === '.') {
-      // Miktar için ondalık girmeye gerek yok ama porsiyon vs desteklenecekse eklenebilir. 
       // Şimdilik sadece tam sayı
     } else {
       const yeniDeger = girilenDeger + tus
-      if (parseInt(yeniDeger) > maxMiktar) return // Maksimum sınırı geçmesini engelle
+      if (parseInt(yeniDeger) > maxMiktar) {
+        setHataAnimasyonu(true);
+        setTimeout(() => setHataAnimasyonu(false), 400); // 400ms sonra animasyonu bitir
+        return; // Sınırı geçmesini engelle
+      }
       setGirilenDeger(yeniDeger)
     }
   }
@@ -54,7 +61,14 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
         <div className="text-center mb-2">
           <p className="text-surface-500 font-medium mb-1">Ürün</p>
           <h4 className="text-xl font-bold text-surface-900 dark:text-white">{urunAdi}</h4>
-          <p className="text-sm text-surface-400 mt-1">Maksimum seçilebilir: {maxMiktar}</p>
+          <p className={clsx(
+            "text-sm mt-2 transition-all duration-300 inline-block px-3 py-1 rounded-full",
+            hataAnimasyonu 
+              ? "text-red-600 bg-red-100 font-bold scale-110 animate-shake shadow-sm border border-red-200" 
+              : "text-surface-500 bg-surface-100 font-medium border border-transparent"
+          )}>
+            Maksimum seçilebilir: {maxMiktar}
+          </p>
         </div>
 
         <div className="bg-surface-50 dark:bg-surface-900 p-4 rounded-3xl border border-surface-200 dark:border-surface-800 flex flex-col items-center justify-center mx-auto w-72">

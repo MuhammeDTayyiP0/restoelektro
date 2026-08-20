@@ -118,6 +118,11 @@ module.exports = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'shake': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '25%': { transform: 'translateX(-6px)' },
+          '75%': { transform: 'translateX(6px)' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.25s ease-out',
@@ -126,6 +131,7 @@ module.exports = {
         'scale-in': 'scale-in 0.2s ease-out',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'shake': 'shake 0.2s ease-in-out 0s 2',
       },
     },
     // Ekran kırılım noktaları (POS monitör boyutları)
