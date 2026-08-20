@@ -102,9 +102,7 @@ begin
   WizardForm.Color := DARK_BG;
   
   // Tum Panel Arka Planlari - Koyu Tema
-  WizardForm.InnerPage.Color := DARK_BG;
-  WizardForm.OuterNotebook.Color := DARK_BG;
-  WizardForm.InnerNotebook.Color := DARK_BG;
+  // (Notebook bilesenleri Color destegi sunmadigi icin kaldirildi)
   
   // MainPanel (ust baslik cubugu alani)
   WizardForm.MainPanel.Color := DARK_SURFACE;
@@ -284,8 +282,6 @@ end;
 procedure CurPageChanged(CurPageID: Integer);
 begin
   // Her sayfa degistiginde arka plan rengini taze (bazi sayfalar sifirlayabiliyor)
-  WizardForm.InnerPage.Color := DARK_BG;
-  WizardForm.OuterNotebook.Color := DARK_BG;
-  WizardForm.InnerNotebook.Color := DARK_BG;
+  // (Notebook bilesenleri Color destegi sunmadigi icin kaldirildi)
   WizardForm.MainPanel.Color := DARK_SURFACE;
 end;
