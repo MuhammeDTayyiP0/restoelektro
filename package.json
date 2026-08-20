@@ -13,6 +13,7 @@
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
+    "build:setup": "npm run pack && node build/build-installer.js",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
@@ -59,6 +60,7 @@
     "electron-builder": "^23.6.0",
     "electron-rebuild": "^3.2.9",
     "electron-vite": "^1.0.29",
+    "innosetup-compiler": "^6.3.1",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",

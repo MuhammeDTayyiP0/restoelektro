@@ -23,10 +23,7 @@ asarUnpack:
 # Windows yapılandırması
 win:
   target:
-    - target: nsis
-      arch:
-        - x64
-        - ia32
+    - target: dir
   icon: resources/icon.ico
   artifactName: '${productName}-${version}-${arch}.${ext}'
 
@@ -35,25 +32,7 @@ publish:
     owner: MuhammeDTayyiP0
     repo: restoelektro
 
-nsis:
-  oneClick: false
-  perMachine: true
-  allowToChangeInstallationDirectory: true
-  shortcutName: ETİBOL POS
-  installerLanguages:
-    - tr_TR
-  language: 1055  # Türkçe dil kodu
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
-  runAfterFinish: true
-  installerIcon: resources/icon.ico
-  uninstallerIcon: resources/icon.ico
-  installerHeaderIcon: resources/icon.ico
-  installerSidebar: resources/installerSidebar.bmp
-  uninstallerSidebar: resources/installerSidebar.bmp
-  installerHeader: resources/installerHeader.bmp
-  deleteAppDataOnUninstall: false
-  displayLanguageSelector: false
+
 
 # Linux yapılandırması (opsiyonel)
 linux:
