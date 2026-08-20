@@ -12,6 +12,7 @@ export default function QRMenuSettings() {
   const [baseUrl, setBaseUrl] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [seciliBolum, setSeciliBolum] = useState<number | null>(null)
+  const [tekliYazdirId, setTekliYazdirId] = useState<number | null>(null)
 
   const { veri: bolumler = [] } = useIPC<Bolum[]>(MASA_KANALLARI.BOLUMLER, [])
   const { veri: masalar = [] } = useIPC<Masa[]>(MASA_KANALLARI.MASALAR, [])
@@ -47,8 +48,16 @@ export default function QRMenuSettings() {
   }
 
   // Yazdır
-  const yazdir = () => {
-    window.print()
+  const yazdir = (masaId?: number) => {
+    if (masaId) {
+      setTekliYazdirId(masaId)
+      setTimeout(() => {
+        window.print()
+        setTekliYazdirId(null)
+      }, 100)
+    } else {
+      window.print()
+    }
   }
 
   const filtrelenmisMasalar = seciliBolum 
@@ -100,9 +109,9 @@ export default function QRMenuSettings() {
             <Printer size={20} className="text-brand-500" /> 
             Masa QR Kodları
           </h2>
-          <Button onClick={yazdir} variant="secondary">
+          <Button onClick={() => yazdir()} variant="secondary">
             <Printer size={18} className="mr-2" />
-            Sayfayı Yazdır
+            Tüm Sayfayı Yazdır
           </Button>
         </div>
 
@@ -134,7 +143,7 @@ export default function QRMenuSettings() {
         </div>
 
         {/* QR Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 print-container print:grid-cols-4 print:gap-8">
+        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 print-container print:gap-8 ${tekliYazdirId ? 'printing-single' : 'print:grid-cols-4'}`}>
           {filtrelenmisMasalar.map(masa => {
             const bolum = bolumler.find(b => b.id === masa.bolum_id)
             // URL formatı: baseUrl?masa=MasaNumarasi
@@ -144,7 +153,10 @@ export default function QRMenuSettings() {
             const finalUrl = `${baseUrl}${seperator}masa=${encodeURIComponent(masa.numara)}`
 
             return (
-              <div key={masa.id} className="flex flex-col items-center p-4 border border-surface-200 dark:border-surface-700 rounded-pos bg-white break-inside-avoid shadow-sm print:shadow-none print:border-gray-300">
+              <div 
+                key={masa.id} 
+                className={`qr-card flex flex-col items-center p-4 border border-surface-200 dark:border-surface-700 rounded-pos bg-white break-inside-avoid shadow-sm print:shadow-none print:border-gray-300 ${tekliYazdirId === masa.id ? 'print-only-this' : ''}`}
+              >
                 <div className="text-center mb-3">
                   <div className="font-bold text-lg text-surface-900 print:text-black">{masa.numara}</div>
                   <div className="text-xs text-surface-500 print:text-gray-600">{bolum?.ad}</div>
@@ -161,6 +173,15 @@ export default function QRMenuSettings() {
                 
                 <div className="mt-3 text-[10px] text-center text-surface-400 print:text-gray-500 truncate w-full" title={finalUrl}>
                   {finalUrl}
+                </div>
+
+                <div className="mt-4 no-print w-full">
+                  <button 
+                    onClick={() => yazdir(masa.id)}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-surface-100 hover:bg-surface-200 dark:bg-surface-700 dark:hover:bg-surface-600 text-surface-700 dark:text-surface-300 rounded-pos-sm transition-colors text-xs font-medium"
+                  >
+                    <Printer size={14} /> Tekli Yazdır
+                  </button>
                 </div>
               </div>
             )
@@ -190,6 +211,22 @@ export default function QRMenuSettings() {
           }
           
           header, aside, .no-print, .tabs, .sidebar { display: none !important; }
+          
+          /* Tekli yazdırma modu */
+          .printing-single {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            height: 100vh !important;
+          }
+          .printing-single .qr-card:not(.print-only-this) {
+            display: none !important;
+          }
+          .printing-single .print-only-this {
+            transform: scale(2);
+            transform-origin: top center;
+            border: none !important;
+          }
         }
       `}} />
     </div>
