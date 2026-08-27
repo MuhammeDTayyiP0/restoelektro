@@ -59,18 +59,18 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
       title="Miktar Belirle"
       size="md"
     >
-      <div className="flex flex-col gap-4 p-2 bg-[#0E121B] text-slate-100 -m-6 p-6 select-none">
+      <div className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
         
         {/* Ürün & Limit Bilgisi */}
-        <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#141926] border border-[#222C42]">
-          <div className="flex items-center gap-2.5">
-            <Hash size={18} className="text-cyan-400" />
-            <span className="font-mono text-sm font-bold text-white truncate max-w-[200px]">
+        <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
+          <div className="flex items-center gap-2">
+            <Hash size={16} className="text-cyan-400" />
+            <span className="font-mono text-xs sm:text-sm font-bold text-white truncate max-w-[200px]">
               {urunAdi}
             </span>
           </div>
           <span className={clsx(
-            "font-mono text-xs font-bold px-2.5 py-1 rounded-lg uppercase border transition-all",
+            "font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg uppercase border transition-all",
             hataAnimasyonu 
               ? "bg-rose-500/20 text-rose-300 border-rose-500/50 animate-shake" 
               : "bg-[#090D15] text-slate-400 border-[#1E2638]"
@@ -80,7 +80,7 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
         </div>
 
         {/* Hızlı Miktar Önayarları */}
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-6 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
           {['1', '2', '3', '4', '5'].map(val => (
             <motion.button
               key={val}
@@ -89,7 +89,7 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
               disabled={parseInt(val, 10) > maxMiktar}
               onClick={() => setGirilenDeger(val)}
               className={clsx(
-                "h-10 rounded-xl font-mono text-xs font-bold border transition-colors",
+                "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
                 girilenDeger === val 
                   ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50" 
                   : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336] disabled:opacity-30"
@@ -103,7 +103,7 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
             type="button"
             onClick={() => setGirilenDeger(maxMiktar.toString())}
             className={clsx(
-              "h-10 rounded-xl font-mono text-xs font-bold border transition-colors",
+              "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
               girilenDeger === maxMiktar.toString()
                 ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
                 : "bg-[#141926] text-amber-400 border-[#222C42] hover:bg-[#1C2336]"
@@ -114,9 +114,9 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
         </div>
 
         {/* Dijital Gösterge ve Numpad */}
-        <div className="bg-[#090D15] p-4 rounded-2xl border border-[#1E2436] flex flex-col items-center justify-center mx-auto w-full max-w-xs shadow-inner">
-          <div className="mb-3 text-center w-full">
-             <div className="h-16 flex items-center justify-center bg-[#0E131E] rounded-xl border border-[#222C42] font-mono font-black text-4xl text-cyan-400 shadow-inner">
+        <div className="bg-[#090D15] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-[#1E2436] flex flex-col items-center justify-center mx-auto w-full max-w-xs shadow-inner flex-shrink-0 shrink-0">
+          <div className="mb-2 text-center w-full">
+             <div className="h-12 sm:h-14 flex items-center justify-center bg-[#0E131E] rounded-xl border border-[#222C42] font-mono font-black text-2xl sm:text-3xl text-cyan-400 shadow-inner">
                {girilenDeger || '0'}
              </div>
           </div>
@@ -124,19 +124,19 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
         </div>
 
         {/* Aksiyon Butonları */}
-        <div className="flex justify-end gap-3 mt-1 pt-3 border-t border-[#1E2436]">
+        <div className="flex justify-end gap-2.5 sm:gap-3 mt-1 pt-2.5 sm:pt-3 border-t border-[#1E2436] flex-shrink-0 shrink-0">
           <Button 
             variant="ghost" 
-            size="lg" 
+            size="md" 
             onClick={onClose} 
-            className="flex-1 font-mono text-xs"
+            className="flex-1 font-mono text-xs h-10 sm:h-11"
           >
             İptal
           </Button>
           <Button 
             variant="primary" 
-            size="lg" 
-            className="flex-1 font-mono font-bold text-xs h-12 uppercase tracking-wider"
+            size="md" 
+            className="flex-1 font-mono font-bold text-xs h-10 sm:h-11 uppercase tracking-wider"
             onClick={handleConfirm}
           >
             Onayla

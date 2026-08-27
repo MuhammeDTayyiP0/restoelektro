@@ -324,7 +324,7 @@ export default function LoginPage() {
                           : '#090A0F',
                       }}
                       transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                      className="w-13 h-15 sm:w-14 sm:h-16 rounded-xl flex items-center justify-center border-2 shadow-inner relative overflow-hidden"
+                      className="w-12 h-14 sm:w-14 sm:h-16 rounded-xl flex items-center justify-center border-2 shadow-inner relative overflow-hidden"
                     >
                       <AnimatePresence>
                         {isFilled && (

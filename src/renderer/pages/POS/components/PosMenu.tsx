@@ -345,23 +345,23 @@ export default function PosMenu() {
           title="Tartılı Ürün Miktarı"
           size="md"
         >
-          <div className="flex flex-col gap-4 py-1 bg-[#0E121B] text-slate-100 -m-6 p-6">
+          <div className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
             
             {/* Ürün Başlığı */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#141926] border border-[#222C42]">
-              <div className="flex items-center gap-2.5">
-                <Scale size={20} className="text-cyan-400" />
-                <span className="font-mono text-sm font-bold text-white">
+            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
+              <div className="flex items-center gap-2">
+                <Scale size={18} className="text-cyan-400" />
+                <span className="font-mono text-xs sm:text-sm font-bold text-white">
                   {miktarSoranUrun.ad}
                 </span>
               </div>
-              <span className="font-mono text-xs font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2.5 py-1 rounded-lg uppercase">
+              <span className="font-mono text-[11px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-lg uppercase">
                 Birim: {miktarSoranUrun.birim || 'KG'}
               </span>
             </div>
 
             {/* Büyük Dijital Gösterge */}
-            <div className="relative flex items-center justify-center">
+            <div className="relative flex items-center justify-center flex-shrink-0 shrink-0">
               <input 
                 type="text" 
                 inputMode="decimal"
@@ -380,22 +380,22 @@ export default function PosMenu() {
                     }
                   }
                 }}
-                className="w-full h-16 px-4 border rounded-2xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-4xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner" 
+                className="w-full h-12 sm:h-14 px-4 border rounded-xl sm:rounded-2xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-2xl sm:text-3xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner" 
               />
-              <span className="absolute right-4 font-mono font-bold text-slate-400 text-sm">
+              <span className="absolute right-4 font-mono font-bold text-slate-400 text-xs sm:text-sm">
                 {miktarSoranUrun.birim || 'KG'}
               </span>
             </div>
 
             {/* Hızlı Önayar Butonları */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
               {['0.25', '0.5', '1', '1.5', '2', '2.5', '3', '5'].map(val => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => setGirilenMiktar(val)}
                   className={clsx(
-                    "h-10 rounded-xl font-mono text-xs font-bold border transition-colors",
+                    "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
                     girilenMiktar === val 
                       ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50" 
                       : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
@@ -407,7 +407,7 @@ export default function PosMenu() {
             </div>
 
             {/* Dokunmatik Numpad */}
-            <div className="flex justify-center w-full my-1">
+            <div className="flex justify-center w-full my-0.5 flex-shrink-0 shrink-0">
               <Numpad
                 layout={[
                   ['1', '2', '3'],
@@ -432,17 +432,19 @@ export default function PosMenu() {
             </div>
 
             {/* Aksiyon Butonları */}
-            <div className="flex gap-2.5 justify-end mt-1 pt-3 border-t border-[#1E2436]">
+            <div className="flex gap-2.5 justify-end mt-1 pt-2.5 sm:pt-3 border-t border-[#1E2436] flex-shrink-0 shrink-0">
               <Button 
                 variant="ghost" 
+                size="md"
                 onClick={() => setMiktarSoranUrun(null)}
-                className="font-mono text-xs"
+                className="font-mono text-xs h-10"
               >
                 İptal
               </Button>
               <Button 
                 variant="primary" 
-                className="font-mono font-bold text-xs px-8 h-12"
+                size="md"
+                className="font-mono font-bold text-xs px-6 h-10"
                 onClick={() => {
                   const parsed = parseFloat(girilenMiktar)
                   if (!isNaN(parsed) && parsed > 0) {

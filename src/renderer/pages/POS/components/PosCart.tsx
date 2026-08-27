@@ -159,16 +159,16 @@ export default function PosCart() {
     <div className="flex flex-col h-full w-full bg-[#0C1017] text-slate-100 relative overflow-hidden select-none">
       
       {/* Industrial Sepet Header */}
-      <div className="flex items-center justify-between p-3.5 border-b border-[#1E2436] bg-[#0E131E] shrink-0 shadow-sm">
+      <div className="flex items-center justify-between p-2.5 sm:p-3 2xl:p-3.5 border-b border-[#1E2436] bg-[#0E131E] flex-shrink-0 shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           {/* Active Status Badge */}
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[#141926] border border-[#222C42]">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#141926] border border-[#222C42]">
             <span className={clsx(
               "h-2.5 w-2.5 rounded-full shrink-0",
               aktifHesap ? "bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
             )} />
             <div className="flex flex-col">
-              <span className="text-base font-black tracking-tight text-white font-mono leading-none">
+              <span className="text-sm sm:text-base font-black tracking-tight text-white font-mono leading-none">
                 {aktifMasaId ? `MASA ${aktifMasaId}` : 'HIZLI SATIŞ'}
               </span>
               <span className="text-[10px] font-mono text-slate-400 tracking-tight mt-0.5">
@@ -183,7 +183,7 @@ export default function PosCart() {
           {aktifHesap && (
             <motion.button 
               whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-blue-500/50 hover:bg-blue-500/10 text-slate-300 hover:text-blue-400 flex items-center justify-center transition-colors" 
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-blue-500/50 hover:bg-blue-500/10 text-slate-300 hover:text-blue-400 flex items-center justify-center transition-colors" 
               title="Adisyon Yazdır"
               onClick={async () => {
                 try {
@@ -209,14 +209,14 @@ export default function PosCart() {
                 }
               }}
             >
-              <Printer size={18} />
+              <Printer size={16} />
             </motion.button>
           )}
 
           {aktifHesap && (
             <motion.button 
               whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-rose-500/50 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 flex items-center justify-center transition-colors" 
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-rose-500/50 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 flex items-center justify-center transition-colors" 
               title="Hesabı İptal Et / Masayı Boşalt"
               onClick={async () => {
                 if (window.confirm('Bu hesabı tamamen iptal edip masayı boşaltmak istediğinize emin misiniz?')) {
@@ -235,14 +235,14 @@ export default function PosCart() {
                 }
               }}
             >
-              <Ban size={18} />
+              <Ban size={16} />
             </motion.button>
           )}
 
           {sepet.length > 0 && (
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-300 hover:text-amber-400 flex items-center justify-center transition-colors"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-300 hover:text-amber-400 flex items-center justify-center transition-colors"
               title="Taslak Sepeti Temizle"
               onClick={() => {
                 if (window.confirm('Taslaktaki tüm ürünleri silmek istiyor musunuz?')) {
@@ -250,14 +250,14 @@ export default function PosCart() {
                 }
               }}
             >
-              <Trash2 size={18} />
+              <Trash2 size={16} />
             </motion.button>
           )}
         </div>
       </div>
 
       {/* Sepet Listesi — High Contrast Terminal List */}
-      <div className="flex-1 overflow-y-auto pos-scrollbar bg-[#090A0F] p-2 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar bg-[#090A0F] p-2 space-y-2">
         {sepet.length === 0 && (!aktifHesap?.siparisler || aktifHesap.siparisler.length === 0) ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 p-8 text-center">
             <div className="w-16 h-16 mb-3 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-600">
@@ -649,10 +649,10 @@ export default function PosCart() {
       </div>
 
       {/* POS CASHIER COMMAND DECK (ALT HESAP & AKSİYON PANELİ) */}
-      <div className="p-3.5 bg-[#0E131F] border-t border-[#1E2436] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] shrink-0 flex flex-col gap-3">
+      <div className="p-2.5 sm:p-3 2xl:p-3.5 bg-[#0E131F] border-t border-[#1E2436] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] flex-shrink-0 shrink-0 flex flex-col gap-2 2xl:gap-3">
         
         {/* Finansal Ledger Dökümü */}
-        <div className="bg-[#090D15] rounded-xl p-3 border border-[#1A2234] flex flex-col gap-1.5">
+        <div className="bg-[#090D15] rounded-xl p-2 sm:p-2.5 2xl:p-3 border border-[#1A2234] flex flex-col gap-1 2xl:gap-1.5 flex-shrink-0 shrink-0">
           {aktifHesap && aktifHesap.toplam_tutar > 0 && (
             <div className="flex justify-between items-center text-xs font-mono text-slate-400">
               <span>Mevcut Adisyon Tutarı</span>
@@ -675,37 +675,37 @@ export default function PosCart() {
           ) : null}
 
           {/* Genel Toplam Digital Readout */}
-          <div className="pt-2 mt-1 border-t border-[#1A2234] flex justify-between items-baseline">
+          <div className="pt-1.5 sm:pt-2 mt-0.5 sm:mt-1 border-t border-[#1A2234] flex justify-between items-baseline">
             <div className="flex flex-col">
               <span className="text-[10px] font-mono font-black tracking-widest text-slate-400 uppercase">
                 GENEL TOPLAM
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
+              <span className="text-[10px] sm:text-[11px] font-mono text-slate-400">
                 {sepet.length + (aktifHesap?.siparisler?.length || 0)} Kalem Sipariş
               </span>
             </div>
             
-            <span className="text-2xl 2xl:text-3xl font-black font-mono text-emerald-400 tabular-nums tracking-tight">
+            <span className="text-xl sm:text-2xl 2xl:text-3xl font-black font-mono text-emerald-400 tabular-nums tracking-tight">
               {formatPara(genelToplamTutar)}
             </span>
           </div>
         </div>
         
         {/* Büyük Endüstriyel Dokunmatik Butonlar */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2 2xl:gap-2.5 flex-shrink-0 shrink-0">
           {/* Sipariş Gönder (Mutfak) */}
           <motion.button 
             whileTap={{ scale: 0.97 }}
             disabled={(sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor}
             onClick={handleSiparisGonder}
             className={clsx(
-              "h-14 rounded-xl font-mono font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md",
+              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md flex-shrink-0 shrink-0",
               ((sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor)
                 ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-[0_0_16px_rgba(16,185,129,0.3)] active:bg-emerald-700"
             )}
           >
-            <Send size={20} className={clsx(siparisGonderiliyor && "animate-spin")} />
+            <Send size={18} className={clsx(siparisGonderiliyor && "animate-spin")} />
             {siparisGonderiliyor ? 'Gönderiliyor...' : 'Siparişi İlet'}
           </motion.button>
 
@@ -715,13 +715,13 @@ export default function PosCart() {
             disabled={(!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0}
             onClick={() => setOdemeModalAcik(true)}
             className={clsx(
-              "h-14 rounded-xl font-mono font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md",
+              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md flex-shrink-0 shrink-0",
               ((!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0)
                 ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
                 : "bg-amber-500 hover:bg-amber-400 text-black border-amber-300/40 shadow-[0_0_16px_rgba(245,158,11,0.3)] active:bg-amber-600"
             )}
           >
-            <CreditCard size={20} />
+            <CreditCard size={18} />
             Ödeme Al
           </motion.button>
         </div>
@@ -743,12 +743,12 @@ export default function PosCart() {
           onClose={() => setMiktarSoranKalem(null)} 
           title="Miktar Belirle"
         >
-          <div className="flex flex-col gap-4 py-2 bg-[#0E121B] text-slate-100 -m-6 p-6">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#141926] border border-[#222C42]">
-              <span className="font-mono text-sm font-bold text-slate-300">
+          <div className="flex flex-col gap-3 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
+            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
+              <span className="font-mono text-xs sm:text-sm font-bold text-slate-300">
                 {miktarSoranKalem.urun.ad}
               </span>
-              <span className="font-mono text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded uppercase">
+              <span className="font-mono text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded uppercase">
                 Birim: {miktarSoranKalem.urun.birim || 'Adet'}
               </span>
             </div>
@@ -773,10 +773,10 @@ export default function PosCart() {
                   }
                 }
               }}
-              className="px-4 py-3.5 border rounded-xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-3xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner" 
+              className="px-4 py-2.5 sm:py-3 border rounded-xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-2xl sm:text-3xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner flex-shrink-0 shrink-0" 
             />
 
-            <div className="flex justify-center w-full my-1">
+            <div className="flex justify-center w-full my-0.5 flex-shrink-0 shrink-0">
               <Numpad
                 layout={[
                   ['1', '2', '3'],
@@ -800,17 +800,19 @@ export default function PosCart() {
               />
             </div>
 
-            <div className="flex gap-2 justify-end mt-2 pt-3 border-t border-[#1E2436]">
+            <div className="flex gap-2.5 justify-end mt-1 pt-2.5 sm:pt-3 border-t border-[#1E2436] flex-shrink-0 shrink-0">
               <Button 
                 variant="ghost" 
+                size="md"
                 onClick={() => setMiktarSoranKalem(null)}
-                className="font-mono text-xs"
+                className="font-mono text-xs h-10"
               >
                 İptal
               </Button>
               <Button 
                 variant="primary" 
-                className="font-mono font-bold text-xs px-6"
+                size="md"
+                className="font-mono font-bold text-xs px-6 h-10"
                 onClick={() => {
                   const isKesirli = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((miktarSoranKalem?.urun?.birim || '').toUpperCase());
                   const parsed = isKesirli ? parseFloat(girilenMiktar) : parseInt(girilenMiktar, 10);

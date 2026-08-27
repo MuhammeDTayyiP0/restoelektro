@@ -118,6 +118,69 @@
   .status-beacon-red {
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
   }
+
+  /* POS Ekran ve Esneklik Düzenleri */
+  .pos-screen-container {
+    @apply h-screen w-full overflow-hidden flex flex-col;
+  }
+
+  .pos-flex-scroll {
+    @apply flex-1 min-h-0 overflow-y-auto;
+  }
+
+  .pos-fixed-shrink {
+    @apply flex-shrink-0 shrink-0;
+  }
+
+  /* Numpad Tuş Stilleri */
+  .pos-numpad-btn {
+    @apply h-12 sm:h-14 xl:h-16 text-xl sm:text-2xl;
+  }
+}
+
+/* ============================================================
+   KÜÇÜK VE DÜŞÜK ÇÖZÜNÜRLÜKLÜ POS EKRANLARI İÇİN RESPONSIVE KURALLAR
+   (1366x768, 1024x768 ve dikey yüksekliği 768px ve altı olan monitörler)
+   ============================================================ */
+@media (max-height: 768px) {
+  /* Scrollbar daha ince */
+  .pos-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  /* Numpad Tuş Yüksekliklerini 42-44px seviyesine çek */
+  .pos-numpad-btn {
+    height: 2.75rem !important;
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+    border-radius: 0.625rem !important;
+  }
+
+  /* Buton ve kart içi boşlukları küçült */
+  .pos-compact-card {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .pos-compact-btn {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    height: 2.25rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .pos-action-deck-btn {
+    height: 3rem !important;
+    font-size: 0.8125rem !important;
+  }
+}
+
+@media (max-height: 680px) {
+  .pos-numpad-btn {
+    height: 2.375rem !important;
+    font-size: 1rem !important;
+    border-radius: 0.5rem !important;
+  }
 }
 
 /* Kiosk Modu Ekran Koruyucu */

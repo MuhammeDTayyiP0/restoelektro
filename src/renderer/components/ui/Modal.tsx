@@ -41,13 +41,13 @@ export function Modal({
     md: 'max-w-xl',
     lg: 'max-w-3xl',
     xl: 'max-w-5xl',
-    full: 'max-w-[95vw] h-[92vh]',
+    full: 'w-[98vw] max-w-[1560px] h-[95vh] max-h-[95vh]',
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-x-hidden overflow-y-auto select-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none">
           {/* Overlay */}
           <motion.div 
             initial={{ opacity: 0 }}
@@ -67,13 +67,12 @@ export function Modal({
             transition={{ type: 'spring', stiffness: 400, damping: 28 }}
             className={clsx(
               'relative w-full bg-[#0D101A] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#1E2436] my-auto z-10',
-              sizes[size],
-              size === 'full' && 'max-h-[92vh]'
+              sizes[size]
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#1A1F30] bg-[#090B12]">
-              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight flex items-center gap-2.5">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-3.5 border-b border-[#1A1F30] bg-[#090B12] flex-shrink-0 shrink-0">
+              <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-brand-500" />
                 {title}
               </h2>
@@ -89,15 +88,17 @@ export function Modal({
             
             {/* Body */}
             <div className={clsx(
-              'p-6 overflow-y-auto pos-scrollbar text-surface-200 select-text',
-              size === 'full' ? 'flex-1' : 'max-h-[72vh]'
+              'text-surface-200 select-text',
+              size === 'full' 
+                ? 'flex-1 min-h-0 overflow-hidden flex flex-col p-0' 
+                : 'p-4 sm:p-6 overflow-y-auto pos-scrollbar max-h-[75vh]'
             )}>
               {children}
             </div>
             
             {/* Footer */}
             {footer && (
-              <div className="px-6 py-4 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-3 rounded-b-2xl">
+              <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-3 rounded-b-2xl flex-shrink-0 shrink-0">
                 {footer}
               </div>
             )}
