@@ -59,7 +59,7 @@ export class EFaturaAdapter {
       
       const xml = this.generateUBL(fatura)
       const uubid = uuidv4()
-      const faturano = \`GIB\${new Date().getFullYear()}\${Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')}\`
+      const faturano = `GIB${new Date().getFullYear()}${Math.floor(Math.random() * 1000000000).toString().padStart(9, '0')}`
 
       console.log(`[e-Fatura] Fatura kuyruğa eklendi. Fatura No: ${faturano}, UUID: ${uubid}`)
       
