@@ -14,15 +14,18 @@ import {
   ShoppingBag,
   Sparkles
 } from 'lucide-react'
-import { useIPC, useIPCListener } from '../../hooks/useIPC'
+import { useIPC, useIPCListener, ipcInvoke } from '../../hooks/useIPC'
 import { MASA_KANALLARI } from '../../../common/ipc-channels'
 import type { Masa, Bolum } from '../../../common/types/table.types'
 import { formatPara, gecenDakikaHesapla } from '../../utils/formatters'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuthStore } from '../../stores/useAuthStore'
+import { useToast } from '../../components/ui/Toast'
 
 export default function TablesPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [seciliBolum, setSeciliBolum] = useState<string>(() => sessionStorage.getItem('seciliBolum') || 'tum')
   const [durumFiltresi, setDurumFiltresi] = useState<string>('tum')
   const [aramaMetni, setAramaMetni] = useState<string>('')
@@ -31,8 +34,63 @@ export default function TablesPage() {
     sessionStorage.setItem('seciliBolum', seciliBolum)
   }, [seciliBolum])
 
-  const { veri: bolumler, yukleniyor: bolumlerYukleniyor } = useIPC<Bolum[]>(MASA_KANALLARI.BOLUMLER, [])
+  const { veri: bolumler, yukleniyor: bolumlerYukleniyor, yenile: bolumleriYenile } = useIPC<Bolum[]>(MASA_KANALLARI.BOLUMLER, [])
   const { veri: masalar, yukleniyor: masalarYukleniyor, yenile: masalariYenile } = useIPC<Masa[]>(MASA_KANALLARI.MASALAR, [])
+
+  const personel = useAuthStore(s => s.personel)
+  const isAdmin = personel?.rol === 'admin'
+
+  const [topluModalAcik, setTopluModalAcik] = useState(false)
+  const [seciliHedefBolumId, setSeciliHedefBolumId] = useState<number | null>(null)
+  const [onek, setOnek] = useState('S')
+  const [masaSayisi, setMasaSayisi] = useState(15)
+  const [olusturuluyor, setOlusturuluyor] = useState(false)
+
+  // İlk açılışta hedef bölümü varsayılan ilk bölüme ayarla
+  useEffect(() => {
+    if (bolumler.length > 0 && !seciliHedefBolumId) {
+      setSeciliHedefBolumId(bolumler[0].id)
+    }
+  }, [bolumler, seciliHedefBolumId])
+
+  const hedefBolumId = seciliBolum !== 'tum' 
+    ? parseInt(seciliBolum, 10) 
+    : (seciliHedefBolumId || (bolumler.length > 0 ? bolumler[0].id : null))
+
+  const handleTopluMasaOlustur = async () => {
+    if (!hedefBolumId || isNaN(hedefBolumId)) {
+      toast.error('Hata', 'Lütfen geçerli bir bölüm seçin.')
+      return
+    }
+
+    if (!onek.trim()) {
+      toast.warning('Eksik Bilgi', 'Lütfen bir masa öneki girin (örn: S).')
+      return
+    }
+
+    if (masaSayisi < 1 || masaSayisi > 200) {
+      toast.warning('Geçersiz Sayı', 'Masa sayısı 1 ile 200 arasında olmalıdır.')
+      return
+    }
+
+    setOlusturuluyor(true)
+    try {
+      const sonuc: any = await ipcInvoke(MASA_KANALLARI.MASA_TOPLU_EKLE, hedefBolumId, onek.trim().toUpperCase(), masaSayisi)
+      if (sonuc && sonuc.basarili) {
+        toast.success('Masalar Oluşturuldu', `${masaSayisi} adet masa başarıyla eklendi.`)
+        setTopluModalAcik(false)
+        await masalariYenile()
+        await bolumleriYenile()
+      } else {
+        toast.error('Hata', (sonuc && sonuc.hata) || 'Masa oluşturulamadı.')
+      }
+    } catch (err: any) {
+      console.error('IPC Hatası:', err)
+      toast.error('İşlem Hatası', err.message || 'Masa oluşturulurken bir hata meydana geldi.')
+    } finally {
+      setOlusturuluyor(false)
+    }
+  }
 
   // Anlık güncellemeleri dinle (Garson vs)
   useIPCListener('masalar:guncellendi', () => {
@@ -72,6 +130,13 @@ export default function TablesPage() {
     })
     return map
   }, [masalar])
+
+  const seciliBolumdekiMasaSayisi = useMemo(() => {
+    if (seciliBolum === 'tum') return masalar.length
+    return masalar.filter(m => m.bolum_id.toString() === seciliBolum).length
+  }, [masalar, seciliBolum])
+
+  const bolumdeHicMasaYok = seciliBolumdekiMasaSayisi === 0 && !aramaMetni.trim() && durumFiltresi === 'tum'
 
   // Filtreleme mantığı
   const filtrelenmisMasalar = useMemo(() => {
@@ -204,6 +269,19 @@ export default function TablesPage() {
             )}
           </div>
 
+          {/* Toplu Masa Ekle Butonu (Admin) */}
+          {isAdmin && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setTopluModalAcik(true)}
+              className="h-11 px-3.5 rounded-xl bg-[#121724] border border-[#222C42] hover:border-emerald-500/50 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold flex items-center gap-2 transition-colors"
+              title="Toplu Masa Oluştur"
+            >
+              <Plus size={16} />
+              <span className="hidden lg:inline">Toplu Masa</span>
+            </motion.button>
+          )}
+
           {/* Müşteriler Butonu */}
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -311,23 +389,106 @@ export default function TablesPage() {
       {/* 3. MASA KARTLARI GRİDİ (HIGH-CONTRAST INDUSTRIAL CARDS) */}
       <div className="flex-1 overflow-y-auto pos-scrollbar pr-1 pb-4">
         {filtrelenmisMasalar.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-80 text-slate-400 text-center">
-            <div className="w-16 h-16 mb-4 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-400">
-              <UtensilsCrossed size={32} />
+          (bolumdeHicMasaYok && isAdmin) ? (
+            <div className="flex flex-col items-center justify-center min-h-[380px] text-slate-400 text-center p-6 my-auto">
+              <div className="w-20 h-20 mb-5 rounded-3xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                <Sparkles size={36} />
+              </div>
+              <h3 className="text-2xl font-black font-mono text-white uppercase tracking-tight mb-2">
+                Bu Bölümde Masa Yok
+              </h3>
+              <p className="text-sm text-slate-400 font-mono max-w-md mb-6">
+                Bu bölüme hızlıca toplu masa ekleyebilirsiniz. Önek ve masa sayısını belirleyip oluştur butonuna tıklayın.
+              </p>
+
+              <div className="flex flex-col gap-4 bg-[#0C1017] border border-[#1E2436] p-6 rounded-2xl w-full max-w-sm text-left shadow-2xl">
+                {seciliBolum === 'tum' && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Hedef Bölüm</label>
+                    <select
+                      value={hedefBolumId || ''}
+                      onChange={e => setSeciliHedefBolumId(parseInt(e.target.value, 10))}
+                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                    >
+                      {bolumler.map(b => (
+                        <option key={b.id} value={b.id} className="bg-[#0C1017] text-white">
+                          {b.ad}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Öneki (Örn: S)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={onek}
+                      onChange={e => setOnek(e.target.value)}
+                      placeholder="Örn: S veya M"
+                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white uppercase focus:outline-none transition-colors"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-mono">Önizleme:</span>
+                      <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/20">
+                        {onek.trim() || 'M'} 1
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Sayısı</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={masaSayisi}
+                    onChange={e => setMasaSayisi(parseInt(e.target.value) || 1)}
+                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleTopluMasaOlustur}
+                  disabled={olusturuluyor || !onek.trim() || masaSayisi < 1}
+                  className="w-full h-12 mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#1A2234] disabled:text-slate-500 disabled:border disabled:border-[#222C42] text-white font-mono text-sm font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:shadow-none flex items-center justify-center gap-2"
+                >
+                  {olusturuluyor ? (
+                    <>
+                      <RefreshCw size={18} className="animate-spin" />
+                      <span>Oluşturuluyor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={18} />
+                      <span>Toplu Masa Oluştur</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
             </div>
-            <p className="text-base font-mono font-bold text-slate-300 uppercase tracking-wider">
-              Kriterlere Uygun Masa Bulunamadı
-            </p>
-            <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm">
-              Seçili filtreleri temizleyerek veya arama kutusunu sıfırlayarak tekrar deneyin.
-            </p>
-            <button
-              onClick={() => { setSeciliBolum('tum'); setDurumFiltresi('tum'); setAramaMetni('') }}
-              className="mt-4 px-4 py-2 bg-[#141926] hover:bg-[#1C2336] border border-[#222C42] text-xs font-mono font-bold text-slate-200 rounded-xl transition-colors"
-            >
-              Filtreleri Sıfırla
-            </button>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-80 text-slate-400 text-center">
+              <div className="w-16 h-16 mb-4 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-400">
+                <UtensilsCrossed size={32} />
+              </div>
+              <p className="text-base font-mono font-bold text-slate-300 uppercase tracking-wider">
+                Kriterlere Uygun Masa Bulunamadı
+              </p>
+              <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm">
+                Seçili filtreleri temizleyerek veya arama kutusunu sıfırlayarak tekrar deneyin.
+              </p>
+              <button
+                onClick={() => { setSeciliBolum('tum'); setDurumFiltresi('tum'); setAramaMetni('') }}
+                className="mt-4 px-4 py-2 bg-[#141926] hover:bg-[#1C2336] border border-[#222C42] text-xs font-mono font-bold text-slate-200 rounded-xl transition-colors"
+              >
+                Filtreleri Sıfırla
+              </button>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3.5">
             <AnimatePresence>
@@ -454,6 +615,110 @@ export default function TablesPage() {
           </div>
         )}
       </div>
+
+      {/* Toplu Masa Oluşturma Modalı (Admin için her an erişilebilir) */}
+      <AnimatePresence>
+        {topluModalAcik && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#0C1017] border border-[#1E2436] rounded-2xl w-full max-w-md p-6 shadow-2xl relative"
+            >
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1A2234]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <Sparkles size={18} />
+                  </div>
+                  <h3 className="text-base font-black font-mono text-white uppercase">Toplu Masa Oluştur</h3>
+                </div>
+                <button
+                  onClick={() => setTopluModalAcik(false)}
+                  className="w-8 h-8 rounded-lg bg-[#141926] hover:bg-[#1E2436] text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Hedef Bölüm</label>
+                  <select
+                    value={(seciliBolum !== 'tum' ? parseInt(seciliBolum, 10) : (seciliHedefBolumId || bolumler[0]?.id)) || ''}
+                    onChange={e => setSeciliHedefBolumId(parseInt(e.target.value, 10))}
+                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                  >
+                    {bolumler.map(b => (
+                      <option key={b.id} value={b.id} className="bg-[#0C1017] text-white">
+                        {b.ad}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Öneki (Örn: S)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={onek}
+                      onChange={e => setOnek(e.target.value)}
+                      placeholder="Örn: S veya M"
+                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white uppercase focus:outline-none transition-colors"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-mono">Önizleme:</span>
+                      <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/20">
+                        {onek.trim() || 'M'} 1
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Sayısı</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={masaSayisi}
+                    onChange={e => setMasaSayisi(parseInt(e.target.value) || 1)}
+                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-[#1A2234]">
+                  <button
+                    onClick={() => setTopluModalAcik(false)}
+                    className="h-11 px-4 rounded-xl bg-[#141926] hover:bg-[#1E2436] text-slate-400 hover:text-white font-mono text-xs font-bold transition-colors"
+                  >
+                    İptal
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleTopluMasaOlustur}
+                    disabled={olusturuluyor || !onek.trim() || masaSayisi < 1}
+                    className="h-11 px-6 bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#1A2234] disabled:text-slate-500 text-white font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:shadow-none flex items-center justify-center gap-2"
+                  >
+                    {olusturuluyor ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        <span>Oluşturuluyor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} />
+                        <span>Oluştur</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   )

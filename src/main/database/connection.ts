@@ -516,22 +516,11 @@ function varsayilanVerileriEkle(): void {
 
     // Varsayılan bölümler ve masalar
     const defaultBolumler = [
-      { ad: 'Salon', sira: 1, harf: 'S', adet: 20 },
-      { ad: 'Dış', sira: 2, harf: 'D', adet: 20 },
-      { ad: 'Teras', sira: 3, harf: 'T', adet: 20 },
-      { ad: 'Bar', sira: 4, harf: 'B', adet: 20 }
+      { ad: 'Ana Salon', sira: 1 }
     ];
 
     for (const b of defaultBolumler) {
-      const result = db!.prepare('INSERT INTO bolum (ad, sira) VALUES (?, ?)').run(b.ad, b.sira);
-      const bolumId = result.lastInsertRowid;
-      
-      for (let i = 1; i <= b.adet; i++) {
-        db!.prepare(`
-          INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y, sira)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).run(bolumId, `${b.harf}${i}`, 4, ((i - 1) % 5) * 120 + 50, Math.floor((i - 1) / 5) * 120 + 50, i);
-      }
+      db!.prepare('INSERT INTO bolum (ad, sira) VALUES (?, ?)').run(b.ad, b.sira);
     }
 
     // Varsayılan kategoriler

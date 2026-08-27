@@ -34,7 +34,7 @@ const izinliKanallar = [
   'menu:urun-ara',
   // Masa
   'masa:bolumler', 'masa:bolum-ekle', 'masa:bolum-guncelle', 'masa:masalar', 'masa:masa-ekle',
-  'masa:masa-guncelle', 'masa:durumu', 'masa:birlestir', 'masa:tasi',
+  'masa:toplu-ekle', 'masa:masa-guncelle', 'masa:durumu', 'masa:birlestir', 'masa:tasi',
   // Hesap & Sipariş
   'hesap:ac', 'hesap:kapat', 'hesap:iptal', 'hesap:detay', 'hesap:listele',
   'hesap:acik-hesaplar', 'hesap:siparis-ekle', 'hesap:siparis-iptal',

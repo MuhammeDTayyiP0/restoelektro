@@ -38,6 +38,7 @@ export const MASA_KANALLARI = {
   BOLUM_GUNCELLE: 'masa:bolum-guncelle',
   MASALAR: 'masa:masalar',
   MASA_EKLE: 'masa:masa-ekle',
+  MASA_TOPLU_EKLE: 'masa:toplu-ekle',
   MASA_GUNCELLE: 'masa:masa-guncelle',
   MASA_DURUMU: 'masa:durumu',
   MASA_BIRLESTIR: 'masa:birlestir',

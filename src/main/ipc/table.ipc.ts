@@ -80,6 +80,33 @@ export function masaIPCKaydet(ipcMain: IpcMain): void {
     return { basarili: true, id: sonuc.lastInsertRowid }
   })
 
+  // Toplu Masa Ekle
+  ipcMain.handle(MASA_KANALLARI.MASA_TOPLU_EKLE, async (_event, bolumId: number, onek: string, adet: number) => {
+    try {
+      const islem = db.transaction(() => {
+        const result = [];
+        for (let i = 1; i <= adet; i++) {
+          const numara = `${onek} ${i}`;
+          const x = ((i - 1) % 5) * 120 + 50;
+          const y = Math.floor((i - 1) / 5) * 120 + 50;
+          const sira = i;
+          
+          const ins = db.prepare(`
+            INSERT INTO masa (bolum_id, numara, kapasite, konum_x, konum_y, sira)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(bolumId, numara, 4, x, y, sira);
+          
+          result.push(ins.lastInsertRowid);
+        }
+        return result;
+      });
+      const ids = islem();
+      return { basarili: true, ids };
+    } catch (hata: any) {
+      return { basarili: false, hata: hata.message };
+    }
+  })
+
   // Masa güncelle
   ipcMain.handle(MASA_KANALLARI.MASA_GUNCELLE, async (_event, id: number, veri: any) => {
     const alanlar: string[] = []
