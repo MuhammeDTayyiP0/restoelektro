@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Plus, 
@@ -8,20 +8,162 @@ import {
   RefreshCw, 
   Layers, 
   TrendingUp, 
-  CircleDot, 
   Link2, 
   UtensilsCrossed, 
-  ShoppingBag,
   Sparkles
 } from 'lucide-react'
 import { useIPC, useIPCListener, ipcInvoke } from '../../hooks/useIPC'
 import { MASA_KANALLARI } from '../../../common/ipc-channels'
 import type { Masa, Bolum } from '../../../common/types/table.types'
-import { formatPara, gecenDakikaHesapla } from '../../utils/formatters'
+import { formatPara } from '../../utils/formatters'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useToast } from '../../components/ui/Toast'
+
+// Süre formatlama (örn: 75 dk -> 1s 15dk)
+function formatGecenSure(dakika: number): string {
+  if (dakika < 60) return `${dakika} dk`
+  const saat = Math.floor(dakika / 60)
+  const kalanDk = dakika % 60
+  return `${saat}s ${kalanDk}d`
+}
+
+interface TableCardProps {
+  masa: Masa
+  seciliBolum: string
+  onClick: (masa: Masa) => void
+}
+
+/**
+ * Performans ve re-render optimizasyonlu Masa Kartı bileşeni
+ */
+const TableCard = React.memo(function TableCard({
+  masa,
+  seciliBolum,
+  onClick,
+}: TableCardProps) {
+  const doluMu = masa.durum === 'dolu' || !!masa.aktif_hesap_id
+  const rezerveMi = masa.durum === 'rezerve'
+  const birlestiMi = masa.durum === 'birlesti'
+
+  // Geçen süre hesabı
+  const gecenSure = doluMu && masa.acik_sure
+    ? parseInt(masa.acik_sure, 10) || 0
+    : 0
+
+  const handleClick = useCallback(() => {
+    onClick(masa)
+  }, [onClick, masa])
+
+  return (
+    <motion.button
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -3, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.15 }}
+      onClick={handleClick}
+      className={clsx(
+        "relative flex flex-col justify-between h-40 rounded-2xl p-3.5 text-left border transition-all touch-feedback group overflow-hidden shadow-lg",
+        doluMu
+          ? "bg-gradient-to-b from-[#18130B] to-[#0E1017] border-amber-500/50 hover:border-amber-400 shadow-[0_4px_24px_rgba(245,158,11,0.12)] ring-1 ring-amber-500/20"
+          : rezerveMi
+            ? "bg-gradient-to-b from-[#160F24] to-[#0E1017] border-purple-500/40 hover:border-purple-400 shadow-[0_4px_20px_rgba(139,92,246,0.1)] ring-1 ring-purple-500/20"
+            : "bg-gradient-to-b from-[#0B1516] to-[#0C1017] border-emerald-500/25 hover:border-emerald-400/70 shadow-[0_4px_16px_rgba(16,185,129,0.06)]"
+      )}
+    >
+      {/* Kart Üst Durum Çizgisi */}
+      <div className={clsx(
+        "absolute top-0 left-0 right-0 h-1.5",
+        doluMu ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" : rezerveMi ? "bg-purple-400 shadow-[0_0_8px_rgba(139,92,246,0.8)]" : "bg-emerald-500/60"
+      )} />
+
+      {/* Üst Kısım: Masa No & Durum Rozeti */}
+      <div className="flex items-start justify-between w-full pt-1">
+        <div className="flex flex-col">
+          <span className="text-2xl 2xl:text-3xl font-black font-mono tracking-tight text-white group-hover:text-amber-300 transition-colors">
+            {masa.numara}
+          </span>
+          {masa.bolum_adi && seciliBolum === 'tum' && (
+            <span className="text-[10px] font-mono text-slate-400 truncate max-w-[80px]">
+              {masa.bolum_adi}
+            </span>
+          )}
+        </div>
+
+        {/* Durum Rozeti */}
+        {doluMu ? (
+          <div className="flex flex-col items-end gap-1">
+            <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full uppercase">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Dolu
+            </span>
+            {gecenSure > 0 && (
+              <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400/90 font-semibold">
+                <Clock size={10} />
+                {formatGecenSure(gecenSure)}
+              </span>
+            )}
+          </div>
+        ) : rezerveMi ? (
+          <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+            Rezerve
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Boş
+          </span>
+        )}
+      </div>
+
+      {/* Alt Kısım: Fiyat veya Kapasite Bilgisi */}
+      <div className="flex items-end justify-between w-full mt-auto pt-2 border-t border-[#1E2638]">
+        {doluMu ? (
+          <div className="flex flex-col w-full">
+            <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+              ADİSYON TUTARI
+            </span>
+            <div className="flex items-baseline justify-between w-full">
+              <span className="text-base 2xl:text-lg font-black font-mono text-emerald-400 tabular-nums tracking-tight">
+                {formatPara(masa.aktif_hesap_tutari || 0)}
+              </span>
+              {masa.garson_adi && (
+                <span className="text-[10px] font-mono text-slate-400 truncate max-w-[70px]">
+                  👤 {masa.garson_adi}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between w-full text-slate-400 text-xs font-mono">
+            <span className="flex items-center gap-1">
+              <Users size={13} className="text-slate-400" />
+              <span>{masa.kapasite || 4} Kişilik</span>
+            </span>
+            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/20">
+              AÇIK
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Masa Birleşti İkonu */}
+      {birlestiMi && (
+        <div 
+          className="absolute bottom-2 right-2 p-1 bg-amber-500/20 border border-amber-500/50 rounded-md text-amber-300 shadow-md"
+          title="Bu masa başka bir masa ile birleşmiştir"
+        >
+          <Link2 size={12} />
+        </div>
+      )}
+    </motion.button>
+  )
+})
 
 export default function TablesPage() {
   const navigate = useNavigate()
@@ -56,7 +198,7 @@ export default function TablesPage() {
     ? parseInt(seciliBolum, 10) 
     : (seciliHedefBolumId || (bolumler.length > 0 ? bolumler[0].id : null))
 
-  const handleTopluMasaOlustur = async () => {
+  const handleTopluMasaOlustur = useCallback(async () => {
     if (!hedefBolumId || isNaN(hedefBolumId)) {
       toast.error('Hata', 'Lütfen geçerli bir bölüm seçin.')
       return
@@ -119,7 +261,7 @@ export default function TablesPage() {
     } finally {
       setOlusturuluyor(false)
     }
-  }
+  }, [hedefBolumId, onek, masaSayisi, masalar, toast, masalariYenile, bolumleriYenile])
 
   // Anlık güncellemeleri dinle (Garson vs)
   useIPCListener('masalar:guncellendi', () => {
@@ -200,21 +342,13 @@ export default function TablesPage() {
     })
   }, [masalar, seciliBolum, durumFiltresi, aramaMetni])
 
-  const masaTikla = (masa: Masa) => {
+  const masaTikla = useCallback((masa: Masa) => {
     if (masa.aktif_hesap_id) {
       navigate(`/pos/${masa.aktif_hesap_id}`)
     } else {
       navigate(`/pos?masa=${masa.id}`)
     }
-  }
-
-  // Süre formatlama (örn: 75 dk -> 1s 15dk)
-  const formatGecenSure = (dakika: number) => {
-    if (dakika < 60) return `${dakika} dk`
-    const saat = Math.floor(dakika / 60)
-    const kalanDk = dakika % 60
-    return `${saat}s ${kalanDk}d`
-  }
+  }, [navigate])
 
   if (bolumlerYukleniyor && masalarYukleniyor) {
     return (
@@ -508,125 +642,14 @@ export default function TablesPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3.5">
             <AnimatePresence>
-              {filtrelenmisMasalar.map(masa => {
-                const doluMu = masa.durum === 'dolu' || !!masa.aktif_hesap_id
-                const rezerveMi = masa.durum === 'rezerve'
-                const birlestiMi = masa.durum === 'birlesti'
-
-                // Geçen süre hesabı
-                const gecenSure = doluMu && masa.acik_sure
-                  ? parseInt(masa.acik_sure, 10) || 0
-                  : 0
-
-                return (
-                  <motion.button
-                    key={masa.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    whileHover={{ y: -3, scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    onClick={() => masaTikla(masa)}
-                    className={clsx(
-                      "relative flex flex-col justify-between h-40 rounded-2xl p-3.5 text-left border transition-all touch-feedback group overflow-hidden shadow-lg",
-                      doluMu
-                        ? "bg-gradient-to-b from-[#18130B] to-[#0E1017] border-amber-500/50 hover:border-amber-400 shadow-[0_4px_24px_rgba(245,158,11,0.12)] ring-1 ring-amber-500/20"
-                        : rezerveMi
-                          ? "bg-gradient-to-b from-[#160F24] to-[#0E1017] border-purple-500/40 hover:border-purple-400 shadow-[0_4px_20px_rgba(139,92,246,0.1)] ring-1 ring-purple-500/20"
-                          : "bg-gradient-to-b from-[#0B1516] to-[#0C1017] border-emerald-500/25 hover:border-emerald-400/70 shadow-[0_4px_16px_rgba(16,185,129,0.06)]"
-                    )}
-                  >
-                    {/* Kart Üst Durum Çizgisi */}
-                    <div className={clsx(
-                      "absolute top-0 left-0 right-0 h-1.5",
-                      doluMu ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" : rezerveMi ? "bg-purple-400 shadow-[0_0_8px_rgba(139,92,246,0.8)]" : "bg-emerald-500/60"
-                    )} />
-
-                    {/* Üst Kısım: Masa No & Durum Rozeti */}
-                    <div className="flex items-start justify-between w-full pt-1">
-                      <div className="flex flex-col">
-                        <span className="text-2xl 2xl:text-3xl font-black font-mono tracking-tight text-white group-hover:text-amber-300 transition-colors">
-                          {masa.numara}
-                        </span>
-                        {masa.bolum_adi && seciliBolum === 'tum' && (
-                          <span className="text-[10px] font-mono text-slate-400 truncate max-w-[80px]">
-                            {masa.bolum_adi}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Durum Rozeti */}
-                      {doluMu ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full uppercase">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            Dolu
-                          </span>
-                          {gecenSure > 0 && (
-                            <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400/90 font-semibold">
-                              <Clock size={10} />
-                              {formatGecenSure(gecenSure)}
-                            </span>
-                          )}
-                        </div>
-                      ) : rezerveMi ? (
-                        <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full uppercase">
-                          <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                          Rezerve
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                          Boş
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Alt Kısım: Fiyat veya Kapasite Bilgisi */}
-                    <div className="flex items-end justify-between w-full mt-auto pt-2 border-t border-[#1E2638]">
-                      {doluMu ? (
-                        <div className="flex flex-col w-full">
-                          <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
-                            ADİSYON TUTARI
-                          </span>
-                          <div className="flex items-baseline justify-between w-full">
-                            <span className="text-base 2xl:text-lg font-black font-mono text-emerald-400 tabular-nums tracking-tight">
-                              {formatPara(masa.aktif_hesap_tutari || 0)}
-                            </span>
-                            {masa.garson_adi && (
-                              <span className="text-[10px] font-mono text-slate-400 truncate max-w-[70px]">
-                                👤 {masa.garson_adi}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between w-full text-slate-400 text-xs font-mono">
-                          <span className="flex items-center gap-1">
-                            <Users size={13} className="text-slate-400" />
-                            <span>{masa.kapasite || 4} Kişilik</span>
-                          </span>
-                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                            AÇIK
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Masa Birleşti İkonu */}
-                    {birlestiMi && (
-                      <div 
-                        className="absolute bottom-2 right-2 p-1 bg-amber-500/20 border border-amber-500/50 rounded-md text-amber-300 shadow-md"
-                        title="Bu masa başka bir masa ile birleşmiştir"
-                      >
-                        <Link2 size={12} />
-                      </div>
-                    )}
-                  </motion.button>
-                )
-              })}
+              {filtrelenmisMasalar.map(masa => (
+                <TableCard
+                  key={masa.id}
+                  masa={masa}
+                  seciliBolum={seciliBolum}
+                  onClick={masaTikla}
+                />
+              ))}
             </AnimatePresence>
           </div>
         )}

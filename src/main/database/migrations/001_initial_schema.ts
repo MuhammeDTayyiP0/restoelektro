@@ -353,12 +353,29 @@ export const migration001: Migration = {
       CREATE INDEX IF NOT EXISTS idx_hesap_masa ON hesap(masa_id);
       CREATE INDEX IF NOT EXISTS idx_hesap_durum ON hesap(durum);
       CREATE INDEX IF NOT EXISTS idx_hesap_tarih ON hesap(acilis_zamani);
+      CREATE INDEX IF NOT EXISTS idx_hesap_masa_durum ON hesap(masa_id, durum);
+      CREATE INDEX IF NOT EXISTS idx_hesap_durum_acilis ON hesap(durum, acilis_zamani);
+      CREATE INDEX IF NOT EXISTS idx_hesap_kapanis ON hesap(kapanis_zamani);
+      CREATE INDEX IF NOT EXISTS idx_hesap_personel ON hesap(personel_id);
+      CREATE INDEX IF NOT EXISTS idx_hesap_musteri ON hesap(musteri_id);
       CREATE INDEX IF NOT EXISTS idx_siparis_hesap ON siparis(hesap_id);
       CREATE INDEX IF NOT EXISTS idx_siparis_durum ON siparis(durum);
+      CREATE INDEX IF NOT EXISTS idx_siparis_hesap_durum ON siparis(hesap_id, durum);
+      CREATE INDEX IF NOT EXISTS idx_siparis_urun ON siparis(urun_id);
+      CREATE INDEX IF NOT EXISTS idx_siparis_personel ON siparis(personel_id);
+      CREATE INDEX IF NOT EXISTS idx_siparis_zamani ON siparis(siparis_zamani);
+      CREATE INDEX IF NOT EXISTS idx_siparis_opsiyon_siparis ON siparis_opsiyonlari(siparis_id);
+      CREATE INDEX IF NOT EXISTS idx_siparis_opsiyon_opsiyon ON siparis_opsiyonlari(opsiyon_id);
       CREATE INDEX IF NOT EXISTS idx_odeme_hesap ON odeme(hesap_id);
+      CREATE INDEX IF NOT EXISTS idx_odeme_tarih ON odeme(odeme_zamani);
       CREATE INDEX IF NOT EXISTS idx_musteri_telefon ON musteri(telefon);
       CREATE INDEX IF NOT EXISTS idx_stok_hareket_hammadde ON stok_hareket(hammadde_id);
+      CREATE INDEX IF NOT EXISTS idx_stok_hareket_tarih ON stok_hareket(created_at);
       CREATE INDEX IF NOT EXISTS idx_kasa_hareket_tarih ON kasa_hareket(created_at);
+      CREATE INDEX IF NOT EXISTS idx_masa_bolum ON masa(bolum_id);
+      CREATE INDEX IF NOT EXISTS idx_masa_durum ON masa(durum);
+      CREATE INDEX IF NOT EXISTS idx_urun_varyant_urun ON urun_varyant(urun_id);
+      CREATE INDEX IF NOT EXISTS idx_urun_opsiyonu_urun ON urun_opsiyonu(urun_id);
     `)
   },
 }

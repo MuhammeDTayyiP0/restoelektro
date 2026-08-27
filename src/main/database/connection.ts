@@ -86,6 +86,8 @@ export async function veritabaniBaslat(): Promise<void> {
   db.pragma('journal_mode = WAL')        // Write-Ahead Logging — eşzamanlı okuma/yazma performansı
   db.pragma('synchronous = NORMAL')      // Dengeli veri güvenliği & yüksek performans
   db.pragma('foreign_keys = ON')         // İlişkisel bütünlük kısıtlamalarını etkinleştir
+  db.pragma('temp_store = MEMORY')       // Geçici tablo ve sıralamalar bellekte tutulur
+  db.pragma('mmap_size = 268435456')     // 256MB bellek haritalı I/O (Memory-Mapped I/O)
   db.pragma('cache_size = -64000')       // ~64MB RAM önbellek
   db.pragma('busy_timeout = 5000')       // 5 saniye kilit bekleme süresi
 
