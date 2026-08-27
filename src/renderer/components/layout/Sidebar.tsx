@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { 
   LayoutDashboard, 
-  MonitorPlay, 
   ChefHat, 
   Package, 
   Users, 
@@ -22,7 +21,6 @@ export function Sidebar() {
   // Yetkilere göre menü öğeleri
   const navItems = [
     { to: '/tables', icon: LayoutDashboard, label: 'Masalar', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
-    { to: '/pos', icon: MonitorPlay, label: 'POS', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
     { to: '/kitchen', icon: ChefHat, label: 'Mutfak', allowedRoles: ['admin', 'mutfak'] },
     { to: '/inventory', icon: Package, label: 'Stok & Menü', allowedRoles: ['admin', 'mudur'] },
     { to: '/customers', icon: Users, label: 'Müşteriler', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },

@@ -58,6 +58,7 @@ export interface Siparis {
   ikram_onaylayan_id: number | null
   yazici_grup: string
   porsiyon?: number
+  cost_price?: number
   // İlişkili veriler
   urun_adi?: string
   varyant_adi?: string

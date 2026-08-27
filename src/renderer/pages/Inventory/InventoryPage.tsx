@@ -31,7 +31,7 @@ import { STOK_KANALLARI, MENU_KANALLARI } from '../../../common/ipc-channels'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { Badge } from '../../components/ui/Badge'
-import { formatPara, formatTarih } from '../../utils/formatters'
+import { formatPara, formatTarih, formatMiktar } from '../../utils/formatters'
 import { useToast } from '../../components/ui/Toast'
 import { useAuthStore } from '../../stores/useAuthStore'
 
@@ -483,7 +483,7 @@ export default function InventoryPage() {
                                   ham.stok_durumu === 'tukendi' || ham.stok_durumu === 'kritik' ? "text-rose-400" :
                                   ham.stok_durumu === 'dusuk' ? "text-amber-400" : "text-emerald-400"
                                 )}>
-                                  {ham.mevcut_stok}
+                                  {formatMiktar(ham.mevcut_stok)}
                                 </span>
                                 <span className="text-xs font-semibold text-surface-400 ml-1.5">{ham.birim}</span>
                               </div>
@@ -491,7 +491,7 @@ export default function InventoryPage() {
                               <div className="text-right">
                                 <span className="text-[10px] uppercase font-mono text-surface-400 block">Min. Eşik</span>
                                 <span className="text-sm font-semibold text-surface-300 font-mono">
-                                  {ham.min_stok || 0} {ham.birim}
+                                  {formatMiktar(ham.min_stok || 0)} {ham.birim}
                                 </span>
                               </div>
                             </div>
@@ -811,7 +811,7 @@ export default function InventoryPage() {
                               <span className={clsx(
                                 islemTipi === 'giris' ? "text-emerald-400" : "text-rose-400"
                               )}>
-                                {islemTipi === 'giris' ? '+' : '-'}{har.miktar}
+                                {islemTipi === 'giris' ? '+' : '-'}{formatMiktar(har.miktar)}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-right font-mono text-surface-300">
@@ -974,7 +974,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
         <div className="bg-[#090C15] border border-[#1E2436] rounded-xl p-3 flex items-center justify-between text-xs font-mono">
           <div>
             <span className="text-surface-500 block uppercase text-[10px]">Mevcut Depo Stoğu</span>
-            <span className="text-base font-bold text-white">{hammadde?.mevcut_stok} {hammadde?.birim}</span>
+            <span className="text-base font-bold text-white">{formatMiktar(hammadde?.mevcut_stok)} {hammadde?.birim}</span>
           </div>
           <div className="text-right">
             <span className="text-surface-500 block uppercase text-[10px]">Mevcut Birim Maliyet</span>
@@ -1327,6 +1327,24 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
     setKalemler(yeni)
   }
 
+  // Birim Dönüşüm Yardımcısı (Canlı Hesaplama)
+  const birimDonusturLocal = (miktar: number, kaynak: string, hedef: string): number => {
+    const k = (kaynak || '').toLowerCase().trim()
+    const h = (hedef || '').toLowerCase().trim()
+    if (k === h || !miktar) return miktar
+
+    const agirlik: Record<string, number> = { gr: 1, g: 1, gram: 1, kg: 1000, kilogram: 1000, mg: 0.001 }
+    const hacim: Record<string, number> = { ml: 1, mililitre: 1, cl: 10, dl: 100, lt: 1000, l: 1000, litre: 1000 }
+
+    if (agirlik[k] !== undefined && agirlik[h] !== undefined) {
+      return (miktar * agirlik[k]) / agirlik[h]
+    }
+    if (hacim[k] !== undefined && hacim[h] !== undefined) {
+      return (miktar * hacim[k]) / hacim[h]
+    }
+    return miktar
+  }
+
   // Canlı Maliyet ve Kâr Hesabı
   const seciliUrunBilgisi = useMemo(() => {
     return urunler.find((u: any) => u.id === Number(urunId)) || seciliUrun
@@ -1336,7 +1354,8 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
     return kalemler.reduce((acc, k) => {
       const ham = hammaddeler.find((h: any) => h.id === Number(k.hammadde_id))
       if (!ham) return acc
-      return acc + (Number(k.miktar || 0) * Number(ham.maliyet_birim || 0))
+      const donusenMiktar = birimDonusturLocal(Number(k.miktar || 0), k.birim || ham.birim, ham.birim)
+      return acc + (donusenMiktar * Number(ham.maliyet_birim || 0))
     }, 0)
   }, [kalemler, hammaddeler])
 
@@ -1407,7 +1426,8 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
             ) : (
               kalemler.map((kalem, idx) => {
                 const seciliHam = hammaddeler.find((h: any) => h.id === Number(kalem.hammadde_id))
-                const kalemMaliyet = Number(kalem.miktar || 0) * Number(seciliHam?.maliyet_birim || 0)
+                const donusenMiktar = birimDonusturLocal(Number(kalem.miktar || 0), kalem.birim || seciliHam?.birim, seciliHam?.birim)
+                const kalemMaliyet = donusenMiktar * Number(seciliHam?.maliyet_birim || 0)
 
                 return (
                   <div key={idx} className="flex items-center gap-2 bg-[#0E121E] border border-[#1A1F30] p-2.5 rounded-xl">
@@ -1436,8 +1456,20 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
                       />
                     </div>
 
-                    <div className="w-16 text-center text-xs font-mono text-surface-400">
-                      {kalem.birim || seciliHam?.birim}
+                    <div className="w-24">
+                      <select
+                        value={kalem.birim || seciliHam?.birim || 'Gram'}
+                        onChange={e => handleKalemGuncelle(idx, 'birim', e.target.value)}
+                        className="w-full h-9 px-2 rounded-lg border border-[#1E2538] bg-[#090C15] text-white font-mono text-xs focus:outline-none"
+                      >
+                        <option value="Gram">Gram (gr)</option>
+                        <option value="KG">Kilogram (kg)</option>
+                        <option value="ML">Mililitre (ml)</option>
+                        <option value="Litre">Litre (lt)</option>
+                        <option value="Adet">Adet</option>
+                        <option value="Porsiyon">Porsiyon</option>
+                        <option value="Paket">Paket</option>
+                      </select>
                     </div>
 
                     <div className="w-24 text-right text-xs font-mono font-bold text-rose-400">

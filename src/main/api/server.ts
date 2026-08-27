@@ -14,6 +14,7 @@ import { BrowserWindow, app as electronApp } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
 import path from 'path'
+import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 
 const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
 
@@ -250,10 +251,23 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
           porsiyon: porsiyon
         })
 
-        db.prepare(`
+        const sonuc = db.prepare(`
           INSERT INTO siparis (hesap_id, urun_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, yazici_grup, ikram, ikram_onaylayan_id, porsiyon)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(hesap.id, sip.urun_id, sip.miktar || 1, urun.fiyat, urun.fiyat * (sip.miktar || 1) * porsiyon, personelId, sip.notlar || null, urun.yazici_grup, sip.ikram ? 1 : 0, sip.ikram ? personelId : null, porsiyon)
+
+        const yeniSiparisId = Number(sonuc.lastInsertRowid)
+
+        // Otomatik stok düşümü ve reçete maliyet hesabı
+        siparisStokDusVeMaliyetHesapla(db, {
+          siparisId: yeniSiparisId,
+          urunId: sip.urun_id,
+          miktar: sip.miktar || 1,
+          porsiyon: porsiyon,
+          personelId: personelId,
+          hesapId: hesap.id,
+          urunAdi: urun.ad,
+        })
       }
 
       // Hesap toplamını güncelle
@@ -295,6 +309,9 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
         return res.status(404).json({ hata: 'Sipariş bulunamadı' })
       }
       
+      // Stoğa iade et
+      siparisStokGeriYukle(db, siparis_id)
+
       db.prepare("UPDATE siparis SET durum = 'iptal', iptal_nedeni = ? WHERE id = ?").run(iptal_nedeni || 'Garson tarafından iptal', siparis_id)
       
       // Hesap toplamını güncelle

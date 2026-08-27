@@ -8,6 +8,7 @@ import { veritabaniGetir } from '../database/connection'
 import { HESAP_KANALLARI } from '../../common/ipc-channels'
 import { v4 as uuidv4 } from 'uuid'
 import type { YeniSiparis, YeniOdeme, IndirimBilgisi, HesapBolme } from '../../common/types/pos.types'
+import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 
 export function hesapIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
@@ -149,7 +150,7 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
 
         for (const sip of siparisler) {
           // Ürün fiyatını al
-          const urun = db.prepare('SELECT fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
+          const urun = db.prepare('SELECT ad, fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
           if (!urun) continue
 
           // Varyant fiyat farkını hesapla
@@ -171,14 +172,26 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
             sip.ikram ? 1 : 0, urun.yazici_grup, porsiyon
           )
 
-          eklenenler.push(Number(sonuc.lastInsertRowid))
+          const yeniSiparisId = Number(sonuc.lastInsertRowid)
+          eklenenler.push(yeniSiparisId)
 
           // Opsiyonları ekle
           if (sip.opsiyon_idleri && sip.opsiyon_idleri.length > 0) {
             for (const opsiyonId of sip.opsiyon_idleri) {
-              db.prepare('INSERT INTO siparis_opsiyonlari (siparis_id, opsiyon_id) VALUES (?, ?)').run(sonuc.lastInsertRowid, opsiyonId)
+              db.prepare('INSERT INTO siparis_opsiyonlari (siparis_id, opsiyon_id) VALUES (?, ?)').run(yeniSiparisId, opsiyonId)
             }
           }
+
+          // Reçete maliyetini hesapla, cost_price'a kaydet ve hammadde stoklarını otomatik düş
+          siparisStokDusVeMaliyetHesapla(db, {
+            siparisId: yeniSiparisId,
+            urunId: sip.urun_id,
+            miktar: sip.miktar,
+            porsiyon: porsiyon,
+            personelId: personelId,
+            hesapId: hesapId,
+            urunAdi: urun.ad,
+          })
         }
 
         // Hesap toplamını güncelle
@@ -203,15 +216,22 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
 
   // Sipariş iptal
   ipcMain.handle(HESAP_KANALLARI.SIPARIS_IPTAL, async (_event, siparisId: number, iptalNedeni: string, onaylayanId: number) => {
-    db.prepare(`
-      UPDATE siparis SET durum = 'iptal', iptal_nedeni = ?, ikram_onaylayan_id = ? WHERE id = ?
-    `).run(iptalNedeni, onaylayanId, siparisId)
+    try {
+      // Düşülen hammadde stoklarını geri iade et
+      siparisStokGeriYukle(db, siparisId, onaylayanId)
 
-    // Hesap toplamını güncelle
-    const siparis = db.prepare('SELECT hesap_id FROM siparis WHERE id = ?').get(siparisId) as any
-    if (siparis) hesapToplamiGuncelle(siparis.hesap_id)
+      db.prepare(`
+        UPDATE siparis SET durum = 'iptal', iptal_nedeni = ?, ikram_onaylayan_id = ? WHERE id = ?
+      `).run(iptalNedeni, onaylayanId, siparisId)
 
-    return { basarili: true }
+      // Hesap toplamını güncelle
+      const siparis = db.prepare('SELECT hesap_id FROM siparis WHERE id = ?').get(siparisId) as any
+      if (siparis) hesapToplamiGuncelle(siparis.hesap_id)
+
+      return { basarili: true }
+    } catch (err: any) {
+      return { basarili: false, hata: err.message }
+    }
   })
 
   // Sipariş İkram Toggle
@@ -273,22 +293,25 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           // Sipariş bazlı (Alman Usulü) ödeme varsa siparişleri böl ve 'odendi' olarak işaretle
           if (odeme.odenen_siparisler && odeme.odenen_siparisler.length > 0) {
             for (const item of odeme.odenen_siparisler) {
-              const siparis = db.prepare(`SELECT miktar, toplam_fiyat FROM siparis WHERE id = ? AND durum != 'iptal'`).get(item.id) as any;
+              const siparis = db.prepare(`SELECT miktar, toplam_fiyat, cost_price FROM siparis WHERE id = ? AND durum != 'iptal'`).get(item.id) as any;
               if (siparis && siparis.miktar > 0) {
+                const birimCost = (siparis.cost_price || 0) / siparis.miktar;
                 if (item.miktar < siparis.miktar) {
                   // Siparişi böl (kalan miktar güncellenir)
                   const birimFiyat = siparis.toplam_fiyat / siparis.miktar;
                   const yeniMiktar = siparis.miktar - item.miktar;
                   const yeniToplamFiyat = yeniMiktar * birimFiyat;
-                  db.prepare('UPDATE siparis SET miktar = ?, toplam_fiyat = ? WHERE id = ?').run(yeniMiktar, yeniToplamFiyat, item.id);
+                  const yeniCostPrice = yeniMiktar * birimCost;
+                  db.prepare('UPDATE siparis SET miktar = ?, toplam_fiyat = ?, cost_price = ? WHERE id = ?').run(yeniMiktar, yeniToplamFiyat, yeniCostPrice, item.id);
                   
                   // Ödenen kısmı yeni satır olarak 'odendi' durumuyla ekle
                   const odenenToplamFiyat = item.miktar * birimFiyat;
+                  const odenenCostPrice = item.miktar * birimCost;
                   db.prepare(`
-                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup)
-                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup 
+                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, cost_price, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup)
+                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup 
                     FROM siparis WHERE id = ?
-                  `).run(item.miktar, odenenToplamFiyat, item.id);
+                  `).run(item.miktar, odenenToplamFiyat, odenenCostPrice, item.id);
                 } else {
                   // Tamamı ödendi
                   db.prepare(`UPDATE siparis SET durum = 'odendi' WHERE id = ?`).run(item.id);
@@ -378,6 +401,13 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   // Hesap iptal
   ipcMain.handle(HESAP_KANALLARI.IPTAL, async (_event, hesapId: number) => {
     const hesap = db.prepare('SELECT masa_id FROM hesap WHERE id = ?').get(hesapId) as any
+    
+    // İptal edilen hesaba ait aktif siparişlerin hammadde stoklarını geri iade et
+    const aktifSiparisler = db.prepare("SELECT id FROM siparis WHERE hesap_id = ? AND durum != 'iptal'").all(hesapId) as Array<{ id: number }>
+    for (const s of aktifSiparisler) {
+      siparisStokGeriYukle(db, s.id)
+    }
+
     db.prepare("UPDATE hesap SET durum = 'iptal', kapanis_zamani = CURRENT_TIMESTAMP WHERE id = ?").run(hesapId)
     db.prepare("UPDATE siparis SET durum = 'iptal' WHERE hesap_id = ?").run(hesapId)
     if (hesap?.masa_id) {

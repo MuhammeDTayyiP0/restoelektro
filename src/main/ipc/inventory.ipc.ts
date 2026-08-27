@@ -5,6 +5,7 @@
 import { IpcMain } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { STOK_KANALLARI } from '../../common/ipc-channels'
+import { birimDonustur, urunReceteMaliyetiHesapla } from '../services/stock-recipe.service'
 
 export function stokIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
@@ -12,7 +13,11 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
   // Hammaddeleri listele
   ipcMain.handle(STOK_KANALLARI.HAMMADDELER, async () => {
     return db.prepare(`
-      SELECT h.*,
+      SELECT 
+        h.id, h.ad, h.birim,
+        ROUND(h.mevcut_stok, 4) as mevcut_stok,
+        ROUND(h.min_stok, 4) as min_stok,
+        h.maliyet_birim, h.tedarikci, h.aktif, h.created_at, h.updated_at,
         CASE
           WHEN h.mevcut_stok <= 0 THEN 'tukendi'
           WHEN h.mevcut_stok <= h.min_stok * 0.5 THEN 'kritik'
@@ -28,7 +33,7 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
     const sonuc = db.prepare(`
       INSERT INTO hammadde (ad, birim, mevcut_stok, min_stok, maliyet_birim, tedarikci)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(veri.ad, veri.birim, veri.mevcut_stok || 0, veri.min_stok || 0, veri.maliyet_birim || 0, veri.tedarikci || null)
+    `).run(veri.ad, veri.birim, Number(Number(veri.mevcut_stok || 0).toFixed(4)), Number(Number(veri.min_stok || 0).toFixed(4)), veri.maliyet_birim || 0, veri.tedarikci || null)
     return { basarili: true, id: sonuc.lastInsertRowid }
   })
 
@@ -38,7 +43,7 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
     const degerler: any[] = []
     if (veri.ad) { alanlar.push('ad = ?'); degerler.push(veri.ad) }
     if (veri.birim) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
-    if (veri.min_stok !== undefined) { alanlar.push('min_stok = ?'); degerler.push(veri.min_stok) }
+    if (veri.min_stok !== undefined) { alanlar.push('min_stok = ?'); degerler.push(Number(Number(veri.min_stok).toFixed(4))) }
     if (veri.maliyet_birim !== undefined) { alanlar.push('maliyet_birim = ?'); degerler.push(veri.maliyet_birim) }
     if (veri.tedarikci !== undefined) { alanlar.push('tedarikci = ?'); degerler.push(veri.tedarikci) }
     alanlar.push('updated_at = CURRENT_TIMESTAMP')
@@ -50,18 +55,19 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
   // Stok hareketi ekle
   ipcMain.handle(STOK_KANALLARI.STOK_GIRIS, async (_event, veri: any) => {
     const islem = db.transaction(() => {
+      const islemMiktar = Number(Number(veri.miktar || 0).toFixed(4))
       db.prepare(`
         INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(veri.hammadde_id, veri.islem_tipi, veri.miktar, veri.birim_maliyet || 0, veri.aciklama || null, veri.personel_id || null)
+      `).run(veri.hammadde_id, veri.islem_tipi, islemMiktar, veri.birim_maliyet || 0, veri.aciklama || null, veri.personel_id || null)
 
-      // Stok miktarını güncelle
+      // Stok miktarını güncelle ve 4 basamağa yuvarla
       if (veri.islem_tipi === 'giris') {
-        db.prepare('UPDATE hammadde SET mevcut_stok = mevcut_stok + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(veri.miktar, veri.hammadde_id)
+        db.prepare('UPDATE hammadde SET mevcut_stok = ROUND(mevcut_stok + ?, 4), updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(islemMiktar, veri.hammadde_id)
       } else if (veri.islem_tipi === 'cikis' || veri.islem_tipi === 'fire') {
-        db.prepare('UPDATE hammadde SET mevcut_stok = MAX(0, mevcut_stok - ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(veri.miktar, veri.hammadde_id)
+        db.prepare('UPDATE hammadde SET mevcut_stok = ROUND(MAX(0, mevcut_stok - ?), 4), updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(islemMiktar, veri.hammadde_id)
       } else if (veri.islem_tipi === 'sayim') {
-        db.prepare('UPDATE hammadde SET mevcut_stok = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(veri.miktar, veri.hammadde_id)
+        db.prepare('UPDATE hammadde SET mevcut_stok = ROUND(?, 4), updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(islemMiktar, veri.hammadde_id)
       }
 
       // Birim maliyeti güncelle (giriş ise)
@@ -97,31 +103,43 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
   // Reçeteleri getir
   ipcMain.handle(STOK_KANALLARI.RECETELER, async (_event, urunId?: number) => {
     if (urunId) {
-      return db.prepare(`
-        SELECT r.*, h.ad as hammadde_adi, h.maliyet_birim as birim_maliyet,
-               (r.miktar * h.maliyet_birim) as kalem_maliyet
+      const kalemler = db.prepare(`
+        SELECT r.*, h.ad as hammadde_adi, h.birim as hammadde_birim, h.maliyet_birim as birim_maliyet
         FROM recete r
         JOIN hammadde h ON h.id = r.hammadde_id
         WHERE r.urun_id = ?
-      `).all(urunId)
+      `).all(urunId) as any[]
+
+      return kalemler.map(k => {
+        const donusenMiktar = birimDonustur(k.miktar, k.birim, k.hammadde_birim)
+        const kalemMaliyet = Number((donusenMiktar * (k.birim_maliyet || 0)).toFixed(2))
+        return {
+          ...k,
+          kalem_maliyet: kalemMaliyet,
+        }
+      })
     }
-    // Tüm ürünlerin maliyet özeti
-    return db.prepare(`
-      SELECT u.id as urun_id, u.ad as urun_adi, u.fiyat as satis_fiyati, k.ad as kategori_adi,
-             COALESCE(SUM(r.miktar * h.maliyet_birim), 0) as toplam_maliyet,
-             u.fiyat - COALESCE(SUM(r.miktar * h.maliyet_birim), 0) as kar_tutari,
-             CASE WHEN u.fiyat > 0
-               THEN ROUND((u.fiyat - COALESCE(SUM(r.miktar * h.maliyet_birim), 0)) / u.fiyat * 100, 1)
-               ELSE 0
-             END as kar_marji
+
+    // Tüm ürünlerin reçete maliyet özeti
+    const urunler = db.prepare(`
+      SELECT u.id as urun_id, u.ad as urun_adi, u.fiyat as satis_fiyati, k.ad as kategori_adi
       FROM urun u
       JOIN kategori k ON k.id = u.kategori_id
-      LEFT JOIN recete r ON r.urun_id = u.id
-      LEFT JOIN hammadde h ON h.id = r.hammadde_id
       WHERE u.aktif = 1
-      GROUP BY u.id
-      ORDER BY kar_marji ASC
-    `).all()
+      ORDER BY u.ad ASC
+    `).all() as any[]
+
+    return urunler.map(u => {
+      const toplamMaliyet = urunReceteMaliyetiHesapla(db, u.urun_id)
+      const karTutari = Number((u.satis_fiyati - toplamMaliyet).toFixed(2))
+      const karMarji = u.satis_fiyati > 0 ? Number(((karTutari / u.satis_fiyati) * 100).toFixed(1)) : 0
+      return {
+        ...u,
+        toplam_maliyet: toplamMaliyet,
+        kar_tutari: karTutari,
+        kar_marji: karMarji,
+      }
+    })
   })
 
   // Reçete ekle/güncelle
@@ -142,28 +160,32 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
 
   // Maliyet analizi
   ipcMain.handle(STOK_KANALLARI.MALIYET_ANALIZI, async () => {
-    return db.prepare(`
+    const urunler = db.prepare(`
       SELECT u.id as urun_id, u.ad as urun_adi, k.ad as kategori_adi, u.fiyat as satis_fiyati,
-             COALESCE(SUM(r.miktar * h.maliyet_birim), 0) as hammadde_maliyeti,
-             CASE WHEN u.fiyat > 0
-               THEN ROUND((u.fiyat - COALESCE(SUM(r.miktar * h.maliyet_birim), 0)) / u.fiyat * 100, 1)
-               ELSE 0
-             END as kar_marji,
              COALESCE(sat.satis_adedi, 0) as satis_adedi,
-             COALESCE(sat.toplam_ciro, 0) as toplam_ciro,
-             COALESCE(sat.satis_adedi, 0) * (u.fiyat - COALESCE(SUM(r.miktar * h.maliyet_birim), 0)) as toplam_kar
+             COALESCE(sat.toplam_ciro, 0) as toplam_ciro
       FROM urun u
       JOIN kategori k ON k.id = u.kategori_id
-      LEFT JOIN recete r ON r.urun_id = u.id
-      LEFT JOIN hammadde h ON h.id = r.hammadde_id
       LEFT JOIN (
         SELECT urun_id, SUM(miktar) as satis_adedi, SUM(toplam_fiyat) as toplam_ciro
         FROM siparis WHERE durum != 'iptal'
         GROUP BY urun_id
       ) sat ON sat.urun_id = u.id
       WHERE u.aktif = 1
-      GROUP BY u.id
-      ORDER BY kar_marji ASC
-    `).all()
+      ORDER BY sat.toplam_ciro DESC
+    `).all() as any[]
+
+    return urunler.map(u => {
+      const hammaddeMaliyeti = urunReceteMaliyetiHesapla(db, u.urun_id)
+      const karMarji = u.satis_fiyati > 0 ? Number((((u.satis_fiyati - hammaddeMaliyeti) / u.satis_fiyati) * 100).toFixed(1)) : 0
+      const toplamKar = Number(((u.satis_fiyati - hammaddeMaliyeti) * u.satis_adedi).toFixed(2))
+
+      return {
+        ...u,
+        hammadde_maliyeti: hammaddeMaliyeti,
+        kar_marji: karMarji,
+        toplam_kar: toplamKar,
+      }
+    })
   })
 }

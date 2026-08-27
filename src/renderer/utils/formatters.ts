@@ -1,6 +1,6 @@
 // =====================================================
 // Yardımcı Fonksiyonlar — Formatlayıcılar
-// Tarih, para, telefon formatlama işlemleri
+// Tarih, para, telefon ve miktar formatlama işlemleri
 // =====================================================
 
 import { format, parseISO } from 'date-fns'
@@ -10,7 +10,7 @@ import { tr } from 'date-fns/locale'
  * Tutarı Türk Lirası formatında biçimlendirir (Örn: 1.250,50 ₺)
  */
 export function formatPara(tutar: number | undefined | null): string {
-  if (tutar === undefined || tutar === null) return '0,00 ₺'
+  if (tutar === undefined || tutar === null || isNaN(tutar)) return '0,00 ₺'
   
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
@@ -18,6 +18,16 @@ export function formatPara(tutar: number | undefined | null): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(tutar)
+}
+
+/**
+ * Stok ve hammadde miktarını virgülden sonra gereksiz sıfır ve hassasiyet taşmalarını engelleyerek biçimlendirir
+ * Örn: 3.4000004 => '3,4', 5 => '5', 0.150 => '0,15'
+ */
+export function formatMiktar(miktar: number | undefined | null, ondalik: number = 3): string {
+  if (miktar === undefined || miktar === null || isNaN(miktar)) return '0'
+  const yuvarlanmis = Number(Number(miktar).toFixed(ondalik))
+  return yuvarlanmis.toLocaleString('tr-TR', { maximumFractionDigits: ondalik })
 }
 
 /**
