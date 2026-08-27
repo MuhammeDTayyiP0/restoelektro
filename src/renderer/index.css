@@ -5,16 +5,30 @@
 @layer base {
   :root {
     --brand-primary: #3b82f6;
-    --brand-dark: #1e3a8a;
-    --surface-bg: #f8fafc;
-    --text-main: #0f172a;
+    --brand-dark: #1d4ed8;
+    --surface-bg: #090a0f;
+    --surface-card: #0e121e;
+    --surface-border: #1e2436;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
   }
   
   .dark {
     --brand-primary: #3b82f6;
     --brand-dark: #60a5fa;
-    --surface-bg: #020617;
-    --text-main: #f1f5f9;
+    --surface-bg: #090a0f;
+    --surface-card: #0e121e;
+    --surface-border: #1e2436;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+
+  body {
+    background-color: #090a0f;
+    color: #f1f5f9;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Form elemanlarının seçilebilir ve yazılabilir olmasını sağla */
@@ -26,54 +40,87 @@
 }
 
 @layer utilities {
-  /* Özel Scrollbar — Dokunmatik ekran için daha kalın ve belirgin */
+  /* Endüstriyel POS Izgara Deseni */
+  .bg-pos-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-pos-grid-dense {
+    background-image: radial-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  /* Merkez Odak Radyal Işığı */
+  .bg-pos-radial {
+    background: radial-gradient(circle at 50% 35%, rgba(59, 130, 246, 0.07) 0%, rgba(9, 10, 15, 0) 70%);
+  }
+
+  /* Özel POS Scrollbar — Dokunmatik ve masaüstü için optimize */
   .pos-scrollbar::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
 
   .pos-scrollbar::-webkit-scrollbar-track {
-    background: theme('colors.surface.100');
-    border-radius: 8px;
-  }
-
-  .dark .pos-scrollbar::-webkit-scrollbar-track {
-    background: theme('colors.surface.800');
+    background: rgba(14, 18, 30, 0.6);
+    border-radius: 6px;
   }
 
   .pos-scrollbar::-webkit-scrollbar-thumb {
-    background: theme('colors.surface.400');
-    border-radius: 8px;
-    border: 3px solid theme('colors.surface.100');
-  }
-
-  .dark .pos-scrollbar::-webkit-scrollbar-thumb {
-    background: theme('colors.surface.600');
-    border: 3px solid theme('colors.surface.800');
+    background: #1e2538;
+    border-radius: 6px;
+    border: 2px solid rgba(14, 18, 30, 0.6);
+    transition: background 0.2s ease;
   }
 
   .pos-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.brand.500');
+    background: #3b82f6;
   }
 
-  /* Cam Efekti (Glassmorphism) */
+  /* Cam & Panel Efektleri (Glassmorphism & Industrial Card) */
   .glass-panel {
-    @apply bg-white/70 dark:bg-surface-900/70 backdrop-blur-md border border-white/20 dark:border-surface-700/30;
+    @apply bg-[#0e121e]/85 backdrop-blur-xl border border-[#1e2436] shadow-2xl;
   }
 
-  /* Dokunmatik Geri Bildirim Efekti (Ripple/Scale) */
+  .industrial-card {
+    @apply bg-[#0e121e] border border-[#1e2436] rounded-2xl shadow-xl transition-all duration-200;
+  }
+
+  .industrial-card-hover {
+    @apply hover:border-brand-500/50 hover:bg-[#121727] hover:shadow-brand-950/40;
+  }
+
+  /* Dokunmatik Geri Bildirim Efekti */
   .touch-feedback {
-    @apply transition-transform active:scale-95 cursor-pointer;
+    @apply transition-transform active:scale-[0.97] cursor-pointer select-none duration-100 ease-out;
   }
   
-  /* Seçim engelleme (kullanıcı arayüzü genelinde) */
+  /* Seçim engelleme */
   .no-select {
     user-select: none;
     -webkit-user-select: none;
   }
+
+  /* LED Durum Sinyali */
+  .status-beacon-green {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  }
+
+  .status-beacon-blue {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+  }
+
+  .status-beacon-amber {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  }
+
+  .status-beacon-red {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  }
 }
 
-/* Kiosk Modu Ekran Koruyucu (opsiyonel) */
+/* Kiosk Modu Ekran Koruyucu */
 .screen-saver-active {
   animation: pulse-soft 2s infinite;
 }

@@ -13,14 +13,14 @@ export function MainLayout() {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen bg-surface-50 dark:bg-surface-950 overflow-hidden">
+    <div className="flex flex-col w-full h-screen bg-[#090A0F] text-surface-100 overflow-hidden">
       <Header />
       
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         
         {/* Ana İçerik Alanı */}
-        <main className="flex-1 relative overflow-hidden flex flex-col bg-surface-100 dark:bg-surface-950/50">
+        <main className="flex-1 relative overflow-hidden flex flex-col bg-[#090A0F]">
           <div className="flex-1 overflow-y-auto pos-scrollbar p-4 lg:p-6">
             <Outlet />
           </div>
@@ -29,3 +29,4 @@ export function MainLayout() {
     </div>
   )
 }
+

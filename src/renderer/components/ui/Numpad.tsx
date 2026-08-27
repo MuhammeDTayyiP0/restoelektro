@@ -25,9 +25,9 @@ export const Numpad = React.memo(function Numpad({
 }: NumpadProps) {
   
   return (
-    <div className={clsx('w-full max-w-sm flex flex-col gap-2.5 select-none', className)}>
+    <div className={clsx('w-full max-w-sm flex flex-col gap-3 select-none', className)}>
       {showDisplay && (
-        <div className="bg-[#090B11] h-16 rounded-xl flex items-center justify-end px-5 border border-[#1E2333] shadow-inner mb-1">
+        <div className="bg-[#090A0F] h-16 rounded-xl flex items-center justify-end px-5 border border-[#1E2436] shadow-inner mb-1">
           <span className="text-2xl font-bold font-mono text-white tracking-widest truncate">
             {value || '0'}
           </span>
@@ -45,9 +45,9 @@ export const Numpad = React.memo(function Numpad({
                 <motion.button
                   key={key}
                   type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.93, y: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.94, y: 1 }}
+                  transition={{ type: 'spring', stiffness: 600, damping: 30 }}
                   onClick={() => {
                     if (isClear) {
                       if (onClear) onClear()
@@ -57,17 +57,19 @@ export const Numpad = React.memo(function Numpad({
                     }
                   }}
                   className={clsx(
-                    'h-14 sm:h-16 rounded-xl flex items-center justify-center font-mono text-xl sm:text-2xl font-semibold border transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50',
+                    'h-15 sm:h-16 rounded-xl flex items-center justify-center font-mono text-xl sm:text-2xl font-bold border transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50 touch-feedback relative overflow-hidden',
                     row.length === 1 && 'col-span-3',
                     isClear
-                      ? 'bg-red-950/30 hover:bg-red-900/40 text-red-400 border-red-900/50 active:bg-red-900/60'
+                      ? 'bg-rose-950/30 hover:bg-rose-900/40 text-rose-400 border-rose-900/50 active:bg-rose-900/60 shadow-inner'
                       : isBackspace
-                      ? 'bg-[#141824] hover:bg-[#1D2233] text-surface-300 border-[#222738] active:bg-[#252C42]'
-                      : 'bg-[#121520] hover:bg-[#1A1F30] text-white border-[#1E2334] active:bg-[#242A42] hover:border-brand-500/30'
+                      ? 'bg-[#151927] hover:bg-[#1D2336] text-surface-200 border-[#242C40] active:bg-[#252E44]'
+                      : 'bg-[#111522] hover:bg-[#181E30] text-white border-[#1F273B] active:bg-[#20283F] hover:border-brand-500/40'
                   )}
                   aria-label={isBackspace ? 'Sil' : isClear ? 'Temizle' : `Tuş ${key}`}
                 >
-                  {isBackspace ? <Delete size={22} className="mx-auto" /> : key}
+                  {/* Üst kenar hafif ışık yansıması (mekanik tuş hissi) */}
+                  <span className="absolute inset-x-0 top-0 h-[1px] bg-white/[0.08]" />
+                  {isBackspace ? <Delete size={22} className="mx-auto text-surface-300" /> : key}
                 </motion.button>
               )
             })}
@@ -83,4 +85,5 @@ export const Numpad = React.memo(function Numpad({
     </div>
   )
 })
+
 
