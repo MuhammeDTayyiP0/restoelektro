@@ -14,6 +14,7 @@ import { musteriIPCKaydet } from './customer.ipc'
 import { raporIPCKaydet } from './report.ipc'
 import { ayarIPCKaydet } from './settings.ipc'
 import { yaziciIPCKaydet } from './printer.ipc'
+import { appIPCKaydet } from './app.ipc'
 
 /**
  * Tüm IPC handler'larını kaydeder
@@ -30,6 +31,7 @@ export function ipcHandlerlariniKaydet(ipcMain: IpcMain): void {
   raporIPCKaydet(ipcMain)
   ayarIPCKaydet(ipcMain)
   yaziciIPCKaydet(ipcMain)
+  appIPCKaydet(ipcMain)
 
   console.log('✅ Tüm IPC handler\'ları kaydedildi')
 }

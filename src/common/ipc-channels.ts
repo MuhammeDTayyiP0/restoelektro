@@ -145,4 +145,7 @@ export const UYGULAMA_KANALLARI = {
   KAPAT: 'uygulama:kapat',
   TAM_EKRAN: 'uygulama:tam-ekran',
   VERITABANI_YEDEKLE: 'uygulama:veritabani-yedekle',
+  VERITABANI_BILGISI: 'uygulama:veritabani-bilgisi',
+  VERITABANI_OPTIMIZE: 'uygulama:veritabani-optimize',
+  VERITABANI_YEDEKLER: 'uygulama:veritabani-yedekler',
 } as const

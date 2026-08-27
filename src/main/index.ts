@@ -6,10 +6,14 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
-import { veritabaniBaslat, veritabaniKapat } from './database/connection'
+import { veritabaniBaslat, veritabaniKapat, veritabaniGetir } from './database/connection'
+import { otomatikYedekAl } from './database/backup'
 import { ipcHandlerlariniKaydet } from './ipc/index'
 import { apiSunucusunuBaslat } from './api/server'
 import { autoUpdater } from 'electron-updater'
+
+// Uygulama adı — userData yolunun tutarlılığı için
+app.name = 'ETİBOL POS'
 
 // Ana pencere referansı
 let anaPencere: BrowserWindow | null = null
@@ -110,8 +114,14 @@ app.disableHardwareAcceleration()
 app.whenReady().then(uygulamaBaslat)
 
 // Tüm pencereler kapandığında (macOS hariç)
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
+    try {
+      const db = veritabaniGetir()
+      await otomatikYedekAl(db, 'kapanis')
+    } catch {
+      // sessizce devam et
+    }
     veritabaniKapat()
     app.quit()
   }
@@ -125,7 +135,13 @@ app.on('activate', () => {
 })
 
 // Uygulama kapanırken veritabanını kapat
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
+  try {
+    const db = veritabaniGetir()
+    await otomatikYedekAl(db, 'kapanis')
+  } catch {
+    // sessizce devam et
+  }
   veritabaniKapat()
 })
 

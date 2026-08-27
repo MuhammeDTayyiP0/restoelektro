@@ -63,7 +63,8 @@ const izinliKanallar = [
   'ayar:getir', 'ayar:kaydet', 'ayar:tumu',
   // Uygulama
   'uygulama:surum', 'uygulama:yeniden-baslat', 'uygulama:kapat',
-  'uygulama:tam-ekran', 'uygulama:veritabani-yedekle',
+  'uygulama:tam-ekran', 'uygulama:veritabani-yedekle', 'uygulama:veritabani-bilgisi',
+  'uygulama:veritabani-optimize', 'uygulama:veritabani-yedekler',
 ]
 
 // Bildirim kanalları (main → renderer)

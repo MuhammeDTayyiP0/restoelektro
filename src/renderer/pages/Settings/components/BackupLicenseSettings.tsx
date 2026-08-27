@@ -9,19 +9,48 @@ export default function BackupLicenseSettings() {
   const { success, info, error } = useToast()
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
-  const [lastBackupTime, setLastBackupTime] = useState<string>('Bugün, 21:45')
+  const [lastBackupTime, setLastBackupTime] = useState<string>('Yükleniyor...')
+  const [dbInfo, setDbInfo] = useState<{
+    dbYolu?: string
+    dbBoyutFormatted?: string
+    toplamYedekSayisi?: number
+    userVersion?: number
+    userDataPath?: string
+  }>({})
+
+  const loadDbInfo = async () => {
+    try {
+      const res = (await ipcInvoke(UYGULAMA_KANALLARI.VERITABANI_BILGISI)) as any
+      if (res && res.basarili) {
+        setDbInfo(res)
+        if (res.sonYedekTarihi) {
+          const d = new Date(res.sonYedekTarihi)
+          setLastBackupTime(d.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }))
+        } else {
+          setLastBackupTime('Henüz yedek yok')
+        }
+      }
+    } catch {
+      // sessizce devam et
+    }
+  }
+
+  React.useEffect(() => {
+    loadDbInfo()
+  }, [])
 
   const handleBackup = async () => {
     setIsBackingUp(true)
     try {
-      try {
-        await ipcInvoke(UYGULAMA_KANALLARI.VERITABANI_YEDEKLE)
-      } catch {
-        // Fallback
+      const res = (await ipcInvoke(UYGULAMA_KANALLARI.VERITABANI_YEDEKLE)) as any
+      if (res && res.basarili) {
+        const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+        setLastBackupTime(`Bugün, ${now}`)
+        success('Yedekleme Tamamlandı', 'Veritabanı anlık yedeği userData/backups/ altına güvenli şekilde kaydedildi.')
+        loadDbInfo()
+      } else {
+        throw new Error(res?.hata || 'Yedekleme başarısız oldu')
       }
-      const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-      setLastBackupTime(`Bugün, ${now}`)
-      success('Yedekleme Tamamlandı', 'Veritabanı anlık yedeği güvenli şekilde oluşturuldu.')
     } catch (err: any) {
       error('Yedekleme Hatası', err.message || 'Yedek alınamadı.')
     } finally {
@@ -31,10 +60,19 @@ export default function BackupLicenseSettings() {
 
   const handleOptimize = async () => {
     setIsOptimizing(true)
-    setTimeout(() => {
+    try {
+      const res = (await ipcInvoke(UYGULAMA_KANALLARI.VERITABANI_OPTIMIZE)) as any
+      if (res && res.basarili) {
+        success('Veritabanı Optimize Edildi', `SQLite indeksleri ve WAL disk alanı optimize edildi (${res.sureMs}ms).`)
+        loadDbInfo()
+      } else {
+        throw new Error(res?.hata || 'Optimizasyon hatası')
+      }
+    } catch (err: any) {
+      error('Optimizasyon Hatası', err.message || 'Optimize edilemedi.')
+    } finally {
       setIsOptimizing(false)
-      success('Veritabanı Optimize Edildi', 'SQLite indeksleri ve önbellek başarıyla temizlendi.')
-    }, 1200)
+    }
   }
 
   return (
@@ -69,19 +107,21 @@ export default function BackupLicenseSettings() {
             <div className="space-y-3 text-xs text-surface-300">
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
                 <span className="text-surface-400">Veritabanı Dosyası</span>
-                <span className="font-mono text-white">resto.sqlite</span>
+                <span className="font-mono text-white">database.sqlite ({dbInfo.dbBoyutFormatted || 'Aktif'})</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
-                <span className="text-surface-400">Motor & Sürüm</span>
-                <span className="font-mono text-white">SQLite 3 / Better-SQLite3</span>
+                <span className="text-surface-400">Motor & Şema Sürümü</span>
+                <span className="font-mono text-white">SQLite 3 / v{dbInfo.userVersion || 1} (WAL Modu)</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
-                <span className="text-surface-400">Son Yedekleme</span>
+                <span className="text-surface-400">Son Güvenlik Yedeği</span>
                 <span className="font-mono text-brand-400">{lastBackupTime}</span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-surface-400">Yedekleme Konumu</span>
-                <span className="font-mono text-surface-400 text-[11px] truncate max-w-[180px]">./backups/auto/</span>
+                <span className="font-mono text-surface-400 text-[11px] truncate max-w-[200px]" title={dbInfo.userDataPath ? `${dbInfo.userDataPath}\\backups` : 'userData/backups/'}>
+                  {dbInfo.userDataPath ? 'userData/backups/' : 'userData/backups/'} ({dbInfo.toplamYedekSayisi || 0} adet)
+                </span>
               </div>
             </div>
           </div>
