@@ -58,8 +58,8 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   })
 
   // ===== QR MENÜ ARAYÜZÜ =====
-  // Müşteriler http://<bilgisayar-ip>:3847/qrmenu adresine gidince açılır
-  app.get('/qrmenu', (_req, res) => {
+  // Müşteriler http://<bilgisayar-ip>:3847/qrmenu veya /menu adresine gidince açılır
+  app.get(['/qrmenu', '/menu'], (_req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.send(qrMenuHTML())
   })
@@ -357,11 +357,11 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   // ===== QR MENÜ =====
 
   // Herkese açık menü (token gerekmez)
-  app.get('/api/qrmenu', (req, res) => {
+  app.get(['/api/qrmenu', '/api/menu'], (req, res) => {
     const db = veritabaniGetir()
     const kategoriler = db.prepare('SELECT id, ad, renk, ikon FROM kategori WHERE aktif = 1 ORDER BY sira').all()
     const urunler = db.prepare(`
-      SELECT id, kategori_id, ad, fiyat, birim, resim_yolu
+      SELECT id, kategori_id, ad, kisaltma, fiyat, birim, resim_yolu
       FROM urun WHERE aktif = 1 ORDER BY sira
     `).all()
     const ayarlar = db.prepare("SELECT deger FROM ayar WHERE anahtar = 'isletme_adi'").get() as any
