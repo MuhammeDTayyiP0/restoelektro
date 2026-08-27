@@ -95,7 +95,8 @@ export function generateMutfakHtml(
     for (const siparis of siparisler) {
       let urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
       if (siparis.porsiyon && siparis.porsiyon !== 1) {
-        urunAdi = `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} PORSİYON ` + urunAdi;
+        const porsiyonText = siparis.porsiyon === 0.5 ? 'YARIM (0.5)' : siparis.porsiyon === 2 ? 'DUBLE (2)' : `${siparis.porsiyon}`;
+        urunAdi = `${porsiyonText} PORSİYON ` + urunAdi;
       }
       const miktar = siparis.miktar || 1;
       const varyantAd = siparis.varyant?.ad || siparis.varyant_adi || '';
@@ -123,7 +124,8 @@ export function generateMutfakHtml(
     for (const iptal of iptaller) {
       let urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
       if (iptal.porsiyon && iptal.porsiyon !== 1) {
-        urunAdi = `${iptal.porsiyon === 2 ? 'Duble (2)' : iptal.porsiyon} PORSİYON ` + urunAdi;
+        const porsiyonText = iptal.porsiyon === 0.5 ? 'YARIM (0.5)' : iptal.porsiyon === 2 ? 'DUBLE (2)' : `${iptal.porsiyon}`;
+        urunAdi = `${porsiyonText} PORSİYON ` + urunAdi;
       }
       const miktar = iptal.miktar || 1;
       const varyantAd = iptal.varyant?.ad || iptal.varyant_adi || '';
@@ -222,7 +224,8 @@ export function generateAdisyonHtml(
     const fiyatStr = isIkram ? 'IKRAM' : formatPara(siparis.toplam_fiyat);
     let urunAdi = siparis.urun_adi;
     if (siparis.porsiyon && siparis.porsiyon !== 1) {
-      urunAdi = `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} Porsiyon ` + urunAdi;
+      const porsiyonText = siparis.porsiyon === 0.5 ? '0.5' : siparis.porsiyon === 2 ? 'Double' : `${siparis.porsiyon}`;
+      urunAdi = `${urunAdi} (${porsiyonText} Porsiyon)`;
     }
     
     html += `

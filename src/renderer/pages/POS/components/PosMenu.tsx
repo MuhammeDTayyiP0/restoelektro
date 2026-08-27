@@ -119,16 +119,17 @@ export default function PosMenu() {
         {/* Porsiyon Seçici Segmented Toggle */}
         <div className="flex items-center bg-[#090D15] p-1 rounded-xl border border-[#1F293D] h-12 w-full md:w-auto shrink-0 shadow-inner">
           {[
+            { p: 0.5, label: '0.5x Yarım', short: '0.5x' },
             { p: 1, label: '1x Porsiyon', short: '1x' },
             { p: 1.5, label: '1.5x Porsiyon', short: '1.5x' },
-            { p: 2, label: '2x Duble', short: '2x' }
+            { p: 2, label: '2x Double', short: '2x' }
           ].map(({ p, label, short }) => (
             <motion.button
               key={p}
               whileTap={{ scale: 0.95 }}
               onClick={() => setAktifPorsiyon(p)}
               className={clsx(
-                'flex-1 md:flex-initial md:px-4 h-10 flex items-center justify-center font-mono font-bold text-xs rounded-lg transition-all',
+                'flex-1 md:flex-initial px-2.5 sm:px-3.5 h-10 flex items-center justify-center font-mono font-bold text-xs rounded-lg transition-all',
                 aktifPorsiyon === p
                   ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)] border border-cyan-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-[#141B29]'
@@ -298,8 +299,8 @@ export default function PosMenu() {
                         {formatPara(urun.fiyat * aktifPorsiyon)}
                       </span>
                       {aktifPorsiyon !== 1 && (
-                        <span className="text-[9px] font-mono text-slate-400">
-                          ({aktifPorsiyon}x Porsiyon)
+                        <span className="text-[9px] font-mono text-cyan-400 font-semibold">
+                          ({aktifPorsiyon === 0.5 ? '0.5x Yarım' : aktifPorsiyon === 2 ? '2x Double' : `${aktifPorsiyon}x Porsiyon`})
                         </span>
                       )}
                     </div>

@@ -1784,7 +1784,7 @@ async function masaDetayCiz(masaId) {
       const iptalCls = isIptal ? 'iptal' : '';
       const statusCls = s.durum === 'bekliyor' ? 'status-bekliyor' : (s.durum === 'hazir' ? 'status-hazir' : 'status-diger');
       const ikramEtiketi = s.ikram ? '<span style="background:var(--pos-purple); color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; margin-left:6px;">İKRAM</span>' : '';
-      const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 2 ? 'Duble ' : s.porsiyon + ' Porsiyon ') ) : '';
+      const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
 
       html += '<div class="siparis-item-row '+iptalCls+'">';
       html += '  <div class="siparis-left-info">';
@@ -1865,8 +1865,8 @@ function siparisEkraniCiz() {
 
   // Porsiyon Seçici Kontrolü
   html += '<div class="porsiyon-control">';
-  [1, 1.5, 2].forEach(p => {
-    const label = p === 1 ? '1 Porsiyon' : (p === 1.5 ? '1.5 Porsiyon' : '2 (Duble)');
+  [0.5, 1, 1.5, 2].forEach(p => {
+    const label = p === 0.5 ? '0.5 (Yarım)' : (p === 1 ? '1 Porsiyon' : (p === 1.5 ? '1.5 Porsiyon' : '2 (Double)'));
     const act = aktifPorsiyon === p ? 'active' : '';
     html += '<button class="porsiyon-btn '+act+'" onclick="porsiyonSec('+p+')">'+label+'</button>';
   });
@@ -2005,7 +2005,7 @@ function sepetListeCiz() {
 
   sepet.forEach((s) => {
     const ikramEtiketi = s.ikram ? '<span style="background:var(--pos-purple); color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:6px; font-weight:800;">İKRAM</span>' : '';
-    const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 2 ? 'Duble ' : s.porsiyon + ' Porsiyon ') ) : '';
+    const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
     const toplamFiyat = (s.fiyat * s.miktar * (s.porsiyon || 1)).toFixed(0);
     const fiyatMetni = s.ikram 
       ? '<span style="text-decoration:line-through; color:var(--text-muted);">₺'+toplamFiyat+'</span>' 

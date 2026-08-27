@@ -303,10 +303,15 @@ export default function PosCart() {
                       <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={clsx(
-                            "text-sm font-bold tracking-tight",
+                            "text-sm font-bold tracking-tight flex items-center gap-1.5 flex-wrap",
                             isIptal ? "line-through text-slate-400" : "text-white"
                           )}>
-                            {siparis.porsiyon && siparis.porsiyon !== 1 ? `${siparis.porsiyon === 2 ? 'Duble (2)' : siparis.porsiyon} Porsiyon ` : ''}{siparis.urun_adi}
+                            <span>{siparis.urun_adi}</span>
+                            {siparis.porsiyon && siparis.porsiyon !== 1 && (
+                              <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                ({siparis.porsiyon === 2 ? 'Double' : siparis.porsiyon} Porsiyon)
+                              </span>
+                            )}
                           </span>
 
                           {/* Status Badge */}
@@ -469,8 +474,13 @@ export default function PosCart() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold tracking-tight text-white">
-                            {kalem.porsiyon && kalem.porsiyon !== 1 ? `${kalem.porsiyon === 2 ? 'Duble (2)' : kalem.porsiyon} Porsiyon ` : ''}{kalem.urun.ad}
+                          <span className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 flex-wrap">
+                            <span>{kalem.urun.ad}</span>
+                            {kalem.porsiyon && kalem.porsiyon !== 1 && (
+                              <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                ({kalem.porsiyon === 2 ? 'Double' : kalem.porsiyon} Porsiyon)
+                              </span>
+                            )}
                           </span>
 
                           {kalem.ikram && (
