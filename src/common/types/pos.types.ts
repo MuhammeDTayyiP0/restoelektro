@@ -102,8 +102,10 @@ export interface YeniOdeme {
   hesap_id: number
   odeme_tipi: OdemeTipi
   tutar: number
+  personel_id?: number
   referans_no?: string
   notlar?: string
+  odenen_siparisler?: { id: number; miktar: number }[]
 }
 
 /** İndirim uygulama */

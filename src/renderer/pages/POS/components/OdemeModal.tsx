@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { formatPara } from '../../../utils/formatters'
@@ -9,8 +9,21 @@ import { HESAP_KANALLARI } from '../../../../common/ipc-channels'
 import { useToast } from '../../../components/ui/Toast'
 import { useNavigate } from 'react-router-dom'
 import { Numpad } from '../../../components/ui/Numpad'
-import { Banknote, CreditCard, Tag, SplitSquareHorizontal } from 'lucide-react'
+import { 
+  Banknote, 
+  CreditCard, 
+  Tag, 
+  SplitSquareHorizontal, 
+  Receipt, 
+  CheckCircle2, 
+  Clock, 
+  Coins, 
+  Sparkles,
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react'
 import { clsx } from 'clsx'
+import { motion } from 'framer-motion'
 import IndirimModal from './IndirimModal'
 import MiktarModal from './MiktarModal'
 
@@ -32,47 +45,74 @@ const SiparisItemRow = React.memo(({
   onMiktarAyarla: (siparis: any) => void 
 }) => {
   const isSelected = secilenMiktar > 0;
+  const birimFiyat = siparis.toplam_fiyat / (siparis.miktar || 1);
+  const seciliTutar = birimFiyat * secilenMiktar;
   
   return (
     <div 
       onClick={() => !isIkram && onMiktarDegistir(siparis, secilenMiktar < siparis.miktar ? 1 : -secilenMiktar)}
       className={clsx(
-        "flex items-center justify-between p-3 mb-2 rounded-xl border transition-colors select-none",
-        isIkram ? "opacity-60 bg-surface-100 border-transparent grayscale cursor-default" : 
-        "cursor-pointer " + (isSelected ? "bg-brand-50 border-brand-300 dark:bg-brand-900/30 dark:border-brand-700 ring-1 ring-brand-400" : "bg-white border-surface-200 dark:bg-surface-800 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700")
+        "flex items-center justify-between p-3 mb-1.5 rounded-xl border transition-all select-none",
+        isIkram 
+          ? "opacity-50 bg-[#0E131E] border-[#1C2538] grayscale cursor-default" 
+          : isSelected 
+            ? "bg-[#142136] border-cyan-500/60 shadow-[0_0_12px_rgba(6,182,212,0.15)] ring-1 ring-cyan-400/40 cursor-pointer" 
+            : "bg-[#0C1018] border-[#1A2234] hover:bg-[#111722] hover:border-[#26324A] cursor-pointer"
       )}
     >
       <div className="flex items-center gap-3">
-        <div className={clsx("w-6 h-6 rounded flex items-center justify-center border font-bold text-xs shrink-0", isIkram ? "border-surface-300" : isSelected ? "bg-brand-500 border-brand-500 text-white" : "border-surface-300 dark:border-surface-600")}>
+        {/* Seçim İndikatörü */}
+        <div className={clsx(
+          "w-6 h-6 rounded-lg flex items-center justify-center border font-mono font-bold text-xs shrink-0 transition-colors",
+          isIkram 
+            ? "border-[#222C42] text-slate-400" 
+            : isSelected 
+              ? "bg-cyan-500 border-cyan-400 text-black shadow-sm" 
+              : "border-[#25324A] text-slate-400 bg-[#090D15]"
+        )}>
           {isSelected ? secilenMiktar : ''}
         </div>
+
         <div className="flex flex-col">
-          <span className="font-bold text-surface-900 dark:text-white text-sm">
-            {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
-            {isIkram && <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-bold uppercase">İkram</span>}
+          <span className="font-bold text-slate-100 text-sm flex items-center gap-1.5">
+            <span>{siparis.miktar}x</span>
+            <span>{siparis.urun_adi || 'Bilinmeyen Ürün'}</span>
+            {isIkram && (
+              <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1.5 py-0.5 rounded uppercase">
+                İkram
+              </span>
+            )}
           </span>
-          {siparis.varyant_adi && <span className="text-xs text-surface-500">{siparis.varyant_adi}</span>}
+          {siparis.varyant_adi && (
+            <span className="text-xs text-slate-400 font-mono">
+              [{siparis.varyant_adi}]
+            </span>
+          )}
         </div>
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {!isIkram && siparis.miktar > 1 && (
-          <div className="flex items-center gap-1 border border-surface-200 dark:border-surface-700 rounded-lg p-0.5 bg-white dark:bg-surface-900 shadow-sm" onClick={e => e.stopPropagation()}>
+          <div 
+            className="flex items-center gap-0.5 border border-[#222E44] rounded-lg p-0.5 bg-[#090D15] shadow-inner" 
+            onClick={e => e.stopPropagation()}
+          >
              <button 
-               className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#162133] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
                disabled={secilenMiktar <= 0}
                onClick={(e) => onMiktarDegistir(siparis, -1, e)}
              >
                -
              </button>
              <button 
-               className="w-8 h-6 text-center text-xs font-bold bg-surface-50 dark:bg-surface-800 border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded p-0 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+               className="w-8 h-7 text-center text-xs font-mono font-black bg-[#121A28] border border-[#202C40] rounded text-cyan-400 hover:bg-[#182337] transition-colors"
                onClick={(e) => { e.stopPropagation(); onMiktarAyarla(siparis); }}
+               title="Miktarı belirlemek için dokunun"
              >
                {secilenMiktar === 0 ? '0' : secilenMiktar}
              </button>
              <button 
-               className="w-6 h-6 flex items-center justify-center rounded text-surface-600 hover:bg-surface-100 disabled:opacity-30 disabled:hover:bg-transparent"
+               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#162133] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
                disabled={secilenMiktar >= siparis.miktar}
                onClick={(e) => onMiktarDegistir(siparis, 1, e)}
              >
@@ -80,39 +120,49 @@ const SiparisItemRow = React.memo(({
              </button>
           </div>
         )}
-        <div className="font-bold text-surface-900 dark:text-white shrink-0">
-          {formatPara(siparis.toplam_fiyat)}
+        <div className="text-right shrink-0">
+          <span className={clsx(
+            "text-sm font-mono font-bold tabular-nums block",
+            isSelected ? "text-cyan-300" : "text-slate-200"
+          )}>
+            {formatPara(isSelected ? seciliTutar : siparis.toplam_fiyat)}
+          </span>
+          {isSelected && secilenMiktar < siparis.miktar && (
+            <span className="text-[10px] font-mono text-slate-400 block">
+              Toplam: {formatPara(siparis.toplam_fiyat)}
+            </span>
+          )}
         </div>
       </div>
     </div>
   )
 });
 
-/** Ödenen ürünlerin satırı – statik, tıklanamaz */
+/** Ödenen ürünlerin satırı – statik */
 const OdenmisItemRow = React.memo(({ siparis }: { siparis: any }) => (
-  <div 
-    className="flex items-center justify-between p-3 mb-2 rounded-xl border border-transparent bg-surface-100/50 dark:bg-surface-800/30 opacity-60 grayscale select-none"
-  >
-    <div className="flex items-center gap-3">
-      <div className="w-6 h-6 rounded flex items-center justify-center border border-surface-300"></div>
+  <div className="flex items-center justify-between p-2.5 mb-1.5 rounded-xl border border-[#182030] bg-[#0A0E17]/60 opacity-60 select-none">
+    <div className="flex items-center gap-2.5">
+      <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
       <div className="flex flex-col">
-        <span className="font-bold text-surface-900 dark:text-white text-sm line-through">
-          {siparis.miktar}x {siparis.urun_adi || 'Bilinmeyen Ürün'}
+        <span className="font-bold text-slate-400 text-xs line-through">
+          {siparis.miktar}x {siparis.urun_adi || 'Ürün'}
         </span>
-        {siparis.varyant_adi && <span className="text-xs text-surface-500 line-through">{siparis.varyant_adi}</span>}
+        {siparis.varyant_adi && <span className="text-[10px] text-slate-400 line-through">[{siparis.varyant_adi}]</span>}
       </div>
     </div>
     
     <div className="flex items-center gap-2">
-      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">Ödendi</span>
-      <div className="font-bold text-surface-500 shrink-0 line-through">
+      <span className="text-[9px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase">
+        Ödendi
+      </span>
+      <div className="font-mono text-xs font-bold text-slate-400 shrink-0 line-through">
         {formatPara(siparis.toplam_fiyat)}
       </div>
     </div>
   </div>
 ));
 
-/** Hızlı tutar butonları – memo ile sarılı */
+/** Hızlı tutar butonları – Endüstriyel Dokunmatik Presetler */
 const HizliTutarButonlari = React.memo(({ 
   odenecekHedefTutar, 
   almanUsuluAktif, 
@@ -123,22 +173,24 @@ const HizliTutarButonlari = React.memo(({
   onHizliTutar: (miktar: number) => void 
 }) => (
   <div className="grid grid-cols-4 gap-2">
-    <Button variant="outline" onClick={() => onHizliTutar(odenecekHedefTutar)} className="col-span-2 font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">
-      {almanUsuluAktif ? 'Seçili Tutar' : 'Kalanın Tamamı'}
-    </Button>
-    <Button variant="outline" onClick={() => onHizliTutar(50)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">50₺</Button>
-    <Button variant="outline" onClick={() => onHizliTutar(100)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">100₺</Button>
-    <Button variant="outline" onClick={() => onHizliTutar(200)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">200₺</Button>
-    <Button variant="outline" onClick={() => onHizliTutar(500)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">500₺</Button>
-    <Button variant="outline" onClick={() => onHizliTutar(1000)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">1000₺</Button>
-    <Button variant="outline" onClick={() => onHizliTutar(2000)} className="font-bold h-14 bg-white dark:bg-surface-900 border-surface-300 shadow-sm text-lg hover:bg-surface-50 dark:hover:bg-surface-800">2000₺</Button>
-  </div>
-));
-
-/** Numpad sarıcısı – handleTutarGirisi referansı değişmedikçe re-render olmaz */
-const MemoizedNumpad = React.memo(({ onKeyPress }: { onKeyPress: (key: string) => void }) => (
-  <div className="flex-1 bg-white dark:bg-surface-900 rounded-3xl p-4 border border-surface-200 dark:border-surface-800 flex items-center justify-center">
-    <Numpad onKeyPress={onKeyPress} />
+    <motion.button 
+      whileTap={{ scale: 0.95 }}
+      onClick={() => onHizliTutar(odenecekHedefTutar)} 
+      className="col-span-2 font-mono font-bold h-12 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm text-xs hover:bg-cyan-500/30 flex items-center justify-center gap-2 transition-colors uppercase tracking-wider"
+    >
+      <Coins size={16} />
+      {almanUsuluAktif ? 'Seçili Ürün Tutarı' : 'Kalanın Tamamı'}
+    </motion.button>
+    {[50, 100, 200, 500, 1000, 2000].map(val => (
+      <motion.button 
+        key={val}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => onHizliTutar(val)} 
+        className="font-mono font-bold h-12 rounded-xl bg-[#121724] border border-[#222C42] text-slate-200 shadow-sm text-sm hover:bg-[#1A2236] hover:text-white flex items-center justify-center transition-colors"
+      >
+        {val}₺
+      </motion.button>
+    ))}
   </div>
 ));
 
@@ -153,7 +205,6 @@ interface OdemeModalProps {
 }
 
 export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalProps) {
-  // Store'dan sadece ihtiyaç olan slice'ları al
   const aktifHesap = usePosStore(s => s.aktifHesap)
   const hesapAyarla = usePosStore(s => s.hesapAyarla)
   const personel = useAuthStore(s => s.personel)
@@ -166,24 +217,16 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   const [seciliMiktarlar, setSeciliMiktarlar] = useState<Record<number, number>>({})
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
   const [aktifSiparisMiktar, setAktifSiparisMiktar] = useState<any>(null)
-  const [listReady, setListReady] = useState(false)
 
-  // Ağır listeyi modal animasyonundan sonra render etmek için
+  // Modal açıldığında alanları sıfırla
   useEffect(() => {
-    if (isOpen) {
-      // requestAnimationFrame ile bir sonraki frame'de render et — setTimeout'tan daha iyi
-      const raf = requestAnimationFrame(() => {
-        setListReady(true)
-      })
-      return () => cancelAnimationFrame(raf)
-    } else {
-      setListReady(false)
+    if (!isOpen) {
       setGirilenTutar('')
       setSeciliMiktarlar({})
     }
   }, [isOpen])
 
-  // Hesaplamalar — sadece değişen bağımlılıklarda yeniden çalışır
+  // Hesaplamalar
   const gecerliTutar = parseFloat(girilenTutar) || 0
   
   const hesaplamalar = useMemo(() => {
@@ -193,12 +236,11 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     const odenenTutar = aktifHesap?.odemeler?.reduce((acc: number, o: any) => acc + o.tutar, 0) || 0
     const kalanGenelNet = Math.max(0, genelNetTutar - odenenTutar)
 
-    // Alman Usulü hesaplaması — Map kullanarak O(n) performans
+    // Alman Usulü hesaplaması
     let seciliUrunlerToplami = 0;
     const seciliSiparisIdleri = Object.keys(seciliMiktarlar);
     
     if (seciliSiparisIdleri.length > 0 && aktifHesap?.siparisler) {
-      // Siparişleri bir Map'e at — O(n) lookup yerine O(1)
       const siparisMap = new Map<number, any>();
       for (const s of aktifHesap.siparisler) {
         siparisMap.set(s.id, s);
@@ -235,7 +277,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
 
   const { genelNetTutar, odenenTutar, kalanGenelNet, odenecekHedefTutar, almanUsuluAktif, seciliIdSayisi } = hesaplamalar
 
-  // Callback'ler — useCallback ile stabilize edildi
+  // Callback'ler
   const handleTutarGirisi = useCallback((deger: string) => {
     if (deger === 'C' || deger === 'clear') {
       setGirilenTutar('')
@@ -253,9 +295,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
   }, [])
 
   const handleSiparisMiktarDegistir = useCallback((siparis: any, degisim: number, event?: React.MouseEvent) => {
-    if (event) {
-      event.stopPropagation();
-    }
+    if (event) event.stopPropagation();
     setSeciliMiktarlar(prev => {
       const id = siparis.id;
       const current = prev[id] || 0;
@@ -389,7 +429,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     }
   }, [aktifSiparisMiktar, handleSiparisMiktarAyarla])
 
-  // Sipariş Listeleri — memoize edilmiş
+  // Sipariş Listeleri
   const odenecekSiparisler = useMemo(() => {
     if (!aktifHesap?.siparisler) return [];
     return aktifHesap.siparisler.filter((s: any) => s.durum !== 'iptal' && s.durum !== 'odendi');
@@ -408,32 +448,50 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Ödeme Paneli"
+      title="Kasa & Ödeme Konsolu"
       size="full"
     >
-      <div className="flex flex-col lg:flex-row h-full max-h-[85vh] overflow-hidden bg-surface-50 dark:bg-surface-950 -m-4">
+      <div className="flex flex-col lg:flex-row h-full max-h-[86vh] overflow-hidden bg-[#090A0F] text-slate-100 -m-6 select-none">
         
-        {/* SOL KOLON: ADİSYON ÖZETİ VE ALMAN USULÜ */}
-        <div className="flex flex-col w-full lg:w-5/12 xl:w-1/3 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800">
+        {/* SOL KOLON: ADİSYON ÖZETİ VE ALMAN USULÜ BÖLÜMÜ */}
+        <div className="flex flex-col w-full lg:w-5/12 xl:w-4/12 bg-[#0C1017] border-r border-[#1E2436] h-full shrink-0">
           
-          <div className="flex items-center justify-between p-4 border-b border-surface-200 dark:border-surface-800 bg-surface-100/50 dark:bg-surface-800/50">
-            <div>
-              <h3 className="font-bold text-surface-900 dark:text-white text-lg">Adisyon Özeti</h3>
-              <p className="text-xs text-surface-500">Masa {aktifHesap?.masa_id || 'Yok'} • Hesap No: {aktifHesap?.hesap_no}</p>
+          {/* Adisyon Başlık Bilgisi */}
+          <div className="flex items-center justify-between p-4 border-b border-[#1E2436] bg-[#0E131E]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center text-cyan-400">
+                <Receipt size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-mono font-black text-sm text-white">
+                  {aktifHesap?.masa_id ? `MASA ${aktifHesap.masa_id}` : 'HIZLI SATIŞ'}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Adisyon #{aktifHesap?.hesap_no || '---'}
+                </span>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={tumunuSecToggle} className="text-xs">
-              {seciliIdSayisi > 0 ? 'Seçimleri Temizle' : 'Tümünü Seç'}
-            </Button>
+
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
+              onClick={tumunuSecToggle} 
+              className={clsx(
+                "h-9 px-3 rounded-lg font-mono text-xs font-bold border transition-colors flex items-center gap-1.5",
+                seciliIdSayisi > 0 
+                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
+                  : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
+              )}
+            >
+              <SplitSquareHorizontal size={14} />
+              {seciliIdSayisi > 0 ? 'Seçimi Temizle' : 'Tümünü Seç'}
+            </motion.button>
           </div>
 
           {/* Sipariş Listesi */}
-          <div className="flex-1 overflow-y-auto p-2 pos-scrollbar relative">
-            {!listReady ? (
-              <div className="absolute inset-0 flex items-center justify-center text-surface-400">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium">Siparişler Yükleniyor...</span>
-                </div>
+          <div className="flex-1 overflow-y-auto p-3 pos-scrollbar bg-[#090D15]">
+            {odenecekSiparisler.length === 0 && !odenmisLerinVar ? (
+              <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-center">
+                <p className="text-xs font-mono">Ödenecek kalem bulunamadı.</p>
               </div>
             ) : (
               <>
@@ -451,8 +509,10 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
 
                 {/* Ödenen Ürünler */}
                 {odenmisLerinVar && (
-                  <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-800">
-                    <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3 px-1">Ödenen Ürünler</h4>
+                  <div className="mt-4 pt-3 border-t border-[#1C2538]">
+                    <h4 className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+                      Ödenen Ürünler
+                    </h4>
                     {odenmisSiparisler.map((siparis: any) => (
                       <OdenmisItemRow key={siparis.id} siparis={siparis} />
                     ))}
@@ -462,120 +522,187 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             )}
           </div>
 
-          {/* Adisyon Genel Toplamları */}
-          <div className="p-4 bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-800">
-            <div className="flex justify-between items-center text-sm text-surface-600 dark:text-surface-400 mb-1">
+          {/* Adisyon Finansal Özeti & İndirim */}
+          <div className="p-4 bg-[#0E131E] border-t border-[#1E2436] flex flex-col gap-2 shrink-0">
+            <div className="flex justify-between items-center text-xs font-mono text-slate-400">
               <span>Ara Toplam</span>
-              <span>{formatPara(aktifHesap?.toplam_tutar || 0)}</span>
-            </div>
-            {hesaplamalar.indirimTutar > 0 && (
-              <div className="flex justify-between items-center text-sm text-red-500 mb-1 font-medium">
-                <span>İndirim</span>
-                <span>-{formatPara(hesaplamalar.indirimTutar)}</span>
-              </div>
-            )}
-            <div className="flex justify-between items-center text-pos-lg font-bold text-surface-900 dark:text-white mb-2 pt-2 border-t border-surface-200 dark:border-surface-700">
-              <span>Genel Toplam</span>
-              <span>{formatPara(genelNetTutar)}</span>
+              <span className="font-bold text-slate-200 tabular-nums">{formatPara(aktifHesap?.toplam_tutar || 0)}</span>
             </div>
             
-            <div className="flex gap-2 mt-4">
-              <Button variant="outline" className="flex-1 font-semibold" onClick={handleIndirim} leftIcon={<Tag size={16}/>}>
+            {hesaplamalar.indirimTutar > 0 && (
+              <div className="flex justify-between items-center text-xs font-mono text-rose-400">
+                <span>Uygulanan İndirim</span>
+                <span className="font-bold tabular-nums">-{formatPara(hesaplamalar.indirimTutar)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-baseline pt-2 border-t border-[#1C2538]">
+              <span className="text-xs font-mono font-black text-slate-300 uppercase tracking-wider">
+                Genel Toplam
+              </span>
+              <span className="text-xl font-mono font-black text-white tabular-nums">
+                {formatPara(genelNetTutar)}
+              </span>
+            </div>
+            
+            <div className="flex gap-2 mt-2">
+              <motion.button 
+                whileTap={{ scale: 0.95 }}
+                onClick={handleIndirim} 
+                className="flex-1 h-10 rounded-xl font-mono text-xs font-bold bg-[#141926] hover:bg-[#1C2436] border border-[#222C42] text-amber-300 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Tag size={15} />
                 {hesaplamalar.indirimTutar > 0 ? 'İndirimi Değiştir' : 'İndirim Uygula'}
-              </Button>
+              </motion.button>
               {hesaplamalar.indirimTutar > 0 && (
-                <Button variant="danger" className="font-semibold px-4" onClick={indirimIptal}>
-                  İptal Et
-                </Button>
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
+                  onClick={indirimIptal}
+                  className="h-10 px-3 rounded-xl font-mono text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 transition-colors"
+                >
+                  İptal
+                </motion.button>
               )}
             </div>
           </div>
         </div>
 
-        {/* SAĞ KOLON: ÖDEME İŞLEMLERİ */}
-        <div className="flex flex-col flex-1 p-6 lg:p-8 bg-surface-50 dark:bg-surface-950">
+        {/* SAĞ KOLON: TAHSİLAT KONSOLU, NUMPAD VE BÜYÜK ÖDEME BUTONLARI */}
+        <div className="flex-1 flex flex-col p-4 lg:p-6 bg-[#090A0F] overflow-y-auto pos-scrollbar gap-4">
           
-          {/* Tutar Panoları */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white dark:bg-surface-900 rounded-2xl p-5 border border-surface-200 dark:border-surface-800 shadow-sm flex flex-col justify-center">
-              <span className="text-surface-500 font-medium text-sm mb-1 uppercase tracking-wider">Kalan Toplam Hesap</span>
-              <span className="text-3xl lg:text-4xl font-black text-brand-600 dark:text-brand-400">
+          {/* 1. DİJİTAL GÖSTERGELER (DUAL LED READOUTS) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
+            {/* Kalan Toplam Hesap */}
+            <div className="bg-[#0C1017] rounded-2xl p-4 border border-[#1E2436] flex flex-col justify-between shadow-md">
+              <span className="text-[10px] font-mono font-black text-slate-400 uppercase tracking-wider mb-1">
+                KALAN HESAP TUTARI
+              </span>
+              <span className="text-2xl lg:text-3xl font-black font-mono text-amber-400 tabular-nums">
                 {formatPara(kalanGenelNet)}
               </span>
               {odenenTutar > 0 && (
-                <span className="text-xs text-green-600 font-medium mt-2 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded w-max">
-                  {formatPara(odenenTutar)} ödendi
+                <span className="text-[10px] font-mono font-bold text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle2 size={12} /> {formatPara(odenenTutar)} tahsil edildi
                 </span>
               )}
             </div>
 
+            {/* Tahsil Edilecek Tutar (Canlı Seçim/Giriş) */}
             <div className={clsx(
-              "rounded-2xl p-5 border shadow-sm flex flex-col justify-center transition-colors",
-              almanUsuluAktif || girilenTutar
-                ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700 ring-2 ring-brand-500"
-                : "bg-surface-100 dark:bg-surface-800 border-surface-200 dark:border-surface-700"
+              "rounded-2xl p-4 border shadow-md flex flex-col justify-between transition-all",
+              (almanUsuluAktif || girilenTutar)
+                ? "bg-[#0E1726] border-cyan-400 ring-1 ring-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+                : "bg-[#0C1017] border-[#1E2436]"
             )}>
-              <span className="text-surface-500 font-medium text-sm mb-1 uppercase tracking-wider">
-                Tahsil Edilecek
+              <span className="text-[10px] font-mono font-black text-cyan-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>TAHSİL EDİLECEK TUTAR</span>
+                {almanUsuluAktif && (
+                  <span className="text-[9px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40">
+                    {seciliIdSayisi} Ürün Seçili
+                  </span>
+                )}
               </span>
-              <span className="text-3xl lg:text-5xl font-black text-surface-900 dark:text-white">
+              <span className="text-3xl lg:text-4xl font-black font-mono text-cyan-400 tabular-nums tracking-tight">
                 {girilenTutar ? formatPara(parseFloat(girilenTutar)) : formatPara(odenecekHedefTutar)}
               </span>
-              {almanUsuluAktif && !girilenTutar && (
-                <span className="text-xs text-brand-600 font-medium mt-2 flex items-center gap-1">
-                  <SplitSquareHorizontal size={12}/> {seciliIdSayisi} ürün seçili
-                </span>
-              )}
+              <span className="text-[10px] font-mono text-slate-400 mt-1">
+                {girilenTutar ? 'Manuel Tutar Girişi' : almanUsuluAktif ? 'Seçili Kalemler Toplamı' : 'Hesabın Tamamı'}
+              </span>
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row gap-6 flex-1">
-            {/* Numpad ve Hızlı Tutarlar */}
-            <div className="flex-1 flex flex-col gap-4">
+          {/* 2. NUMPAD, HIZLI TUTARLAR VE BÜYÜK BUTONLAR */}
+          <div className="flex flex-col xl:flex-row gap-4 flex-1">
+            
+            {/* Sol Alt: Hızlı Tutarlar ve Numpad */}
+            <div className="flex-1 flex flex-col gap-3">
+              {/* Hızlı Tutar Presetleri */}
               <HizliTutarButonlari 
                 odenecekHedefTutar={odenecekHedefTutar}
                 almanUsuluAktif={almanUsuluAktif}
                 onHizliTutar={hizliTutar}
               />
 
-              <MemoizedNumpad onKeyPress={handleTutarGirisi} />
+              {/* Endüstriyel Dokunmatik Numpad */}
+              <div className="bg-[#0C1017] rounded-2xl p-4 border border-[#1E2436] flex items-center justify-center shadow-inner">
+                <Numpad
+                  layout={[
+                    ['7', '8', '9'],
+                    ['4', '5', '6'],
+                    ['1', '2', '3'],
+                    ['C', '0', '.'],
+                    ['⌫']
+                  ]}
+                  onKeyPress={handleTutarGirisi}
+                  onClear={() => setGirilenTutar('')}
+                />
+              </div>
               
+              {/* Para Üstü Göstergesi */}
               {gecerliTutar > kalanGenelNet && (
-                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-2xl border border-amber-200 dark:border-amber-800 flex items-center justify-between shadow-sm">
-                   <span className="font-medium text-lg">Para Üstü:</span>
-                   <span className="text-2xl font-black">{formatPara(gecerliTutar - kalanGenelNet)}</span>
-                 </div>
+                 <motion.div 
+                   initial={{ opacity: 0, y: 5 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="p-3.5 bg-amber-950/40 text-amber-300 rounded-xl border border-amber-500/40 flex items-center justify-between shadow-sm font-mono"
+                 >
+                   <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                     <Coins size={16} /> Para Üstü Verilecek:
+                   </span>
+                   <span className="text-xl font-black text-amber-300 tabular-nums">
+                     {formatPara(gecerliTutar - kalanGenelNet)}
+                   </span>
+                 </motion.div>
               )}
             </div>
 
-            {/* Ödeme Tipleri */}
-            <div className="w-full xl:w-56 flex flex-col gap-3 justify-end shrink-0">
-              <Button 
-                variant="success" 
-                size="lg" 
-                className="h-24 xl:h-32 text-2xl font-bold rounded-2xl shadow-md flex-col gap-2"
+            {/* Sağ Alt: Dev Ödeme Aksiyon Butonları */}
+            <div className="w-full xl:w-64 flex flex-col gap-3 justify-end shrink-0">
+              
+              {/* NAKİT ÖDEME BUTONU */}
+              <motion.button 
+                whileTap={{ scale: 0.96 }}
                 onClick={() => odemeAl('nakit')}
                 disabled={odemeIslemi}
+                className={clsx(
+                  "h-28 xl:h-36 rounded-2xl font-mono font-black text-lg uppercase tracking-wider flex flex-col items-center justify-center gap-2 border transition-all shadow-lg",
+                  odemeIslemi
+                    ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-[0_0_25px_rgba(16,185,129,0.3)] active:bg-emerald-700"
+                )}
               >
-                <Banknote size={36} />
-                Nakit
-              </Button>
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="h-24 xl:h-32 text-2xl font-bold rounded-2xl shadow-md flex-col gap-2"
+                <Banknote size={40} className="stroke-[2.2]" />
+                <span className="tracking-widest">NAKİT ÖDEME</span>
+                <span className="text-[11px] font-normal opacity-80">
+                  {girilenTutar ? formatPara(parseFloat(girilenTutar)) : formatPara(odenecekHedefTutar)}
+                </span>
+              </motion.button>
+
+              {/* KREDİ KARTI ÖDEME BUTONU */}
+              <motion.button 
+                whileTap={{ scale: 0.96 }}
                 onClick={() => odemeAl('kredi_karti')}
                 disabled={odemeIslemi}
+                className={clsx(
+                  "h-28 xl:h-36 rounded-2xl font-mono font-black text-lg uppercase tracking-wider flex flex-col items-center justify-center gap-2 border transition-all shadow-lg",
+                  odemeIslemi
+                    ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
+                    : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40 shadow-[0_0_25px_rgba(6,182,212,0.3)] active:bg-cyan-700"
+                )}
               >
-                <CreditCard size={36} />
-                Kredi Kartı
-              </Button>
+                <CreditCard size={40} className="stroke-[2.2]" />
+                <span className="tracking-widest">KREDİ KARTI</span>
+                <span className="text-[11px] font-normal opacity-80">
+                  POS Cihazı / Temassız
+                </span>
+              </motion.button>
+
             </div>
           </div>
         </div>
 
       </div>
       
+      {/* İndirim Modalı */}
       {indirimModalAcik && (
         <IndirimModal 
           isOpen={indirimModalAcik}
@@ -584,6 +711,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
         />
       )}
 
+      {/* Miktar Belirleme Modalı */}
       {aktifSiparisMiktar && (
         <MiktarModal 
           isOpen={!!aktifSiparisMiktar}

@@ -93,7 +93,7 @@ export default function QRMenuSettings() {
           </div>
           <Button 
             onClick={ayariKaydet} 
-            loading={isSaving}
+            isLoading={isSaving}
             className="h-11"
           >
             <Save size={18} className="mr-2" />

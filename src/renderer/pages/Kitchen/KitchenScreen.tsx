@@ -34,7 +34,7 @@ export default function KitchenScreen() {
           setSiparisler(mevcut => mevcut.filter(s => s.id !== siparisId))
           success('Sipariş Hazır', 'Sipariş hazır olarak işaretlendi ve garsona bildirildi.')
         } else {
-          setSiparisler(mevcut => mevcut.map(s => s.id === siparisId ? { ...s, durum: yeniDurum } : s))
+          setSiparisler(mevcut => mevcut.map(s => s.id === siparisId ? { ...s, durum: yeniDurum as any } : s))
         }
       } else {
         error('Hata', 'Sipariş durumu güncellenemedi')
@@ -106,7 +106,7 @@ export default function KitchenScreen() {
                 )}>
                   <div className="flex justify-between items-center">
                     <span className="text-pos-xl font-bold">
-                      {ilkSiparis.masa_numara ? `Masa ${ilkSiparis.masa_numara}` : 'Paket'}
+                      {(ilkSiparis as any).masa_numara ? `Masa ${(ilkSiparis as any).masa_numara}` : 'Paket'}
                     </span>
                     <div className="flex items-center gap-1 text-sm font-medium bg-black/20 px-2 py-1 rounded-md">
                       <Clock size={16} />
@@ -114,7 +114,7 @@ export default function KitchenScreen() {
                     </div>
                   </div>
                   <div className="flex justify-between items-center text-sm opacity-80">
-                    <span>Garson: {ilkSiparis.garson_adi}</span>
+                    <span>Garson: {(ilkSiparis as any).garson_adi || '-'}</span>
                     <span>{formatSaat(ilkSiparis.siparis_zamani)}</span>
                   </div>
                 </div>

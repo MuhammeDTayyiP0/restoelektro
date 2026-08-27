@@ -2,7 +2,7 @@ import React from 'react'
 import { clsx, type ClassValue } from 'clsx'
 
 // Dokunmatik ekran için optimize edilmiş ortak Button bileşeni
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
   variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline' | 'ghost'
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'pos'
   fullWidth?: boolean

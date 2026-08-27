@@ -5,5 +5,5 @@
     "jsx": "react-jsx",
     "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.tsx", "src/common/**/*.ts"]
+  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.tsx", "src/common/**/*.ts", "src/preload/**/*.ts"]
 }
