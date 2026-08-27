@@ -5,6 +5,7 @@ import './index.css'
 
 // Electron IPC API tip tanımları için global namespace
 declare global {
+  const __APP_VERSION__: string
   interface Window {
     api: import('../preload/index').RestoElektroAPI
   }

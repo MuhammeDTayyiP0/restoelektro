@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
+import pkg from './package.json'
 
 // electron-vite yapılandırması — Ana, Preload ve Renderer işlemleri ayrı ayrı build edilir
 export default defineConfig({
@@ -22,6 +23,9 @@ export default defineConfig({
 
   // Renderer (React) yapılandırması
   renderer: {
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer'),

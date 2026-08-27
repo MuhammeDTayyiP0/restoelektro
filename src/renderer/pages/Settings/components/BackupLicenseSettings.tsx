@@ -4,6 +4,7 @@ import { useToast } from '../../../components/ui/Toast'
 import { ipcInvoke } from '../../../hooks/useIPC'
 import { UYGULAMA_KANALLARI } from '../../../../common/ipc-channels'
 import { motion } from 'framer-motion'
+import { APP_FULL_NAME } from '../../../utils/version'
 
 export default function BackupLicenseSettings() {
   const { success, info, error } = useToast()
@@ -172,7 +173,7 @@ export default function BackupLicenseSettings() {
             <div className="space-y-3 text-xs text-surface-300">
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
                 <span className="text-surface-400">Yazılım Sürümü</span>
-                <span className="font-mono text-white">ETİBOL POS v2.1.0</span>
+                <span className="font-mono text-white">{(dbInfo as any)?.uygulamaSurumu ? `ETİBOL POS v${(dbInfo as any).uygulamaSurumu}` : APP_FULL_NAME}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
                 <span className="text-surface-400">Lisans Tipi</span>

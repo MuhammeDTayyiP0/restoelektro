@@ -42,12 +42,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
+      - name: Get Version from package.json
+        id: get_version
+        shell: pwsh
+        run: |
+          $ver = (Get-Content package.json | ConvertFrom-Json).version
+          echo "TAG=v$ver" >> $env:GITHUB_ENV
+
       - name: Auto Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v2.1.0"
-          name: "ETİBOL POS v2.1.0"
-          files: dist/*.exe
+          tag_name: ${{ env.TAG }}
+          name: "ETİBOL POS ${{ env.TAG }}"
+          files: |
+            dist/*.exe
+            dist/latest.yml
+            dist/*.blockmap
           draft: false
           prerelease: false
         env:

@@ -8,6 +8,7 @@ import type { Hesap } from '../../../common/types/pos.types'
 import { useToast } from '../../components/ui/Toast'
 import { motion } from 'framer-motion'
 import { Activity, Server } from 'lucide-react'
+import { APP_VERSION_TAG } from '../../utils/version'
 
 // Alt Bileşenler
 import PosMenu from './components/PosMenu'
@@ -124,7 +125,7 @@ export default function PosPage() {
             <span className="flex items-center gap-1">
               <Activity size={10} className="text-emerald-400" /> CANLI BAĞLANTI
             </span>
-            <span className="text-slate-400">v2.1.0</span>
+            <span className="text-slate-400">{APP_VERSION_TAG}</span>
           </div>
         </motion.div>
       </div>

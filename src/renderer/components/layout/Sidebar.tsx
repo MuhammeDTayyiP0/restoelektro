@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useUIStore } from '../../stores/useUIStore'
+import { UpdateWidget } from './UpdateWidget'
 
 export function Sidebar() {
   const { cikisYap, personel } = useAuthStore()
@@ -106,15 +107,18 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Alt Alan — Çıkış Butonu */}
+        {/* Alt Alan — Güncelleme Modülü & Çıkış Butonu */}
         <div className="p-2 border-t border-[#1A1F30] flex flex-col items-center gap-2">
+          {/* Güncelleme Durum Rozeti ve Popover */}
+          <UpdateWidget />
+
           <button
             onClick={handleLogout}
-            className="w-full flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-surface-400 hover:text-rose-300 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/50 transition-all duration-150 touch-feedback"
+            className="w-full flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-surface-400 hover:text-rose-300 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/50 transition-all duration-150 touch-feedback"
             title="Güvenli Çıkış"
             aria-label="Güvenli Çıkış"
           >
-            <LogOut size={20} className="text-rose-400" />
+            <LogOut size={18} className="text-rose-400" />
             <span className="text-[10px] font-semibold tracking-wider uppercase">Çıkış</span>
           </button>
         </div>
@@ -122,4 +126,5 @@ export function Sidebar() {
     </>
   )
 }
+
 

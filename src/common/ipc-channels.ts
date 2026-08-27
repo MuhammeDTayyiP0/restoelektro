@@ -149,3 +149,15 @@ export const UYGULAMA_KANALLARI = {
   VERITABANI_OPTIMIZE: 'uygulama:veritabani-optimize',
   VERITABANI_YEDEKLER: 'uygulama:veritabani-yedekler',
 } as const
+
+/** Otomatik Güncelleme kanalları (electron-updater) */
+export const GUNCELLEME_KANALLARI = {
+  KONTROL_ET: 'guncelleme:kontrol-et',
+  INDIR: 'guncelleme:indir',
+  YUKLE_VE_BASLAT: 'guncelleme:yukle-ve-baslat',
+  DURUM_GETIR: 'guncelleme:durum-getir',
+  // Bildirimler (Main -> Renderer)
+  DURUM_BILDIRIMI: 'guncelleme:durum-bildirimi',
+  ILERLEME_BILDIRIMI: 'guncelleme:ilerleme-bildirimi',
+} as const
+

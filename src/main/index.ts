@@ -10,7 +10,6 @@ import { veritabaniBaslat, veritabaniKapat, veritabaniGetir } from './database/c
 import { otomatikYedekAl } from './database/backup'
 import { ipcHandlerlariniKaydet } from './ipc/index'
 import { apiSunucusunuBaslat } from './api/server'
-import { autoUpdater } from 'electron-updater'
 
 // Uygulama adı — userData yolunun tutarlılığı için
 app.name = 'ETİBOL POS'
@@ -97,10 +96,6 @@ async function uygulamaBaslat(): Promise<void> {
     // 4. Ana pencereyi oluştur
     pencereOlustur()
     console.log('✅ ETİBOL POS hazır!')
-
-    // 5. Güncellemeleri kontrol et
-    autoUpdater.checkForUpdatesAndNotify()
-
   } catch (hata) {
     console.error('❌ Uygulama başlatma hatası:', hata)
     app.quit()

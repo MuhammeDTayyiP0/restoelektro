@@ -9,6 +9,7 @@ import { PERSONEL_KANALLARI } from '../../../common/ipc-channels'
 import type { GirisYaniti, Personel } from '../../../common/types/staff.types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { clsx } from 'clsx'
+import { APP_VERSION_TAG } from '../../utils/version'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -161,7 +162,7 @@ export default function LoginPage() {
                 </h1>
                 <p className="text-[11px] text-surface-400 uppercase tracking-wider font-mono flex items-center gap-2">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 status-beacon-green" />
-                  TOUCH POS TERMINAL • v2.1.0
+                  TOUCH POS TERMINAL • {APP_VERSION_TAG}
                 </p>
               </div>
             </div>

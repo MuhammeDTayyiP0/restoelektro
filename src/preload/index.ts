@@ -65,6 +65,8 @@ const izinliKanallar = [
   'uygulama:surum', 'uygulama:yeniden-baslat', 'uygulama:kapat',
   'uygulama:tam-ekran', 'uygulama:veritabani-yedekle', 'uygulama:veritabani-bilgisi',
   'uygulama:veritabani-optimize', 'uygulama:veritabani-yedekler',
+  // Güncelleme
+  'guncelleme:kontrol-et', 'guncelleme:indir', 'guncelleme:yukle-ve-baslat', 'guncelleme:durum-getir',
 ]
 
 // Bildirim kanalları (main → renderer)
@@ -74,6 +76,8 @@ const bildirimKanallari = [
   'masalar:guncellendi',
   'siparis:guncellendi',
   'mutfak:yazdir-istek',
+  'guncelleme:durum-bildirimi',
+  'guncelleme:ilerleme-bildirimi',
 ]
 
 // Callback sarmalayıcılarını tutmak için Map
