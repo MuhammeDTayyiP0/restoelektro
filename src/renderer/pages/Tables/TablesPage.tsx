@@ -40,7 +40,6 @@ export default function TablesPage() {
   const personel = useAuthStore(s => s.personel)
   const isAdmin = personel?.rol === 'admin'
 
-  const [topluModalAcik, setTopluModalAcik] = useState(false)
   const [seciliHedefBolumId, setSeciliHedefBolumId] = useState<number | null>(null)
   const [onek, setOnek] = useState('S')
   const [masaSayisi, setMasaSayisi] = useState(15)
@@ -75,15 +74,45 @@ export default function TablesPage() {
 
     setOlusturuluyor(true)
     try {
-      const sonuc: any = await ipcInvoke(MASA_KANALLARI.MASA_TOPLU_EKLE, hedefBolumId, onek.trim().toUpperCase(), masaSayisi)
-      if (sonuc && sonuc.basarili) {
-        toast.success('Masalar Oluşturuldu', `${masaSayisi} adet masa başarıyla eklendi.`)
-        setTopluModalAcik(false)
-        await masalariYenile()
-        await bolumleriYenile()
-      } else {
-        toast.error('Hata', (sonuc && sonuc.hata) || 'Masa oluşturulamadı.')
+      const p = onek.trim().toUpperCase()
+      const bolumMasalari = masalar.filter(m => m.bolum_id === hedefBolumId && m.aktif !== false)
+      
+      // En yüksek mevcut masa numarasını bul
+      let maxNum = 0
+      const escaped = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`^${escaped}\\s*[-_]?\\s*(\\d+)$`, 'i')
+      for (const m of bolumMasalari) {
+        const match = m.numara.trim().match(regex)
+        if (match) {
+          const num = parseInt(match[1], 10)
+          if (!isNaN(num) && num > maxNum) maxNum = num
+        }
       }
+
+      // Sıralama ve pozisyon başlangıcı
+      const maxSira = bolumMasalari.reduce((max, m) => Math.max(max, m.sira || 0), 0)
+      const existingCount = bolumMasalari.length
+
+      for (let i = 1; i <= masaSayisi; i++) {
+        const num = maxNum + i
+        const numara = `${p} ${num}`
+        const sira = maxSira + i
+        const x = ((existingCount + i - 1) % 5) * 120 + 50
+        const y = Math.floor((existingCount + i - 1) / 5) * 120 + 50
+
+        await ipcInvoke(MASA_KANALLARI.MASA_EKLE, {
+          bolum_id: hedefBolumId,
+          numara,
+          kapasite: 4,
+          konum_x: x,
+          konum_y: y,
+          sira
+        })
+      }
+
+      toast.success('Masalar Oluşturuldu', `${masaSayisi} adet masa başarıyla eklendi.`)
+      await masalariYenile()
+      await bolumleriYenile()
     } catch (err: any) {
       console.error('IPC Hatası:', err)
       toast.error('İşlem Hatası', err.message || 'Masa oluşturulurken bir hata meydana geldi.')
@@ -268,19 +297,6 @@ export default function TablesPage() {
               </button>
             )}
           </div>
-
-          {/* Toplu Masa Ekle Butonu (Admin) */}
-          {isAdmin && (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setTopluModalAcik(true)}
-              className="h-11 px-3.5 rounded-xl bg-[#121724] border border-[#222C42] hover:border-emerald-500/50 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold flex items-center gap-2 transition-colors"
-              title="Toplu Masa Oluştur"
-            >
-              <Plus size={16} />
-              <span className="hidden lg:inline">Toplu Masa</span>
-            </motion.button>
-          )}
 
           {/* Müşteriler Butonu */}
           <motion.button
@@ -615,110 +631,6 @@ export default function TablesPage() {
           </div>
         )}
       </div>
-
-      {/* Toplu Masa Oluşturma Modalı (Admin için her an erişilebilir) */}
-      <AnimatePresence>
-        {topluModalAcik && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-[#0C1017] border border-[#1E2436] rounded-2xl w-full max-w-md p-6 shadow-2xl relative"
-            >
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1A2234]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                    <Sparkles size={18} />
-                  </div>
-                  <h3 className="text-base font-black font-mono text-white uppercase">Toplu Masa Oluştur</h3>
-                </div>
-                <button
-                  onClick={() => setTopluModalAcik(false)}
-                  className="w-8 h-8 rounded-lg bg-[#141926] hover:bg-[#1E2436] text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Hedef Bölüm</label>
-                  <select
-                    value={(seciliBolum !== 'tum' ? parseInt(seciliBolum, 10) : (seciliHedefBolumId || bolumler[0]?.id)) || ''}
-                    onChange={e => setSeciliHedefBolumId(parseInt(e.target.value, 10))}
-                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
-                  >
-                    {bolumler.map(b => (
-                      <option key={b.id} value={b.id} className="bg-[#0C1017] text-white">
-                        {b.ad}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Öneki (Örn: S)</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={onek}
-                      onChange={e => setOnek(e.target.value)}
-                      placeholder="Örn: S veya M"
-                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white uppercase focus:outline-none transition-colors"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500 font-mono">Önizleme:</span>
-                      <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/20">
-                        {onek.trim() || 'M'} 1
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Masa Sayısı</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={masaSayisi}
-                    onChange={e => setMasaSayisi(parseInt(e.target.value) || 1)}
-                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-[#1A2234]">
-                  <button
-                    onClick={() => setTopluModalAcik(false)}
-                    className="h-11 px-4 rounded-xl bg-[#141926] hover:bg-[#1E2436] text-slate-400 hover:text-white font-mono text-xs font-bold transition-colors"
-                  >
-                    İptal
-                  </button>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleTopluMasaOlustur}
-                    disabled={olusturuluyor || !onek.trim() || masaSayisi < 1}
-                    className="h-11 px-6 bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#1A2234] disabled:text-slate-500 text-white font-mono text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:shadow-none flex items-center justify-center gap-2"
-                  >
-                    {olusturuluyor ? (
-                      <>
-                        <RefreshCw size={16} className="animate-spin" />
-                        <span>Oluşturuluyor...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={16} />
-                        <span>Oluştur</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   )

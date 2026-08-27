@@ -3,10 +3,11 @@ import { useToast } from '../../../components/ui/Toast'
 import { ipcInvoke, useIPC } from '../../../hooks/useIPC'
 import { MASA_KANALLARI } from '../../../../common/ipc-channels'
 import { Modal } from '../../../components/ui/Modal'
-import { Plus, Edit2, Trash2, Save, LayoutGrid } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, LayoutGrid, Layers } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { Bolum, Masa } from '../../../../common/types/table.types'
 import { motion } from 'framer-motion'
+import BulkTableModal from './BulkTableModal'
 
 export default function TableSettings() {
   const { success, error } = useToast()
@@ -20,6 +21,7 @@ export default function TableSettings() {
   const [bolumModalAcik, setBolumModalAcik] = useState(false)
   const [duzenlenecekBolum, setDuzenlenecekBolum] = useState<Bolum | null>(null)
   const [masaModalAcik, setMasaModalAcik] = useState(false)
+  const [topluMasaModalAcik, setTopluMasaModalAcik] = useState(false)
   const [duzenlenecekMasa, setDuzenlenecekMasa] = useState<Masa | null>(null)
 
   // Form alanları
@@ -289,15 +291,27 @@ export default function TableSettings() {
             <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider">
               {bolumler.find(b => b.id === seciliBolumId)?.ad} — Masa Listesi
             </h3>
-            <motion.button 
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={yeniMasaAc}
-              className="h-9 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
-            >
-              <Plus size={14} />
-              Yeni Masa Ekle
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <motion.button 
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTopluMasaModalAcik(true)}
+                className="h-9 px-3.5 rounded-xl bg-[#141926] hover:bg-[#1E2538] border border-[#222C42] hover:border-brand-500/50 text-brand-400 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                title="Toplu Masa Oluştur"
+              >
+                <Layers size={14} />
+                Toplu Masa Oluştur
+              </motion.button>
+              <motion.button 
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={yeniMasaAc}
+                className="h-9 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+              >
+                <Plus size={14} />
+                Yeni Masa Ekle
+              </motion.button>
+            </div>
           </div>
 
           {filtrelenmisMasalar.length === 0 ? (
@@ -467,6 +481,19 @@ export default function TableSettings() {
           </div>
         </div>
       </Modal>
+
+      {/* Toplu Masa Oluşturma Modalı */}
+      <BulkTableModal
+        isOpen={topluMasaModalAcik}
+        onClose={() => setTopluMasaModalAcik(false)}
+        bolumler={bolumler}
+        masalar={masalar}
+        varsayilanBolumId={seciliBolumId}
+        onSuccess={() => {
+          masalariYenile()
+          bolumleriYenile()
+        }}
+      />
     </div>
   )
 }
