@@ -13,6 +13,7 @@ import { veritabaniGetir } from '../database/connection'
 import { BrowserWindow, app as electronApp } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
+import { bossMobilHTML } from './boss-mobile'
 import path from 'path'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 
@@ -56,6 +57,13 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   app.get('/garson', (_req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.send(garsonMobilHTML())
+  })
+
+  // ===== PATRON (BOSS) MOBİL ARAYÜZÜ =====
+  // Telefondan http://<bilgisayar-ip>:3847/boss veya /patron adresine gidince açılır
+  app.get(['/boss', '/patron'], (_req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(bossMobilHTML())
   })
 
   // ===== QR MENÜ ARAYÜZÜ =====

@@ -124,7 +124,7 @@ export default function PosPage() {
             <span className="flex items-center gap-1">
               <Activity size={10} className="text-emerald-400" /> CANLI BAĞLANTI
             </span>
-            <span className="text-slate-400">v2.0.2</span>
+            <span className="text-slate-400">v2.1.0</span>
           </div>
         </motion.div>
       </div>

@@ -356,3 +356,311 @@ export async function yazdirAdisyon(
     return false;
   }
 }
+
+// =====================================================
+// QR YAZDIRMA ŞABLONLARI & FONKSİYONLARI
+// Termal Fiş (58mm/80mm) ve Standart A4/Sticker Baskı Modları
+// =====================================================
+
+export interface QRPrintItem {
+  id?: string | number
+  title: string
+  subTitle?: string
+  type: 'masa' | 'garson' | 'patron' | 'genel'
+  qrUrl: string
+  masaNo?: string
+  bolumAdi?: string
+  restoName?: string
+  customNote?: string
+}
+
+export interface QRPrintOptions {
+  mode: 'thermal' | 'standard'
+  paperWidth: '58mm' | '80mm'
+  gridCols?: 1 | 2 | 3 | 4
+  showRestoName?: boolean
+  showGuideText?: boolean
+  showCutGuides?: boolean
+  restoName?: string
+  guideText?: string
+}
+
+export const defaultQROptions: QRPrintOptions = {
+  mode: 'thermal',
+  paperWidth: '80mm',
+  gridCols: 3,
+  showRestoName: true,
+  showGuideText: true,
+  showCutGuides: true,
+  restoName: 'ETİBOL RESTORAN',
+  guideText: 'Menüyü İncelemek İçin Okutunuz'
+}
+
+/**
+ * Termal POS Yazıcılar için Kağıt Tasarruflu Kompakt QR HTML Üretir
+ */
+export function generateThermalQRHtml(
+  items: { item: QRPrintItem; svgHtml: string }[],
+  options: QRPrintOptions = defaultQROptions
+): string {
+  const is58 = options.paperWidth === '58mm';
+  const widthPx = is58 ? '190px' : '280px';
+  const qrSize = is58 ? '110px' : '160px';
+  const restoName = options.restoName || 'ETİBOL RESTORAN';
+
+  let itemsHtml = '';
+
+  items.forEach((entry, idx) => {
+    const item = entry.item;
+    const svgContent = entry.svgHtml;
+    const isLast = idx === items.length - 1;
+    
+    let headerTag = 'DİJİTAL QR MENÜ';
+    let subTag = options.guideText || 'Menüyü İncelemek İçin Okutunuz';
+    if (item.type === 'garson') {
+      headerTag = 'GARSON EL TERMİNALİ';
+      subTag = 'Garson Girişi İçin Okutunuz';
+    } else if (item.type === 'patron') {
+      headerTag = 'PATRON CANLI TAKİP';
+      subTag = 'Mobil Ciro & Masa Takibi';
+    }
+
+    const masaLabel = item.masaNo ? `MASA: ${item.masaNo}` : item.title;
+    const bolumText = item.bolumAdi ? `(${item.bolumAdi})` : '';
+
+    itemsHtml += `
+      <div class="thermal-card" style="width: 100%; text-align: center; margin: 0 auto; padding: 4px 0 10px 0; ${!isLast ? 'page-break-after: always; border-bottom: 2px dashed #000; margin-bottom: 12px; padding-bottom: 12px;' : ''}">
+        
+        <!-- Restoran Adı -->
+        ${options.showRestoName !== false ? `
+          <div style="font-size: ${is58 ? '13px' : '16px'}; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px;">
+            ${restoName}
+          </div>
+        ` : ''}
+
+        <div style="font-size: ${is58 ? '10px' : '11px'}; font-weight: 700; color: #333; margin-bottom: 4px; letter-spacing: 0.5px;">
+          ${headerTag}
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 4px 0 6px 0;"></div>
+
+        <!-- Masa No Etiketi (Belirgin & Okunaklı) -->
+        <div style="background: #000; color: #fff; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px;">
+          <div style="font-size: ${is58 ? '15px' : '19px'}; font-weight: 900; letter-spacing: 1px; line-height: 1.1;">
+            ${masaLabel}
+          </div>
+          ${bolumText ? `<div style="font-size: ${is58 ? '9px' : '10px'}; font-weight: 600; opacity: 0.9;">${bolumText}</div>` : ''}
+        </div>
+
+        <!-- QR Kod Görseli -->
+        <div style="display: flex; justify-content: center; align-items: center; margin: 4px 0; padding: 4px; background: #fff; border: 1px solid #000; border-radius: 6px; display: inline-block;">
+          <div style="width: ${qrSize}; height: ${qrSize}; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+            ${svgContent}
+          </div>
+        </div>
+
+        <!-- Yönlendirme Metni -->
+        ${options.showGuideText !== false ? `
+          <div style="font-size: ${is58 ? '9px' : '11px'}; font-weight: 700; color: #111; margin-top: 4px; line-height: 1.2;">
+            ${subTag}
+          </div>
+        ` : ''}
+
+        <!-- Web URL -->
+        <div style="font-size: ${is58 ? '7px' : '9px'}; color: #555; word-break: break-all; margin-top: 3px; font-family: monospace; max-width: 95%; margin-left: auto; margin-right: auto;">
+          ${item.qrUrl}
+        </div>
+
+        <!-- Kompakt Alt Çizgi -->
+        <div style="border-top: 1px dashed #000; margin: 6px 0 2px 0;"></div>
+        <div style="font-size: ${is58 ? '8px' : '9px'}; font-weight: 600; color: #444;">
+          ★ ETİBOL POS ★
+        </div>
+      </div>
+    `;
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Termal QR Baskı</title>
+        <style>
+          @page { margin: 0; size: auto; }
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 4px;
+            width: ${widthPx};
+            color: #000;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          svg { width: 100% !important; height: 100% !important; }
+        </style>
+      </head>
+      <body>
+        ${itemsHtml}
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Standart Yazıcılar (A4 / Pleksi Masa Standı / Sticker) için Optimize Edilmiş Şablon Üretir
+ */
+export function generateStandardQRHtml(
+  items: { item: QRPrintItem; svgHtml: string }[],
+  options: QRPrintOptions = defaultQROptions
+): string {
+  const cols = options.gridCols || 3;
+  const restoName = options.restoName || 'ETİBOL RESTORAN';
+
+  let cardsHtml = '';
+
+  items.forEach((entry) => {
+    const item = entry.item;
+    const svgContent = entry.svgHtml;
+
+    let headerTag = 'DİJİTAL MENÜ';
+    let subTag = options.guideText || 'Menüyü İncelemek İçin Kameranızla Okutunuz';
+    if (item.type === 'garson') {
+      headerTag = 'GARSON TERMİNALİ';
+      subTag = 'Garson Girişi İçin Kameranızla Okutunuz';
+    } else if (item.type === 'patron') {
+      headerTag = 'PATRON TAKİP';
+      subTag = 'Mobil Ciro Takibi İçin Okutunuz';
+    }
+
+    const masaLabel = item.masaNo ? `MASA: ${item.masaNo}` : item.title;
+    const bolumText = item.bolumAdi ? item.bolumAdi : '';
+
+    cardsHtml += `
+      <div class="qr-stand-card" style="border: 2px solid #1E2538; border-radius: 16px; padding: 18px; text-align: center; background: #ffffff; break-inside: avoid; page-break-inside: avoid; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+        
+        <!-- Kesim Kılavuzu (Köşe Çentikleri) -->
+        ${options.showCutGuides !== false ? `
+          <div style="position: absolute; top: 4px; left: 4px; width: 8px; height: 8px; border-top: 1px dashed #999; border-left: 1px dashed #999;"></div>
+          <div style="position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-top: 1px dashed #999; border-right: 1px dashed #999;"></div>
+          <div style="position: absolute; bottom: 4px; left: 4px; width: 8px; height: 8px; border-bottom: 1px dashed #999; border-left: 1px dashed #999;"></div>
+          <div style="position: absolute; bottom: 4px; right: 4px; width: 8px; height: 8px; border-bottom: 1px dashed #999; border-right: 1px dashed #999;"></div>
+        ` : ''}
+
+        <!-- Başlık & Kurumsal İsim -->
+        <div style="margin-bottom: 8px;">
+          <div style="font-size: 15px; font-weight: 900; color: #090A0F; letter-spacing: 0.5px; text-transform: uppercase;">
+            ${restoName}
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: #2563EB; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px;">
+            ${headerTag}
+          </div>
+        </div>
+
+        <!-- Masa No Badge (Yüksek Kontrast & Belirgin) -->
+        <div style="background: #090A0F; color: #FFFFFF; border-radius: 8px; padding: 6px 12px; display: inline-block; margin-bottom: 10px; border: 1px solid #1E2538;">
+          <div style="font-size: 18px; font-weight: 900; letter-spacing: 1px; line-height: 1.1;">
+            ${masaLabel}
+          </div>
+          ${bolumText ? `<div style="font-size: 10px; font-weight: 600; color: #94A3B8; text-transform: uppercase;">${bolumText}</div>` : ''}
+        </div>
+
+        <!-- QR Kod Alanı -->
+        <div style="background: #FFFFFF; padding: 8px; border-radius: 12px; border: 1.5px solid #E2E8F0; display: inline-block; margin: 4px auto 8px auto; box-shadow: inset 0 0 4px rgba(0,0,0,0.03);">
+          <div style="width: 140px; height: 140px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+            ${svgContent}
+          </div>
+        </div>
+
+        <!-- Yönlendirme & Açıklama -->
+        <div style="font-size: 11px; font-weight: 700; color: #0F172A; margin-top: 4px; line-height: 1.3;">
+          ${subTag}
+        </div>
+
+        <div style="font-size: 8px; color: #64748B; word-break: break-all; margin-top: 4px; font-family: monospace;">
+          ${item.qrUrl}
+        </div>
+      </div>
+    `;
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Standart / A4 QR Menü Baskı</title>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .grid-container {
+            display: grid;
+            grid-template-columns: repeat(${cols}, 1fr);
+            gap: 16px;
+            width: 100%;
+          }
+          svg { width: 100% !important; height: 100% !important; }
+        </style>
+      </head>
+      <body>
+        <div class="grid-container">
+          ${cardsHtml}
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * QR Kodlarını Termal veya Standart Şablon ile Yazdırır
+ */
+export async function yazdirQR(
+  items: { item: QRPrintItem; svgHtml: string }[],
+  options: QRPrintOptions,
+  printerName?: string
+): Promise<boolean> {
+  if (!items || items.length === 0) return false;
+
+  const html = options.mode === 'thermal'
+    ? generateThermalQRHtml(items, options)
+    : generateStandardQRHtml(items, options);
+
+  if (printerName) {
+    try {
+      const res = await ipcInvoke<any>(YAZICI_KANALLARI.FISI_YAZDIR, html, printerName);
+      return res?.basarili || false;
+    } catch (e) {
+      console.error('Doğrudan QR yazdırma hatası:', e);
+      return false;
+    }
+  } else {
+    // Yeni gizli pencerede aç ve yazdır
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+      return true;
+    }
+    return false;
+  }
+}
+

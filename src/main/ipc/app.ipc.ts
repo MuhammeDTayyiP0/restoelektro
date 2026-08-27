@@ -124,11 +124,29 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
 
   // 5. Sürüm Bilgisi
   ipcMain.handle(UYGULAMA_KANALLARI.SURUM_BILGISI, async () => {
+    const os = require('os')
+    let localIP = 'localhost'
+    try {
+      const interfaces = os.networkInterfaces()
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] || []) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            localIP = iface.address
+            break
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+
     return {
       surum: app.getVersion(),
       electron: process.versions.electron,
       chrome: process.versions.chrome,
       node: process.versions.node,
+      localIP,
+      apiPort: 3847,
     }
   })
 }

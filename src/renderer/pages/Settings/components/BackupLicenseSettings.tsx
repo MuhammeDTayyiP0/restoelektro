@@ -172,7 +172,7 @@ export default function BackupLicenseSettings() {
             <div className="space-y-3 text-xs text-surface-300">
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
                 <span className="text-surface-400">Yazılım Sürümü</span>
-                <span className="font-mono text-white">ETİBOL POS v2.0.2</span>
+                <span className="font-mono text-white">ETİBOL POS v2.1.0</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
                 <span className="text-surface-400">Lisans Tipi</span>

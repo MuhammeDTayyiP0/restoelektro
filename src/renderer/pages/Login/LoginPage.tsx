@@ -161,7 +161,7 @@ export default function LoginPage() {
                 </h1>
                 <p className="text-[11px] text-surface-400 uppercase tracking-wider font-mono flex items-center gap-2">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 status-beacon-green" />
-                  TOUCH POS TERMINAL • v2.0
+                  TOUCH POS TERMINAL • v2.1.0
                 </p>
               </div>
             </div>

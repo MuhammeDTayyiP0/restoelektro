@@ -29,7 +29,7 @@ export default function SettingsPage() {
     { id: 'backup', label: 'Veritabanı & Lisans', icon: <Database size={18} />, desc: 'SQLite yedeği & sistem durumu' },
     { id: 'staff', label: 'Personeller & Yetkiler', icon: <Users size={18} />, desc: 'Kullanıcılar ve PIN kodları' },
     { id: 'menu', label: 'Menü Yönetimi', icon: <BookOpen size={18} />, desc: 'Kategoriler, ürünler ve fiyatlar' },
-    { id: 'qrmenu', label: 'QR Menü', icon: <QrCode size={18} />, desc: 'Masa QR kodları ve URL ayarları' },
+    { id: 'qrmenu', label: 'QR', icon: <QrCode size={18} />, desc: 'Masa, garson ve patron QR kodları' },
   ]
 
   return (
