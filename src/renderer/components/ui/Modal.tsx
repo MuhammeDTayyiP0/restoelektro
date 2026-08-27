@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { clsx } from 'clsx'
 import { X } from 'lucide-react'
-import { Button } from './Button'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface ModalProps {
   isOpen: boolean
@@ -36,64 +36,75 @@ export function Modal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
-
   const sizes = {
     sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
-    full: 'max-w-[95vw] h-[95vh]',
+    md: 'max-w-xl',
+    lg: 'max-w-3xl',
+    xl: 'max-w-5xl',
+    full: 'max-w-[95vw] h-[92vh]',
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
-      <div 
-        className="absolute inset-0 bg-black/60 animate-fade-in"
-        onClick={() => closeOnOverlayClick && onClose()}
-      />
-      
-      {/* Modal Content */}
-      <div 
-        ref={modalRef}
-        className={clsx(
-          'relative w-full bg-white dark:bg-surface-900 rounded-pos-lg shadow-pos-lg flex flex-col overflow-hidden animate-scale-in border border-surface-200 dark:border-surface-800 m-4 will-change-transform',
-          sizes[size],
-          size === 'full' && 'max-h-[95vh]'
-        )}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100 dark:border-surface-800 bg-surface-50 dark:bg-surface-950">
-          <h2 className="text-pos-lg font-semibold text-surface-900 dark:text-surface-100">
-            {title}
-          </h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="rounded-full w-10 h-10 p-0"
-            aria-label="Kapat"
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-x-hidden overflow-y-auto select-none">
+          {/* Overlay */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
+            onClick={() => closeOnOverlayClick && onClose()}
+          />
+          
+          {/* Modal Container */}
+          <motion.div 
+            ref={modalRef}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            className={clsx(
+              'relative w-full bg-[#0D101A] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#1E2436] my-auto z-10',
+              sizes[size],
+              size === 'full' && 'max-h-[92vh]'
+            )}
           >
-            <X size={24} />
-          </Button>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#1A1F30] bg-[#090B12]">
+              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-brand-500" />
+                {title}
+              </h2>
+              <button 
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:text-white hover:bg-[#1A1F30] transition-colors focus:outline-none"
+                aria-label="Kapat"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className={clsx(
+              'p-6 overflow-y-auto pos-scrollbar text-surface-200 select-text',
+              size === 'full' ? 'flex-1' : 'max-h-[72vh]'
+            )}>
+              {children}
+            </div>
+            
+            {/* Footer */}
+            {footer && (
+              <div className="px-6 py-4 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-3 rounded-b-2xl">
+                {footer}
+              </div>
+            )}
+          </motion.div>
         </div>
-        
-        {/* Body */}
-        <div className={clsx(
-          'p-6 overflow-y-auto pos-scrollbar',
-          size === 'full' ? 'flex-1' : 'max-h-[70vh]'
-        )}>
-          {children}
-        </div>
-        
-        {/* Footer */}
-        {footer && (
-          <div className="px-6 py-4 border-t border-surface-100 dark:border-surface-800 bg-surface-50 dark:bg-surface-950 flex justify-end gap-3 rounded-b-pos-lg">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }
+

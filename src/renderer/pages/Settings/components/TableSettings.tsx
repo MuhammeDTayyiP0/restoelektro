@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from '../../../components/ui/Button'
 import { useToast } from '../../../components/ui/Toast'
-import { ipcInvoke } from '../../../hooks/useIPC'
-import { useIPC } from '../../../hooks/useIPC'
+import { ipcInvoke, useIPC } from '../../../hooks/useIPC'
 import { MASA_KANALLARI } from '../../../../common/ipc-channels'
 import { Modal } from '../../../components/ui/Modal'
 import { Plus, Edit2, Trash2, Save, LayoutGrid } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { Bolum, Masa } from '../../../../common/types/table.types'
+import { motion } from 'framer-motion'
 
 export default function TableSettings() {
-  console.log("RENDER TableSettings")
   const { success, error } = useToast()
   
   // Bölüm ve masalar
@@ -200,67 +198,82 @@ export default function TableSettings() {
 
   if (bolumlerYukleniyor || masalarYukleniyor) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <p className="text-surface-500 animate-pulse text-lg">Masa ayarları yükleniyor...</p>
+      <div className="flex items-center justify-center p-12 text-surface-400 font-mono text-sm">
+        <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-3" />
+        Masa krokisi yükleniyor...
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-pos-lg font-bold text-surface-900 dark:text-white">Masa Düzeni & Ayarları</h2>
-          <p className="text-sm text-surface-500 mt-1">Bölümler oluşturun, masalar ekleyin ve düzenleyin.</p>
-        </div>
+    <div className="flex flex-col gap-6 max-w-5xl animate-fade-in text-surface-100 select-none pb-8">
+      <div>
+        <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5">
+          <LayoutGrid size={22} className="text-brand-500" />
+          Masa & Bölüm Yerleşimi
+        </h2>
+        <p className="text-xs text-surface-400 mt-1">
+          Salon, Bahçe, Teras gibi bölümler oluşturun ve masaları konumlandırın.
+        </p>
       </div>
 
       {/* Bölüm Yönetimi */}
-      <div className="flex flex-col gap-4 bg-surface-50 dark:bg-surface-800/50 p-6 rounded-pos-lg border border-surface-200 dark:border-surface-700">
-        <div className="flex justify-between items-center pb-2 border-b border-surface-200 dark:border-surface-700">
-          <h3 className="font-bold text-surface-900 dark:text-white">Bölümler</h3>
-          <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={yeniBolumAc}>
+      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+          <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider">
+            Restoran Bölümleri
+          </h3>
+          <motion.button 
+            type="button"
+            whileTap={{ scale: 0.95 }}
+            onClick={yeniBolumAc}
+            className="h-9 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+          >
+            <Plus size={14} />
             Yeni Bölüm
-          </Button>
+          </motion.button>
         </div>
 
         {bolumler.length === 0 ? (
-          <p className="text-surface-400 text-center py-6">Henüz bölüm oluşturulmamış. Yeni bölüm ekleyerek başlayın.</p>
+          <p className="text-surface-400 text-center py-6 text-xs">Henüz bölüm oluşturulmamış. Yeni bölüm ekleyerek başlayın.</p>
         ) : (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2.5">
             {bolumler.map(bolum => (
               <div key={bolum.id} className="relative group">
                 <button
+                  type="button"
                   onClick={() => setSeciliBolumId(bolum.id)}
                   className={clsx(
-                    'flex items-center gap-2 px-4 py-3 rounded-pos-lg border-2 transition-all font-medium pr-10',
+                    'flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-xs font-semibold pr-9 transition-all',
                     seciliBolumId === bolum.id
-                      ? 'bg-brand-50 dark:bg-brand-900/30 border-brand-500 text-brand-700 dark:text-brand-300 shadow-sm'
-                      : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:border-brand-300'
+                      ? 'bg-brand-950/50 border-brand-500/60 text-white shadow-md shadow-brand-950/40'
+                      : 'bg-[#121624] hover:bg-[#181D2E] border-[#1E2538] text-surface-300'
                   )}
                 >
-                  <LayoutGrid size={18} />
+                  <LayoutGrid size={15} className={seciliBolumId === bolum.id ? 'text-brand-400' : 'text-surface-400'} />
                   <span>{bolum.ad}</span>
-                  <span className="text-xs bg-surface-200 dark:bg-surface-700 px-2 py-0.5 rounded-full ml-1">
-                    {bolum.masa_sayisi || 0} masa
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#181E30] text-surface-400 border border-[#252E46] ml-1">
+                    {bolum.masa_sayisi || 0}
                   </span>
                 </button>
                 
                 {/* Bölüm düzenle/sil butonu */}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
+                    type="button"
                     onClick={(e) => { e.stopPropagation(); bolumDuzenlemeAc(bolum); }}
-                    className="p-1.5 text-surface-400 hover:text-brand-500 hover:bg-brand-100 dark:hover:bg-brand-900/50 rounded-full transition-colors"
+                    className="p-1 text-surface-400 hover:text-white rounded transition-colors"
                     title="Düzenle"
                   >
-                    <Edit2 size={14} />
+                    <Edit2 size={12} />
                   </button>
                   <button
+                    type="button"
                     onClick={(e) => bolumSil(bolum, e)}
-                    className="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+                    className="p-1 text-surface-400 hover:text-red-400 rounded transition-colors"
                     title="Sil"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>
@@ -271,47 +284,55 @@ export default function TableSettings() {
 
       {/* Masa Listesi */}
       {seciliBolumId && (
-        <div className="flex flex-col gap-4 bg-surface-50 dark:bg-surface-800/50 p-6 rounded-pos-lg border border-surface-200 dark:border-surface-700">
-          <div className="flex justify-between items-center pb-2 border-b border-surface-200 dark:border-surface-700">
-            <h3 className="font-bold text-surface-900 dark:text-white">
-              {bolumler.find(b => b.id === seciliBolumId)?.ad} — Masalar
+        <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider">
+              {bolumler.find(b => b.id === seciliBolumId)?.ad} — Masa Listesi
             </h3>
-            <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={yeniMasaAc}>
+            <motion.button 
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={yeniMasaAc}
+              className="h-9 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <Plus size={14} />
               Yeni Masa Ekle
-            </Button>
+            </motion.button>
           </div>
 
           {filtrelenmisMasalar.length === 0 ? (
-            <p className="text-surface-400 text-center py-6">Bu bölümde henüz masa yok.</p>
+            <p className="text-surface-400 text-center py-6 text-xs">Bu bölümde henüz masa tanımlanmamış.</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {filtrelenmisMasalar.map(masa => (
                 <div
                   key={masa.id}
-                  className="relative flex flex-col items-center justify-center bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-pos-lg p-4 h-28 shadow-sm hover:shadow-md transition-shadow group"
+                  className="relative flex flex-col items-center justify-center bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] rounded-xl p-4 h-24 shadow-md transition-colors group"
                 >
-                  <span className="text-pos-2xl font-bold text-surface-900 dark:text-white mb-1">
+                  <span className="text-xl font-bold font-mono text-white mb-0.5">
                     {masa.numara}
                   </span>
-                  <span className="text-xs text-surface-500">
-                    Kapasite: {masa.kapasite}
+                  <span className="text-[11px] text-surface-400">
+                    {masa.kapasite} Kişilik
                   </span>
 
                   {/* Düzenle/Sil butonları */}
-                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      type="button"
                       onClick={() => masaDuzenlemeAc(masa)}
-                      className="p-1.5 text-surface-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/30 rounded-pos transition-colors"
+                      className="p-1 text-surface-400 hover:text-white rounded transition-colors"
                       title="Düzenle"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={12} />
                     </button>
                     <button
+                      type="button"
                       onClick={() => masaSil(masa)}
-                      className="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-pos transition-colors"
+                      className="p-1 text-surface-400 hover:text-red-400 rounded transition-colors"
                       title="Sil"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
@@ -323,39 +344,52 @@ export default function TableSettings() {
 
       {/* Bölüm Ekleme/Düzenleme Modalı */}
       <Modal isOpen={bolumModalAcik} onClose={() => setBolumModalAcik(false)} title={duzenlenecekBolum ? "Bölüm Düzenle" : "Yeni Bölüm Ekle"} size="sm">
-        <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Bölüm Adı</label>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-surface-400">Bölüm Adı</label>
             <input
               type="text"
               value={bolumForm.ad}
               onChange={e => {
-                const val = e.target.value;
+                const val = e.target.value
                 setBolumForm(prev => ({ ...prev, ad: val }))
               }}
-              className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
+              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: Salon, Bahçe, Teras..."
               autoFocus
               onKeyDown={e => { if (e.key === 'Enter') bolumKaydet() }}
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Sıra Numarası</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-surface-400">Sıralama Önceliği</label>
             <input
               type="number"
               value={bolumForm.sira}
               onChange={e => {
-                const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                const val = e.target.value === '' ? '' : parseInt(e.target.value)
                 setBolumForm(prev => ({ ...prev, sira: val }))
               }}
-              className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
+              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="0"
             />
-            <span className="text-xs text-surface-500">Küçük olanlar önce listelenir.</span>
           </div>
-          <div className="flex justify-end gap-3 mt-2">
-            <Button variant="ghost" onClick={() => setBolumModalAcik(false)}>İptal</Button>
-            <Button variant="primary" leftIcon={<Save size={18} />} onClick={bolumKaydet}>Kaydet</Button>
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#1A1F30]">
+            <button 
+              type="button" 
+              onClick={() => setBolumModalAcik(false)}
+              className="h-10 px-4 rounded-xl text-xs font-semibold text-surface-400 hover:text-white transition-colors"
+            >
+              İptal
+            </button>
+            <motion.button 
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={bolumKaydet}
+              className="h-10 px-5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <Save size={14} />
+              Kaydet
+            </motion.button>
           </div>
         </div>
       </Modal>
@@ -367,58 +401,45 @@ export default function TableSettings() {
         title={duzenlenecekMasa ? `Masa ${duzenlenecekMasa.numara} Düzenle` : 'Yeni Masa Ekle'}
         size="sm"
       >
-        <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Masa Numarası</label>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-surface-400">Masa Numarası / Kodu</label>
             <input
               type="text"
               value={masaForm.numara}
               onChange={e => {
-                const val = e.target.value;
+                const val = e.target.value
                 setMasaForm(prev => ({ ...prev, numara: val }))
               }}
-              className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
+              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: 1, A1, VIP-1..."
               autoFocus
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Kapasite (Kişi Sayısı)</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-surface-400">Kapasite (Kişi Sayısı)</label>
             <input
               type="number"
               min={1}
               max={50}
               value={masaForm.kapasite}
               onChange={e => {
-                const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                const val = e.target.value === '' ? '' : parseInt(e.target.value)
                 setMasaForm(prev => ({ ...prev, kapasite: val }))
               }}
-              className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Sıra Numarası</label>
-            <input
-              type="number"
-              value={masaForm.sira}
-              onChange={e => {
-                const val = e.target.value === '' ? '' : parseInt(e.target.value);
-                setMasaForm(prev => ({ ...prev, sira: val }))
-              }}
-              className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
-              placeholder="0"
+              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           {!duzenlenecekMasa && (
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Bölüm</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-surface-400">Bölüm</label>
               <select
                 value={masaForm.bolum_id || seciliBolumId || ''}
                 onChange={e => {
-                  const val = parseInt(e.target.value);
+                  const val = parseInt(e.target.value)
                   setMasaForm(prev => ({ ...prev, bolum_id: val }))
                 }}
-                className="w-full px-4 py-2.5 border rounded-pos dark:bg-surface-900 dark:border-surface-700 focus:outline-none focus:border-brand-500"
+                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
               >
                 {bolumler.map(b => (
                   <option key={b.id} value={b.id}>{b.ad}</option>
@@ -426,14 +447,27 @@ export default function TableSettings() {
               </select>
             </div>
           )}
-          <div className="flex justify-end gap-3 mt-2">
-            <Button variant="ghost" onClick={() => { setMasaModalAcik(false); setDuzenlenecekMasa(null) }}>İptal</Button>
-            <Button variant="primary" leftIcon={<Save size={18} />} onClick={masaKaydet}>
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#1A1F30]">
+            <button 
+              type="button" 
+              onClick={() => { setMasaModalAcik(false); setDuzenlenecekMasa(null) }}
+              className="h-10 px-4 rounded-xl text-xs font-semibold text-surface-400 hover:text-white transition-colors"
+            >
+              İptal
+            </button>
+            <motion.button 
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={masaKaydet}
+              className="h-10 px-5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <Save size={14} />
               {duzenlenecekMasa ? 'Güncelle' : 'Ekle'}
-            </Button>
+            </motion.button>
           </div>
         </div>
       </Modal>
     </div>
   )
 }
+

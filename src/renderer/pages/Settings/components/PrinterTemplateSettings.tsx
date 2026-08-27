@@ -1,37 +1,37 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Button } from '../../../components/ui/Button'
-import { Save, FileText, Utensils } from 'lucide-react'
+import { Save, FileText, Utensils, Printer, Check, Eye } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useIPC, ipcInvoke } from '../../../hooks/useIPC'
+import { ipcInvoke } from '../../../hooks/useIPC'
 import { AYAR_KANALLARI } from '../../../../common/ipc-channels'
 import { useToast } from '../../../components/ui/Toast'
 import { 
   MutfakSablonConfig, 
   KasaSablonConfig, 
   defaultMutfakConfig, 
-  defaultKasaConfig,
-  generateMutfakHtml,
-  generateAdisyonHtml
+  defaultKasaConfig, 
+  generateMutfakHtml, 
+  generateAdisyonHtml 
 } from '../../../utils/print.utils'
+import { motion } from 'framer-motion'
 
-// Sahte (Mock) veriler - Sadece önizleme amaçlı
-const mockMasaNo = "12";
+// Mock önizleme verileri
+const mockMasaNo = "12"
 const mockRestoranBilgileri = {
   ad: "ETİBOL KEBAP & DÖNER",
   telefon: "0212 555 44 33",
   adres: "Atatürk Cad. No:123 Kadıköy/İstanbul",
-  altNot: ""
-};
+  altNot: "Afiyet olsun, yine bekleriz!"
+}
 
 const mockSiparisler = [
   { urun_adi: "Adana Kebap", miktar: 1, birim_fiyat: 250, toplam_fiyat: 250, opsiyonlar: [{ ad: "Acılı" }], notlar: "Az pişmiş olsun" },
   { urun_adi: "Kutu Kola", miktar: 2, birim_fiyat: 40, toplam_fiyat: 80, opsiyonlar: [] },
   { urun_adi: "Çoban Salata", miktar: 1, birim_fiyat: 70, toplam_fiyat: 70, opsiyonlar: [] }
-];
+]
 
 const mockIptaller = [
   { urun_adi: "Ayran", miktar: 1, opsiyonlar: [] }
-];
+]
 
 const mockHesap = {
   hesap_no: "84729",
@@ -39,9 +39,9 @@ const mockHesap = {
   toplam_tutar: 400,
   indirim_tutari: 0,
   net_tutar: 400,
-  odemeler: [{ tutar: 200, tip: "nakit" }],
+  odemeler: [{ tutar: 400, tip: "kredi_karti" }],
   siparisler: mockSiparisler
-};
+}
 
 export default function PrinterTemplateSettings() {
   const { success, error } = useToast()
@@ -86,9 +86,9 @@ export default function PrinterTemplateSettings() {
     try {
       await ipcInvoke(AYAR_KANALLARI.KAYDET, 'yazici_sablon_kasa', JSON.stringify(kasaConfig))
       await ipcInvoke(AYAR_KANALLARI.KAYDET, 'yazici_sablon_mutfak', JSON.stringify(mutfakConfig))
-      success('Başarılı', 'Yazıcı şablonları kaydedildi.')
+      success('Başarılı', 'Yazıcı şablonları başarıyla kaydedildi.')
     } catch (err: any) {
-      error('Hata', err.message)
+      error('Hata', err.message || 'Şablon kaydedilemedi.')
     } finally {
       setSaving(false)
     }
@@ -97,176 +97,276 @@ export default function PrinterTemplateSettings() {
   // Canlı Önizleme HTML Üretimi
   const previewHtml = useMemo(() => {
     if (activeTab === 'kasa') {
-      return generateAdisyonHtml(mockHesap, mockRestoranBilgileri, kasaConfig);
+      return generateAdisyonHtml(mockHesap, mockRestoranBilgileri, kasaConfig)
     } else {
-      return generateMutfakHtml(mockSiparisler, mockMasaNo, mockIptaller, mutfakConfig);
+      return generateMutfakHtml(mockSiparisler, mockMasaNo, mockIptaller, mutfakConfig)
     }
   }, [activeTab, kasaConfig, mutfakConfig])
 
-  if (loading) return <div className="p-4">Yükleniyor...</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12 text-surface-400 font-mono text-sm">
+        <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-3" />
+        Şablon parametreleri yükleniyor...
+      </div>
+    )
+  }
+
+  const isKasa = activeTab === 'kasa'
+  const currentPaperWidth = isKasa ? kasaConfig.paperWidth : mutfakConfig.paperWidth
+  const currentFontSize = isKasa ? kasaConfig.fontSize : mutfakConfig.fontSize
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col gap-6 animate-fade-in text-surface-100 select-none pb-8">
       
-      <div className="flex items-center justify-between">
+      {/* Başlık ve Aksiyon */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-surface-900 dark:text-white">Yazıcı Fiş Tasarımı</h2>
-          <p className="text-sm text-surface-500">Müşteri ve mutfak fişlerinin görünümünü özelleştirin.</p>
+          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <Printer size={22} className="text-brand-500" />
+            Termal Fiş & Yazıcı Tasarımı
+          </h2>
+          <p className="text-xs text-surface-400 mt-1">
+            Kasa adisyonu ve mutfak sipariş bilgi fişlerinin termal baskı düzenini yapılandırın.
+          </p>
         </div>
-        <Button 
-          variant="primary" 
-          leftIcon={<Save size={18} />} 
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.95 }}
           onClick={handleSave}
           disabled={saving}
+          className="h-11 px-5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-brand-900/40 border border-brand-400/30 transition-colors disabled:opacity-50"
         >
-          {saving ? 'Kaydediliyor...' : 'Tasarımları Kaydet'}
-        </Button>
+          <Save size={16} />
+          {saving ? 'Kaydediliyor...' : 'Şablonları Kaydet'}
+        </motion.button>
       </div>
 
-      <div className="flex gap-4">
-        {/* Sol Taraf - Kontroller */}
-        <div className="w-1/2 flex flex-col gap-4">
-          <div className="flex bg-surface-100 dark:bg-surface-800 p-1 rounded-pos">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Sol Taraf: Kontrol Paneli (7 cols) */}
+        <div className="lg:col-span-7 flex flex-col gap-5">
+          
+          {/* Fiş Tipi Seçimi */}
+          <div className="grid grid-cols-2 p-1 bg-[#090B12] rounded-xl border border-[#1A1F30]">
             <button
+              type="button"
               className={clsx(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-pos transition-colors",
-                activeTab === 'kasa' ? "bg-white dark:bg-surface-900 shadow-sm text-brand-600" : "text-surface-600 hover:text-surface-900"
+                "flex items-center justify-center gap-2 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all",
+                activeTab === 'kasa'
+                  ? "bg-[#161B2B] text-white border border-[#252E46] shadow-md"
+                  : "text-surface-400 hover:text-white"
               )}
               onClick={() => setActiveTab('kasa')}
             >
-              <FileText size={16} /> Kasa (Adisyon) Fişi
+              <FileText size={15} className="text-brand-400" />
+              Kasa (Adisyon) Fişi
             </button>
             <button
+              type="button"
               className={clsx(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-pos transition-colors",
-                activeTab === 'mutfak' ? "bg-white dark:bg-surface-900 shadow-sm text-brand-600" : "text-surface-600 hover:text-surface-900"
+                "flex items-center justify-center gap-2 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all",
+                activeTab === 'mutfak'
+                  ? "bg-[#161B2B] text-white border border-[#252E46] shadow-md"
+                  : "text-surface-400 hover:text-white"
               )}
               onClick={() => setActiveTab('mutfak')}
             >
-              <Utensils size={16} /> Mutfak Fişi
+              <Utensils size={15} className="text-amber-400" />
+              Mutfak Sipariş Fişi
             </button>
           </div>
 
-          <div className="bg-white dark:bg-surface-900 p-5 rounded-pos-lg border border-surface-200 dark:border-surface-800 flex flex-col gap-4">
-            
-            {/* Ortak Ayarlar */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Yazı Boyutu</label>
-                <select 
-                  className="w-full bg-surface-50 border border-surface-300 rounded-pos px-3 py-2 text-sm"
-                  value={activeTab === 'kasa' ? kasaConfig.fontSize : mutfakConfig.fontSize}
-                  onChange={(e) => activeTab === 'kasa' 
-                    ? handleKasaChange('fontSize', e.target.value) 
-                    : handleMutfakChange('fontSize', e.target.value)
-                  }
-                >
-                  <option value="small">Küçük</option>
-                  <option value="normal">Normal</option>
-                  <option value="large">Büyük</option>
-                </select>
+          {/* Ortak Parametreler Kartı */}
+          <div className="bg-[#0E111B] p-5 sm:p-6 rounded-2xl border border-[#1E2436] space-y-5 shadow-xl">
+            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+              <span>Kağıt ve Tipografi Parametreleri</span>
+              <span className="font-mono text-brand-400 text-[11px]">{currentPaperWidth} / {currentFontSize}</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Kağıt Genişliği */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-surface-400">Termal Rulo Genişliği</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['58mm', '80mm'].map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => isKasa ? handleKasaChange('paperWidth', w) : handleMutfakChange('paperWidth', w)}
+                      className={clsx(
+                        "h-11 rounded-xl font-mono text-xs font-semibold border flex items-center justify-center transition-all",
+                        currentPaperWidth === w
+                          ? "bg-brand-950/40 text-brand-300 border-brand-500/60 shadow-inner"
+                          : "bg-[#121624] text-surface-400 border-[#1E2538] hover:text-white"
+                      )}
+                    >
+                      {w} {w === '80mm' ? '(Standart)' : '(Dar)'}
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Kağıt Genişliği</label>
-                <select 
-                  className="w-full bg-surface-50 border border-surface-300 rounded-pos px-3 py-2 text-sm"
-                  value={activeTab === 'kasa' ? kasaConfig.paperWidth : mutfakConfig.paperWidth}
-                  onChange={(e) => activeTab === 'kasa' 
-                    ? handleKasaChange('paperWidth', e.target.value) 
-                    : handleMutfakChange('paperWidth', e.target.value)
-                  }
-                >
-                  <option value="58mm">58 mm (Küçük Termal)</option>
-                  <option value="80mm">80 mm (Standart Termal)</option>
-                </select>
+
+              {/* Yazı Boyutu */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-surface-400">Fiş Font Ölçeği</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'small', label: 'Küçük' },
+                    { id: 'normal', label: 'Normal' },
+                    { id: 'large', label: 'Büyük' },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => isKasa ? handleKasaChange('fontSize', s.id) : handleMutfakChange('fontSize', s.id)}
+                      className={clsx(
+                        "h-11 rounded-xl text-xs font-semibold border flex items-center justify-center transition-all",
+                        currentFontSize === s.id
+                          ? "bg-brand-950/40 text-brand-300 border-brand-500/60 shadow-inner"
+                          : "bg-[#121624] text-surface-400 border-[#1E2538] hover:text-white"
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+          </div>
 
-            <hr className="border-surface-200 dark:border-surface-700" />
+          {/* Görünürlük Anahtarları Kartı */}
+          <div className="bg-[#0E111B] p-5 sm:p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
+            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#1A1F30]">
+              {isKasa ? 'Kasa Fişi Alanları' : 'Mutfak Fişi Alanları'}
+            </h3>
 
-            {/* Kasa Özel Ayarlar */}
-            {activeTab === 'kasa' && (
-              <div className="flex flex-col gap-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showRestoName} onChange={e => handleKasaChange('showRestoName', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Restoran Adını Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showRestoInfo} onChange={e => handleKasaChange('showRestoInfo', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Adres & Telefon Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showTime} onChange={e => handleKasaChange('showTime', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Tarih & Saat Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showOrderNo} onChange={e => handleKasaChange('showOrderNo', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Sipariş / Hesap No Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showPrices} onChange={e => handleKasaChange('showPrices', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Fiyatları ve Toplamı Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={kasaConfig.showFooter} onChange={e => handleKasaChange('showFooter', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Alt Bilgi (Teşekkür Mesajı) Göster</span>
-                </label>
-                
+            {isKasa ? (
+              <div className="space-y-3">
+                {[
+                  { key: 'showRestoName', label: 'Restoran Adı Başlığı', desc: 'İşletme ünvanını en üstte kalın gösterir' },
+                  { key: 'showRestoInfo', label: 'Adres & Telefon Bilgisi', desc: 'İletişim ve konum bilgilerini ekler' },
+                  { key: 'showTime', label: 'Tarih ve Saat Damgası', desc: 'Baskı zamanını kaydeder' },
+                  { key: 'showOrderNo', label: 'Adisyon & Hesap Numarası', desc: 'Benzersiz fiş takip numarasını yazar' },
+                  { key: 'showPrices', label: 'Birim Fiyatlar & KDV Toplamı', desc: 'Ödeme ve tutar dökümünü gösterir' },
+                  { key: 'showFooter', label: 'Alt Teşekkür Mesajı', desc: 'Fişin sonunda özel kapanış notu yer alır' },
+                ].map((item) => {
+                  const isChecked = !!(kasaConfig as any)[item.key]
+                  return (
+                    <div
+                      key={item.key}
+                      onClick={() => handleKasaChange(item.key as any, !isChecked)}
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="text-xs font-semibold text-white">{item.label}</div>
+                        <div className="text-[11px] text-surface-400">{item.desc}</div>
+                      </div>
+                      <div className={clsx(
+                        "w-6 h-6 rounded-lg flex items-center justify-center border transition-all",
+                        isChecked
+                          ? "bg-brand-600 border-brand-400 text-white"
+                          : "bg-[#090A10] border-[#222B40] text-transparent"
+                      )}>
+                        <Check size={14} />
+                      </div>
+                    </div>
+                  )
+                })}
+
                 {kasaConfig.showFooter && (
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Alt Bilgi Metni</label>
-                    <textarea 
-                      className="w-full bg-surface-50 border border-surface-300 rounded-pos px-3 py-2 text-sm"
-                      rows={3}
-                      value={kasaConfig.footerText}
-                      onChange={e => handleKasaChange('footerText', e.target.value)}
+                  <div className="mt-4 pt-4 border-t border-[#1A1F30] flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-surface-300">Özel Alt Bilgi Notu</label>
+                    <textarea
+                      rows={2}
+                      value={kasaConfig.footerText || ''}
+                      onChange={(e) => handleKasaChange('footerText', e.target.value)}
+                      className="w-full p-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors resize-none"
+                      placeholder="Örn: Afiyet olsun, yine bekleriz!"
                     />
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Mutfak Özel Ayarlar */}
-            {activeTab === 'mutfak' && (
-              <div className="flex flex-col gap-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={mutfakConfig.showTable} onChange={e => handleMutfakChange('showTable', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Masa Numarasını Göster</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={mutfakConfig.showTime} onChange={e => handleMutfakChange('showTime', e.target.checked)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" />
-                  <span className="text-sm font-medium">Tarih & Saat Göster</span>
-                </label>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { key: 'showTable', label: 'Masa Numarası Vurgusu', desc: 'Büyük puntolarla hedef masayı belirtir' },
+                  { key: 'showTime', label: 'Sipariş İletim Saati', desc: 'Mutfağa geliş dakikasını gösterir' },
+                ].map((item) => {
+                  const isChecked = !!(mutfakConfig as any)[item.key]
+                  return (
+                    <div
+                      key={item.key}
+                      onClick={() => handleMutfakChange(item.key as any, !isChecked)}
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="text-xs font-semibold text-white">{item.label}</div>
+                        <div className="text-[11px] text-surface-400">{item.desc}</div>
+                      </div>
+                      <div className={clsx(
+                        "w-6 h-6 rounded-lg flex items-center justify-center border transition-all",
+                        isChecked
+                          ? "bg-brand-600 border-brand-400 text-white"
+                          : "bg-[#090A10] border-[#222B40] text-transparent"
+                      )}>
+                        <Check size={14} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
         </div>
 
-        {/* Sağ Taraf - Canlı Önizleme */}
-        <div className="w-1/2 flex flex-col h-[500px]">
-          <div className="text-sm font-bold text-surface-500 mb-2 uppercase tracking-wider">Canlı Önizleme</div>
-          <div className="flex-1 bg-surface-200 dark:bg-surface-800 rounded-pos-lg border border-surface-300 dark:border-surface-700 p-4 flex items-center justify-center overflow-auto pos-scrollbar">
-            {/* Önizleme Kağıdı */}
-            <div 
-              className="bg-white shadow-lg overflow-hidden transition-all duration-300 mx-auto"
-              style={{
-                width: activeTab === 'kasa' 
-                  ? (kasaConfig.paperWidth === '58mm' ? '220px' : '320px') 
-                  : (mutfakConfig.paperWidth === '58mm' ? '220px' : '320px'),
-                height: '100%',
-                minHeight: '400px'
-              }}
-            >
-              <iframe 
-                srcDoc={previewHtml} 
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                title="Fiş Önizleme"
-              />
+        {/* Sağ Taraf: Canlı Termal Simülatör (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col items-center">
+          <div className="w-full bg-[#0E111B] p-5 rounded-2xl border border-[#1E2436] shadow-xl flex flex-col items-center">
+            
+            <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-[#1A1F30]">
+              <div className="flex items-center gap-2 text-xs font-bold text-surface-300 uppercase tracking-wider">
+                <Eye size={16} className="text-brand-400" />
+                <span>Canlı Termal Kağıt</span>
+              </div>
+              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#141928] text-surface-300 border border-[#222B40]">
+                {currentPaperWidth} RULO
+              </span>
+            </div>
+
+            {/* Termal Rulo Kağıt Çerçevesi */}
+            <div className="w-full py-6 px-4 bg-[#07090F] rounded-xl border border-[#161B2A] flex justify-center items-center overflow-x-auto">
+              <div 
+                className="bg-white text-black shadow-2xl rounded-sm transition-all duration-200 overflow-hidden relative border-t-8 border-t-zinc-300 border-b-8 border-b-zinc-300"
+                style={{
+                  width: currentPaperWidth === '58mm' ? '240px' : '310px',
+                  minHeight: '420px',
+                }}
+              >
+                {/* Jagged / Tear Edge simülasyonu */}
+                <div className="h-2 w-full bg-zinc-200 border-b border-dashed border-zinc-400" />
+                
+                <iframe
+                  srcDoc={previewHtml}
+                  title="Termal Önizleme"
+                  className="w-full min-h-[400px] border-none"
+                  style={{ height: '420px' }}
+                />
+
+                <div className="h-2 w-full bg-zinc-200 border-t border-dashed border-zinc-400" />
+              </div>
+            </div>
+
+            <div className="w-full mt-4 flex items-center justify-between text-[11px] text-surface-400 font-mono">
+              <span>GERÇEK ZAMANLI MOTOR</span>
+              <span>100% ESC/POS UYUMLU</span>
             </div>
           </div>
         </div>
+
       </div>
+
     </div>
   )
 }
+

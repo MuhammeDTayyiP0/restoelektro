@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { clsx } from 'clsx'
-import { CheckCircle, AlertTriangle, XCircle, Info, X } from 'lucide-react'
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -35,7 +36,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substring(7)
+    const id = Math.random().toString(36).substring(2, 9)
     setToasts((prev) => [...prev, { ...toast, id }])
   }, [])
 
@@ -48,7 +49,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [addToast])
 
   const error = useCallback((title: string, message?: string) => {
-    addToast({ title, message, type: 'error', duration: 5000 })
+    addToast({ title, message, type: 'error', duration: 4500 })
   }, [addToast])
 
   const warning = useCallback((title: string, message?: string) => {
@@ -62,10 +63,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info }}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full">
-        {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
-        ))}
+      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+        <AnimatePresence mode="popLayout">
+          {toasts.map((toast) => (
+            <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   )
@@ -75,50 +78,70 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
   useEffect(() => {
     const timer = setTimeout(() => {
       onRemove(toast.id)
-    }, toast.duration || 3000)
+    }, toast.duration || 3200)
 
     return () => clearTimeout(timer)
   }, [toast, onRemove])
 
-  const icons = {
-    success: <CheckCircle className="text-green-500" size={24} />,
-    error: <XCircle className="text-red-500" size={24} />,
-    warning: <AlertTriangle className="text-amber-500" size={24} />,
-    info: <Info className="text-blue-500" size={24} />,
+  const typeConfig = {
+    success: {
+      icon: <CheckCircle2 className="text-emerald-400" size={18} />,
+      border: 'border-l-emerald-500 border-[#1E2333]',
+      accentBg: 'bg-emerald-500/10 text-emerald-400',
+    },
+    error: {
+      icon: <AlertCircle className="text-red-400" size={18} />,
+      border: 'border-l-red-500 border-[#1E2333]',
+      accentBg: 'bg-red-500/10 text-red-400',
+    },
+    warning: {
+      icon: <AlertTriangle className="text-amber-400" size={18} />,
+      border: 'border-l-amber-500 border-[#1E2333]',
+      accentBg: 'bg-amber-500/10 text-amber-400',
+    },
+    info: {
+      icon: <Info className="text-blue-400" size={18} />,
+      border: 'border-l-blue-500 border-[#1E2333]',
+      accentBg: 'bg-blue-500/10 text-blue-400',
+    },
   }
 
-  const bgColors = {
-    success: 'border-l-green-500',
-    error: 'border-l-red-500',
-    warning: 'border-l-amber-500',
-    info: 'border-l-blue-500',
-  }
+  const config = typeConfig[toast.type]
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -12, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 20, scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
       className={clsx(
-        'bg-white dark:bg-surface-800 shadow-pos-lg rounded-pos border border-surface-200 dark:border-surface-700 border-l-4 p-4 flex gap-3 animate-slide-down',
-        bgColors[toast.type]
+        'pointer-events-auto bg-[#0C0F17] shadow-2xl rounded-xl border border-l-4 p-3.5 flex items-start gap-3 select-none backdrop-blur-md',
+        config.border
       )}
       role="alert"
     >
-      <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-pos-base font-semibold text-surface-900 dark:text-surface-100">
+      <div className={clsx('p-1 rounded-lg shrink-0 mt-0.5', config.accentBg)}>
+        {config.icon}
+      </div>
+      <div className="flex-1 min-w-0 pr-1">
+        <h4 className="text-sm font-medium text-surface-100 tracking-tight leading-snug">
           {toast.title}
-        </p>
+        </h4>
         {toast.message && (
-          <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+          <p className="text-xs text-surface-400 mt-0.5 leading-relaxed break-words">
             {toast.message}
           </p>
         )}
       </div>
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 transition-colors"
+        className="shrink-0 p-1 text-surface-400 hover:text-white rounded-lg hover:bg-surface-800 transition-colors"
+        aria-label="Kapat"
       >
-        <X size={20} />
+        <X size={14} />
       </button>
-    </div>
+    </motion.div>
   )
 }
+
