@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react'
 import { useToast } from '../../../components/ui/Toast'
 import { ipcInvoke } from '../../../hooks/useIPC'
-import { AYAR_KANALLARI, YAZICI_KANALLARI } from '../../../../common/ipc-channels'
-import { Save, Printer, Smartphone, Building2, Receipt, CheckCircle2, Play } from 'lucide-react'
+import { AYAR_KANALLARI, YAZICI_KANALLARI, UYGULAMA_KANALLARI } from '../../../../common/ipc-channels'
+import { 
+  Save, 
+  Printer, 
+  Smartphone, 
+  Building2, 
+  Receipt, 
+  CheckCircle2, 
+  Play, 
+  Power, 
+  Layers, 
+  ShieldCheck 
+} from 'lucide-react'
 import { motion } from 'framer-motion'
+import { clsx } from 'clsx'
 
 export default function GeneralSettings() {
   const [ayarlar, setAyarlar] = useState<Record<string, string>>({})
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [yazicilar, setYazicilar] = useState<{name: string, displayName: string, description: string}[]>([])
+  const [otomatikBaslat, setOtomatikBaslat] = useState(false)
+  const [otomatikBaslatYukleniyor, setOtomatikBaslatYukleniyor] = useState(false)
   const { success, error } = useToast()
 
   const ayariGetir = (anahtar: string) => ayarlar[anahtar] || ''
@@ -26,6 +40,12 @@ export default function GeneralSettings() {
       const printerRes = await ipcInvoke<any>(YAZICI_KANALLARI.AYARLAR)
       if (printerRes?.basarili && printerRes.yazicilar) {
         setYazicilar(printerRes.yazicilar)
+      }
+
+      // Otomatik başlatma durumunu sorgula
+      const autoRes = await ipcInvoke<any>(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_DURUM)
+      if (autoRes?.basarili) {
+        setOtomatikBaslat(Boolean(autoRes.openAtLogin))
       }
     } catch (err: any) {
       error('Hata', err.message || 'Ayarlar yüklenemedi')
@@ -51,6 +71,29 @@ export default function GeneralSettings() {
     }
   }
 
+  const toggleOtomatikBaslat = async () => {
+    setOtomatikBaslatYukleniyor(true)
+    const yeniDurum = !otomatikBaslat
+    try {
+      const res = await ipcInvoke<any>(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_AYARLA, yeniDurum)
+      if (res && res.basarili) {
+        setOtomatikBaslat(yeniDurum)
+        success(
+          'Başlangıç Ayarı Güncellendi',
+          yeniDurum
+            ? 'ETİBOL POS, Windows açılışında otomatik başlatılacaktır.'
+            : 'Windows başlangıcında otomatik başlatma devre dışı bırakıldı.'
+        )
+      } else {
+        throw new Error(res?.hata || 'Ayar güncellenemedi')
+      }
+    } catch (err: any) {
+      error('Hata', err.message || 'Otomatik başlatma ayarı değiştirilemedi.')
+    } finally {
+      setOtomatikBaslatYukleniyor(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-4xl animate-fade-in text-surface-100 select-none pb-8">
       
@@ -62,7 +105,7 @@ export default function GeneralSettings() {
             Genel İşletme & Donanım Ayarları
           </h2>
           <p className="text-xs text-surface-400 mt-1">
-            İşletme kimlik bilgileri, termal donanım yönlendirmeleri ve mali parametreler.
+            İşletme kimlik bilgileri, başlangıç parametreleri ve termal donanım yönlendirmeleri.
           </p>
         </div>
         <motion.button 
@@ -75,6 +118,76 @@ export default function GeneralSettings() {
           <Save size={16} />
           {kaydediliyor ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
         </motion.button>
+      </div>
+
+      {/* Sistem & Başlangıç Tercihleri Kartı (Auto-Launch & System Tray) */}
+      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+          <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
+            <Power size={16} className="text-brand-400" />
+            Sistem & Başlangıç Tercihleri
+          </h3>
+          <span className={clsx(
+            "text-[11px] font-mono px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 transition-colors",
+            otomatikBaslat 
+              ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40" 
+              : "bg-[#141826] text-surface-400 border-[#1E2436]"
+          )}>
+            <span className={clsx(
+              "w-1.5 h-1.5 rounded-full",
+              otomatikBaslat ? "bg-emerald-400 status-beacon-green" : "bg-surface-500"
+            )} />
+            {otomatikBaslat ? 'BAŞLANGIÇTA ÇALIŞIR' : 'MANUEL BAŞLATMA'}
+          </span>
+        </div>
+
+        {/* Windows Başlangıcında Otomatik Başlat Switch */}
+        <div className="bg-[#090B12] rounded-xl p-4 border border-[#181D2E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-xs font-semibold text-white flex items-center gap-2">
+              <span>Windows Başlangıcında Otomatik Başlat</span>
+              {otomatikBaslat && (
+                <span className="text-[10px] bg-brand-950/60 text-brand-400 border border-brand-800/40 px-2 py-0.2 rounded font-mono">
+                  ÖNERİLEN
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-surface-400 max-w-xl leading-relaxed">
+              Bilgisayar açıldığında ETİBOL POS arka planda hazır başlatılır; garson terminalleri ve mutfak ekranları kesintisiz çalışır.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={otomatikBaslat}
+            disabled={otomatikBaslatYukleniyor}
+            onClick={toggleOtomatikBaslat}
+            className={clsx(
+              "relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
+              otomatikBaslat ? "bg-brand-600" : "bg-[#1A2032]"
+            )}
+          >
+            <motion.span
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className={clsx(
+                "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+                otomatikBaslat ? "translate-x-6" : "translate-x-0"
+              )}
+            />
+          </button>
+        </div>
+
+        {/* System Tray Bilgilendirme Kutusu */}
+        <div className="bg-[#090B12]/60 rounded-xl p-3.5 border border-[#161B2B] flex items-start gap-3">
+          <div className="w-6 h-6 rounded-lg bg-blue-950/40 border border-blue-800/40 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
+            <Layers size={13} />
+          </div>
+          <div className="text-[11px] text-surface-400 leading-relaxed">
+            <strong className="text-surface-200 font-semibold">Arka Planda Çalışma (System Tray):</strong> Sağ üstteki <span className="text-rose-400 font-mono">[X]</span> butonuna basıldığında uygulama tamamen kapanmaz, Windows sağ alt bildirim alanına (System Tray) küçültülür. Tamamen kapatmak için bildirim alanındaki ikona sağ tıklayıp <span className="text-brand-300 font-medium">"Sistemden Tamamen Çık"</span> seçeneğini kullanabilirsiniz.
+          </div>
+        </div>
       </div>
 
       {/* İşletme Bilgileri Kartı */}
@@ -252,4 +365,3 @@ export default function GeneralSettings() {
     </div>
   )
 }
-

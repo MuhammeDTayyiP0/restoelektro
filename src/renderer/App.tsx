@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastProvider } from './components/ui/Toast'
 import { initTema } from './stores/useUIStore'
 import { useIPCListener, ipcInvoke } from './hooks/useIPC'
 import { yazdirMutfak } from './utils/print.utils'
 import { AYAR_KANALLARI } from '../common/ipc-channels'
+import AutoLaunchModal from './components/modals/AutoLaunchModal'
 
-// Sayfalar ve Layoutlar
 // Sayfalar ve Layoutlar
 import LoginPage from './pages/Login/LoginPage'
 import { MainLayout } from './components/layout/MainLayout'
@@ -24,9 +24,19 @@ import SettingsPage from './pages/Settings/SettingsPage'
  * HashRouter kullanımı Electron uygulamaları için zorunludur (file:// protokolü ile çalışırken)
  */
 export default function App() {
-  // Uygulama başlarken temayı yükle
+  const [autoLaunchModalAcik, setAutoLaunchModalAcik] = useState(false)
+
+  // Uygulama başlarken temayı yükle ve ilk açılışta otomatik başlatma tercihini kontrol et
   useEffect(() => {
     initTema()
+
+    const sorulduMu = localStorage.getItem('etibol_auto_launch_prompted')
+    if (!sorulduMu) {
+      const timer = setTimeout(() => {
+        setAutoLaunchModalAcik(true)
+      }, 1200)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   // Arka planda gelen (örneğin Garson modülünden) mutfak yazdırma isteklerini dinle
@@ -70,6 +80,12 @@ export default function App() {
             {/* Bulunamayan rotalar */}
             <Route path="*" element={<Navigate to="/tables" replace />} />
           </Routes>
+
+          {/* İlk Açılışta Windows Başlangıcında Otomatik Başlatma Modalı */}
+          <AutoLaunchModal
+            isOpen={autoLaunchModalAcik}
+            onClose={() => setAutoLaunchModalAcik(false)}
+          />
         </div>
       </HashRouter>
     </ToastProvider>

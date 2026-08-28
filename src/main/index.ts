@@ -10,12 +10,55 @@ import { veritabaniBaslat, veritabaniKapat, veritabaniGetir } from './database/c
 import { otomatikYedekAl } from './database/backup'
 import { ipcHandlerlariniKaydet } from './ipc/index'
 import { apiSunucusunuBaslat } from './api/server'
+import {
+  trayBaslat,
+  trayYokEt,
+  pencereyiGoster,
+  trayKucultmeBildirimiGoster,
+} from './services/tray.service'
 
 // Uygulama adı — userData yolunun tutarlılığı için
 app.name = 'ETİBOL POS'
 
 // Ana pencere referansı
 let anaPencere: BrowserWindow | null = null
+
+// Uygulamanın tamamen kapatılıp kapatılmadığını kontrol eden bayrak
+let isAppQuitting = false
+
+/**
+ * Ana pencere referansını dışa aktarır
+ */
+export function anaPencereGetir(): BrowserWindow | null {
+  return anaPencere
+}
+
+/**
+ * Uygulamayı arka plandan çıkarıp tamamen sonlandırır
+ */
+export function tamamenCikisYap(): void {
+  isAppQuitting = true
+  trayYokEt()
+  app.quit()
+}
+
+/**
+ * Tekil çalışma kilidi (Single Instance Lock)
+ * Uygulamanın birden fazla kopyasının açılmasını engeller
+ */
+const tekilUygulamaKilidi = app.requestSingleInstanceLock()
+
+if (!tekilUygulamaKilidi) {
+  // Başka bir örnek zaten çalışıyorsa bu kopyayı kapat
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // İkinci bir kopya başlatılmaya çalışıldığında mevcut pencereyi öne getir
+    if (anaPencere) {
+      pencereyiGoster(anaPencere)
+    }
+  })
+}
 
 /**
  * Ana uygulama penceresini oluşturur
@@ -25,6 +68,10 @@ function pencereOlustur(): void {
   // Ekran boyutunu al
   const birincilEkran = screen.getPrimaryDisplay()
   const { width: ekranGenislik, height: ekranYukseklik } = birincilEkran.workAreaSize
+
+  const icoYolu = is.dev
+    ? join(__dirname, '../../resources/icon.ico')
+    : join(process.resourcesPath, 'resources/icon.ico')
 
   anaPencere = new BrowserWindow({
     width: ekranGenislik,
@@ -45,8 +92,8 @@ function pencereOlustur(): void {
       zoomFactor: 1.0,
     },
     // Uygulama ikonu
-    icon: join(__dirname, '../../resources/icon.png'),
-    backgroundColor: '#0f172a', // Koyu arka plan — yükleme sırasında beyaz flash önler
+    icon: icoYolu,
+    backgroundColor: '#090A0F', // Koyu POS arka plan — yükleme sırasında beyaz flash önler
   })
 
   // Pencere hazır olduğunda göster (beyaz ekran gösterme)
@@ -55,6 +102,15 @@ function pencereOlustur(): void {
     // Geliştirme modunda DevTools aç
     if (is.dev) {
       anaPencere?.webContents.openDevTools({ mode: 'detach' })
+    }
+  })
+
+  // Sağ üstteki [X] butonuna veya kapatma eylemine basıldığında uygulamayı kapatmak yerine gizle
+  anaPencere.on('close', (event) => {
+    if (!isAppQuitting) {
+      event.preventDefault()
+      anaPencere?.hide()
+      trayKucultmeBildirimiGoster()
     }
   })
 
@@ -95,6 +151,13 @@ async function uygulamaBaslat(): Promise<void> {
 
     // 4. Ana pencereyi oluştur
     pencereOlustur()
+
+    // 5. System Tray (Bildirim Alanı) servisini başlat
+    if (anaPencere) {
+      trayBaslat(anaPencere, tamamenCikisYap)
+      console.log('🟢 System Tray servisi aktif')
+    }
+
     console.log('✅ ETİBOL POS hazır!')
   } catch (hata) {
     console.error('❌ Uygulama başlatma hatası:', hata)
@@ -108,9 +171,9 @@ app.disableHardwareAcceleration()
 // Electron hazır olduğunda uygulamayı başlat
 app.whenReady().then(uygulamaBaslat)
 
-// Tüm pencereler kapandığında (macOS hariç)
+// Tüm pencereler kapandığında
 app.on('window-all-closed', async () => {
-  if (process.platform !== 'darwin') {
+  if (isAppQuitting) {
     try {
       const db = veritabaniGetir()
       await otomatikYedekAl(db, 'kapanis')
@@ -118,6 +181,7 @@ app.on('window-all-closed', async () => {
       // sessizce devam et
     }
     veritabaniKapat()
+    trayYokEt()
     app.quit()
   }
 })
@@ -126,11 +190,14 @@ app.on('window-all-closed', async () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     pencereOlustur()
+  } else if (anaPencere) {
+    pencereyiGoster(anaPencere)
   }
 })
 
 // Uygulama kapanırken veritabanını kapat
 app.on('before-quit', async () => {
+  isAppQuitting = true
   try {
     const db = veritabaniGetir()
     await otomatikYedekAl(db, 'kapanis')
@@ -138,6 +205,7 @@ app.on('before-quit', async () => {
     // sessizce devam et
   }
   veritabaniKapat()
+  trayYokEt()
 })
 
 // Tam ekran IPC — dokunmatik POS için
@@ -159,4 +227,25 @@ ipcMain.handle('pencere:buyut', () => {
     anaPencere?.maximize()
   }
 })
-ipcMain.handle('pencere:kapat', () => anaPencere?.close())
+// Kapat butonuna basıldığında pencereyi gizle (System Tray'de arka planda çalışmaya devam eder)
+ipcMain.handle('pencere:kapat', () => {
+  if (anaPencere) {
+    anaPencere.hide()
+    trayKucultmeBildirimiGoster()
+  }
+})
+
+// Pencere görünürlük IPC'leri
+ipcMain.handle('uygulama:gizle', () => {
+  if (anaPencere) {
+    anaPencere.hide()
+    trayKucultmeBildirimiGoster()
+  }
+  return true
+})
+ipcMain.handle('uygulama:goster', () => {
+  if (anaPencere) {
+    pencereyiGoster(anaPencere)
+  }
+  return true
+})

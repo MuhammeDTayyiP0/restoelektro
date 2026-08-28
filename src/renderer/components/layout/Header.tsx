@@ -176,12 +176,12 @@ export function Header() {
             {tamEkran ? <Minimize size={16} /> : <Maximize size={16} />}
           </button>
 
-          {/* Uygulamayı Kapat */}
+          {/* Uygulamayı Gizle / Tepsiye Küçült */}
           <button 
             onClick={handleKapat}
             className="w-8 h-8 flex items-center justify-center text-surface-400 hover:text-white hover:bg-rose-600 border border-transparent hover:border-rose-500 rounded-lg touch-feedback transition-colors"
-            title="Uygulamayı Kapat"
-            aria-label="Uygulamayı Kapat"
+            title="Arka Plana Gizle (Tepsiye Küçült)"
+            aria-label="Arka Plana Gizle"
           >
             <X size={17} />
           </button>

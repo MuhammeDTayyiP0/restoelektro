@@ -1,13 +1,15 @@
 // =====================================================
 // Uygulama & Veritabanı Yönetimi IPC Handler'ları
-// Yedekleme, bakım, optimize etme ve sistem teşhis kanalları
+// Yedekleme, bakım, optimize etme, otomatik başlatma ve sistem kanalları
 // =====================================================
 
 import { IpcMain, app } from 'electron'
 import { existsSync, statSync } from 'fs'
+import { is } from '@electron-toolkit/utils'
 import { veritabaniGetir, veritabaniYoluGetir } from '../database/connection'
 import { otomatikYedekAl, yedekleriListele } from '../database/backup'
 import { UYGULAMA_KANALLARI } from '../../common/ipc-channels'
+import { tamamenCikisYap } from '../index'
 
 export function appIPCKaydet(ipcMain: IpcMain): void {
   // 1. Manuel Veritabanı Yedeği Al
@@ -148,5 +150,86 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
       localIP,
       apiPort: 3847,
     }
+  })
+
+  // 6. Windows Başlangıcında Otomatik Başlatma Durumu
+  ipcMain.handle(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_DURUM, async () => {
+    try {
+      const settings = app.getLoginItemSettings()
+      let dbKaydi: boolean | null = null
+      
+      try {
+        const db = veritabaniGetir()
+        const ayar = db.prepare('SELECT deger FROM ayar WHERE anahtar = ?').get('otomatik_baslat') as any
+        if (ayar?.deger !== undefined && ayar?.deger !== null) {
+          dbKaydi = ayar.deger === '1'
+        }
+      } catch {
+        // db okunamadıysa electron sonucunu kullan
+      }
+
+      return {
+        basarili: true,
+        openAtLogin: dbKaydi !== null ? dbKaydi : settings.openAtLogin,
+      }
+    } catch (error: any) {
+      console.error('❌ Otomatik başlatma durumu sorgulanamadı:', error)
+      return {
+        basarili: false,
+        openAtLogin: false,
+        hata: error?.message || 'Durum alınamadı',
+      }
+    }
+  })
+
+  // 7. Windows Başlangıcında Otomatik Başlatma Ayarla
+  ipcMain.handle(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_AYARLA, async (_event, openAtLogin: boolean) => {
+    try {
+      const aktifMi = Boolean(openAtLogin)
+      
+      // Electron başlangıç ayarını güncelle
+      app.setLoginItemSettings({
+        openAtLogin: aktifMi,
+        path: process.execPath,
+        args: is.dev ? [] : ['--hidden'],
+      })
+
+      // SQLite ayar tablosuna kaydet
+      try {
+        const db = veritabaniGetir()
+        db.prepare('INSERT OR REPLACE INTO ayar (anahtar, deger) VALUES (?, ?)').run(
+          'otomatik_baslat',
+          aktifMi ? '1' : '0'
+        )
+      } catch (dbErr) {
+        console.warn('⚠️ Veritabanına otomatik_baslat kaydedilemedi:', dbErr)
+      }
+
+      console.log(`⚙️ Otomatik başlatma ayarlandı: ${aktifMi ? 'ETKİN' : 'DEVRE DIŞI'}`)
+
+      return {
+        basarili: true,
+        openAtLogin: aktifMi,
+      }
+    } catch (error: any) {
+      console.error('❌ Otomatik başlatma ayarlanamadı:', error)
+      return {
+        basarili: false,
+        hata: error?.message || 'Ayar kaydedilemedi',
+      }
+    }
+  })
+
+  // 8. Uygulamayı Tamamen Kapat
+  ipcMain.handle(UYGULAMA_KANALLARI.KAPAT, async () => {
+    tamamenCikisYap()
+    return { basarili: true }
+  })
+
+  // 9. Uygulamayı Yeniden Başlat
+  ipcMain.handle(UYGULAMA_KANALLARI.YENIDEN_BASLAT, async () => {
+    app.relaunch()
+    tamamenCikisYap()
+    return { basarili: true }
   })
 }

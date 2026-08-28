@@ -19,6 +19,9 @@ export interface RestoElektroAPI {
     buyut: () => Promise<void>
     kapat: () => Promise<void>
     tamEkran: () => Promise<boolean>
+    gizle: () => Promise<boolean>
+    goster: () => Promise<boolean>
+    tamamenKapat: () => Promise<void>
   }
 }
 
@@ -65,6 +68,8 @@ const izinliKanallar = [
   'uygulama:surum', 'uygulama:yeniden-baslat', 'uygulama:kapat',
   'uygulama:tam-ekran', 'uygulama:veritabani-yedekle', 'uygulama:veritabani-bilgisi',
   'uygulama:veritabani-optimize', 'uygulama:veritabani-yedekler',
+  'uygulama:otomatik-baslatma-durum', 'uygulama:otomatik-baslatma-ayarla',
+  'uygulama:gizle', 'uygulama:goster',
   // Güncelleme
   'guncelleme:kontrol-et', 'guncelleme:indir', 'guncelleme:yukle-ve-baslat', 'guncelleme:durum-getir',
 ]
@@ -117,5 +122,8 @@ contextBridge.exposeInMainWorld('api', {
     buyut: () => ipcRenderer.invoke('pencere:buyut'),
     kapat: () => ipcRenderer.invoke('pencere:kapat'),
     tamEkran: () => ipcRenderer.invoke('uygulama:tam-ekran'),
+    gizle: () => ipcRenderer.invoke('uygulama:gizle'),
+    goster: () => ipcRenderer.invoke('uygulama:goster'),
+    tamamenKapat: () => ipcRenderer.invoke('uygulama:kapat'),
   },
 } satisfies RestoElektroAPI)
