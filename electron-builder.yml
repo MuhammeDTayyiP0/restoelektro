@@ -1,6 +1,6 @@
 # Electron Builder paketleme yapılandırması
 appId: com.etibol.pos
-productName: ETİBOL POS
+productName: EtibolPOS
 copyright: Copyright © 2024 ETİBOL POS
 
 directories:
@@ -28,7 +28,7 @@ win:
         - x64
         - ia32
   icon: resources/icon.ico
-  artifactName: '${productName}-${version}-${arch}.${ext}'
+  artifactName: '${productName}-Setup-${version}-${arch}.${ext}'
 
 publish:
   - provider: github

@@ -4,17 +4,17 @@
 // =====================================================
 
 /**
- * package.json'dan otomatik olarak derlenen sürüm numarası (Örn: "2.1.2")
+ * package.json'dan otomatik olarak derlenen sürüm numarası (Örn: "2.2.1")
  */
 export const APP_VERSION: string =
-  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.1.2'
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.2.1'
 
 /**
- * Sürüm etiketi (Örn: "v2.1.2")
+ * Sürüm etiketi (Örn: "v2.2.1")
  */
 export const APP_VERSION_TAG: string = `v${APP_VERSION}`
 
 /**
- * Tam sürüm başlığı (Örn: "ETİBOL POS v2.1.2")
+ * Tam sürüm başlığı (Örn: "ETİBOL POS v2.2.1")
  */
 export const APP_FULL_NAME: string = `ETİBOL POS ${APP_VERSION_TAG}`
