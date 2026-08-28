@@ -72,6 +72,8 @@ const izinliKanallar = [
   'uygulama:gizle', 'uygulama:goster',
   // Güncelleme
   'guncelleme:kontrol-et', 'guncelleme:indir', 'guncelleme:yukle-ve-baslat', 'guncelleme:durum-getir',
+  // Ağ & IP
+  'ag:kartlari-getir', 'ag:yerel-ip-getir',
 ]
 
 // Bildirim kanalları (main → renderer)

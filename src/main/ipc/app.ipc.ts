@@ -8,10 +8,12 @@ import { existsSync, statSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { veritabaniGetir, veritabaniYoluGetir } from '../database/connection'
 import { otomatikYedekAl, yedekleriListele } from '../database/backup'
+import { varsayilanYerelIpGetir } from '../services/network.service'
 import { UYGULAMA_KANALLARI } from '../../common/ipc-channels'
 import { tamamenCikisYap } from '../index'
 
 export function appIPCKaydet(ipcMain: IpcMain): void {
+
   // 1. Manuel Veritabanı Yedeği Al
   ipcMain.handle(UYGULAMA_KANALLARI.VERITABANI_YEDEKLE, async () => {
     try {
@@ -126,21 +128,7 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
 
   // 5. Sürüm Bilgisi
   ipcMain.handle(UYGULAMA_KANALLARI.SURUM_BILGISI, async () => {
-    const os = require('os')
-    let localIP = 'localhost'
-    try {
-      const interfaces = os.networkInterfaces()
-      for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name] || []) {
-          if (iface.family === 'IPv4' && !iface.internal) {
-            localIP = iface.address
-            break
-          }
-        }
-      }
-    } catch (e) {
-      console.error(e)
-    }
+    const localIP = varsayilanYerelIpGetir()
 
     return {
       surum: app.getVersion(),
@@ -157,7 +145,7 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
     try {
       const settings = app.getLoginItemSettings()
       let dbKaydi: boolean | null = null
-      
+
       try {
         const db = veritabaniGetir()
         const ayar = db.prepare('SELECT deger FROM ayar WHERE anahtar = ?').get('otomatik_baslat') as any
@@ -186,7 +174,7 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
   ipcMain.handle(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_AYARLA, async (_event, openAtLogin: boolean) => {
     try {
       const aktifMi = Boolean(openAtLogin)
-      
+
       // Electron başlangıç ayarını güncelle
       app.setLoginItemSettings({
         openAtLogin: aktifMi,

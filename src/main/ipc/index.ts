@@ -16,6 +16,7 @@ import { ayarIPCKaydet } from './settings.ipc'
 import { yaziciIPCKaydet } from './printer.ipc'
 import { appIPCKaydet } from './app.ipc'
 import { guncellemeIPCKaydet } from './update.ipc'
+import { networkIPCKaydet } from './network.ipc'
 
 /**
  * Tüm IPC handler'larını kaydeder
@@ -34,6 +35,7 @@ export function ipcHandlerlariniKaydet(ipcMain: IpcMain): void {
   yaziciIPCKaydet(ipcMain)
   appIPCKaydet(ipcMain)
   guncellemeIPCKaydet(ipcMain)
+  networkIPCKaydet(ipcMain)
 
   console.log('✅ Tüm IPC handler\'ları kaydedildi')
 }

@@ -97,7 +97,7 @@ export default function QRMenuSettings() {
         setIsMasaParamEnabled(savedParam)
 
         // Garson Terminal URL'i
-        const detectedLocalIP = sysInfo?.localIP || 'localhost'
+        const detectedLocalIP = tumAyarlar.garson_ip || sysInfo?.localIP || 'localhost'
         const defaultWaiter = `http://${detectedLocalIP}:${sysInfo?.apiPort || 3847}/garson`
         if (tumAyarlar.qr_waiter_url) {
           setWaiterUrl(tumAyarlar.qr_waiter_url)

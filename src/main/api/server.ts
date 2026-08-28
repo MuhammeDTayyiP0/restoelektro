@@ -16,6 +16,8 @@ import { qrMenuHTML } from './qrmenu-mobile'
 import { bossMobilHTML } from './boss-mobile'
 import path from 'path'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
+import { varsayilanYerelIpGetir } from '../services/network.service'
+
 
 const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
 
@@ -213,7 +215,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     BrowserWindow.getAllWindows().forEach(win => {
       win.webContents.send(channel, ...args)
     })
-    
+
     // Telefondaki Garson uygulamalarına yayın (WebSocket)
     if (io) {
       io.emit(channel, ...args)
@@ -286,7 +288,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       broadcastToWindows('masalar:guncellendi')
       broadcastToWindows('siparis:guncellendi', hesap.id, masa_id)
       broadcastToWindows('mutfak:yeni-siparis') // Kitchen screen
-      
+
       // Mutfak yazıcısı için özel istek (Eğer eklenen kalem varsa)
       if (yazdirSiparisler.length > 0) {
         broadcastToWindows('mutfak:yazdir-istek', yazdirSiparisler, masaNo, [])
@@ -302,7 +304,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   app.post('/api/garson/siparis-iptal', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
     const { siparis_id, iptal_nedeni } = req.body
-    
+
     try {
       const siparis = db.prepare(`
         SELECT s.hesap_id, s.miktar, s.notlar, u.ad as urun_adi, h.masa_id, m.numara as masa_numara 
@@ -316,21 +318,21 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       if (!siparis) {
         return res.status(404).json({ hata: 'Sipariş bulunamadı' })
       }
-      
+
       // Stoğa iade et
       siparisStokGeriYukle(db, siparis_id)
 
       db.prepare("UPDATE siparis SET durum = 'iptal', iptal_nedeni = ? WHERE id = ?").run(iptal_nedeni || 'Garson tarafından iptal', siparis_id)
-      
+
       // Hesap toplamını güncelle
       const toplam = db.prepare("SELECT COALESCE(SUM(toplam_fiyat), 0) as t FROM siparis WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0").get(siparis.hesap_id) as any
       db.prepare('UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?').run(toplam.t, toplam.t, siparis.hesap_id)
-      
+
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
       broadcastToWindows('siparis:guncellendi', siparis.hesap_id, siparis.masa_id)
       broadcastToWindows('mutfak:yeni-siparis')
-      
+
       // İptal fişini mutfağa yazdır
       const yazdirIptal = [{
         urun_adi: siparis.urun_adi,
@@ -350,7 +352,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     const db = veritabaniGetir()
     const { siparis_id, ikram } = req.body
     const personelId = req.kullanici.id
-    
+
     try {
       const siparis = db.prepare(`
         SELECT s.hesap_id, h.masa_id 
@@ -361,13 +363,13 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       if (!siparis) {
         return res.status(404).json({ hata: 'Sipariş bulunamadı' })
       }
-      
+
       db.prepare('UPDATE siparis SET ikram = ?, ikram_onaylayan_id = ? WHERE id = ?').run(ikram ? 1 : 0, ikram ? personelId : null, siparis_id)
-      
+
       // Hesap toplamını güncelle
       const toplam = db.prepare("SELECT COALESCE(SUM(toplam_fiyat), 0) as t FROM siparis WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0").get(siparis.hesap_id) as any
       db.prepare('UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?').run(toplam.t, toplam.t, siparis.hesap_id)
-      
+
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
       broadcastToWindows('siparis:guncellendi', siparis.hesap_id, siparis.masa_id)
@@ -400,19 +402,8 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
 
   // Sunucuyu başlat (httpServer kullanmalıyız ki Socket.io çalışsın)
   sunucu = httpServer.listen(port, '0.0.0.0', () => {
-    // Yerel ağ IP adresini bul
-    const os = require('os')
-    const interfaces = os.networkInterfaces()
-    let localIP = 'localhost'
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          localIP = iface.address
-          break
-        }
-      }
-    }
-    
+    const localIP = varsayilanYerelIpGetir()
+
     console.log(`🌐 REST API sunucusu http://0.0.0.0:${port} adresinde çalışıyor`)
     console.log(`   Boss Modülü:       http://localhost:${port}/api/boss/ozet`)
     console.log(`   Garson Modülü:     http://localhost:${port}/api/garson/masalar`)

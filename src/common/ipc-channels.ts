@@ -165,3 +165,10 @@ export const GUNCELLEME_KANALLARI = {
   ILERLEME_BILDIRIMI: 'guncelleme:ilerleme-bildirimi',
 } as const
 
+/** Ağ ve IP kanalları */
+export const AG_KANALLARI = {
+  KARTLARI_GETIR: 'ag:kartlari-getir',
+  YEREL_IP_GETIR: 'ag:yerel-ip-getir',
+} as const
+
+
