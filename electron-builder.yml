@@ -7,6 +7,13 @@ directories:
   buildResources: resources
   output: dist
 
+# Tray ikonu ve diğer kaynakları paketlenmiş uygulamaya dahil et
+extraResources:
+  - from: resources/icon.ico
+    to: icon.ico
+  - from: resources/icon.png
+    to: icon.png
+
 files:
   - '!**/.vscode/*'
   - '!src/*'

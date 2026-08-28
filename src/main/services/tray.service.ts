@@ -6,27 +6,42 @@
 import { app, BrowserWindow, Menu, nativeImage, NativeImage, Tray } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
+import { existsSync } from 'fs'
 
 let tray: Tray | null = null
 let ilkKucultmeMi = true
 
 /**
  * Tray ikon dosyasını güvenli şekilde yükler
+ * Dev modda: resources/ klasöründen, prod modda: extraResources ile paketlenen yoldan
  */
 function trayIkonuGetir(): NativeImage {
-  const icoYolu = is.dev
-    ? join(__dirname, '../../resources/icon.ico')
-    : join(process.resourcesPath, 'resources/icon.ico')
+  // Olası ikon yolları — öncelik sırasıyla denenir
+  const ikonYollari: string[] = is.dev
+    ? [
+        join(__dirname, '../../resources/icon.ico'),
+        join(__dirname, '../../resources/icon.png'),
+      ]
+    : [
+        join(process.resourcesPath, 'icon.ico'),
+        join(process.resourcesPath, 'icon.png'),
+        join(process.resourcesPath, 'resources/icon.ico'),
+        join(process.resourcesPath, 'resources/icon.png'),
+      ]
 
-  const pngYolu = is.dev
-    ? join(__dirname, '../../resources/icon.png')
-    : join(process.resourcesPath, 'resources/icon.png')
-
-  let image = nativeImage.createFromPath(icoYolu)
-  if (image.isEmpty()) {
-    image = nativeImage.createFromPath(pngYolu)
+  for (const yol of ikonYollari) {
+    if (existsSync(yol)) {
+      const image = nativeImage.createFromPath(yol)
+      if (!image.isEmpty()) {
+        console.log(`✅ [Tray] İkon yüklendi: ${yol}`)
+        return image
+      }
+    }
   }
-  return image
+
+  // Hiçbir ikon bulunamazsa boş ikon oluştur (crash önleme)
+  console.warn('⚠️ [Tray] İkon dosyası bulunamadı, boş ikon kullanılıyor. Denenen yollar:', ikonYollari)
+  return nativeImage.createEmpty()
 }
 
 /**
@@ -75,7 +90,7 @@ export function trayBaslat(
 
   const ikon = trayIkonuGetir()
   tray = new Tray(ikon)
-  tray.setToolTip('ETİBOL POS — Profesyonel Restoran Yönetimi')
+  tray.setToolTip(`ETİBOL POS v${app.getVersion()}`)
 
   const contextMenu = Menu.buildFromTemplate([
     {
