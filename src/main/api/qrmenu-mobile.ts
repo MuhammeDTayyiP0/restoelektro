@@ -1,6 +1,6 @@
 // =====================================================
 // ETİBOL POS - Müşteri QR Menü Mobil Web Arayüzü
-// Lüks gastronomi, iştah kabartan modern dijital menü
+// Dark Fine-Dining — Lüks Tipografi Odaklı Katalog
 // Express sunucusu üzerinden serve edilir
 // =====================================================
 
@@ -13,86 +13,95 @@ export function qrMenuHTML(): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#080A10">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="description" content="Dijital Menü — Lezzetlerimizi keşfedin">
   <title>Dijital Menü</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  
-  <!-- Premium Typography -->
+
+  <!-- Premium Typography: Playfair Display SC (headings) + Karla (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Playfair+Display+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 
   <style>
+    /* ==========================================================================
+       DESIGN TOKENS — Dark Fine-Dining
+       ========================================================================== */
     :root {
-      /* Warm Gourmet Obsidian Palette */
-      --bg-base: #080A10;
-      --bg-surface: #10131E;
-      --bg-surface-elevated: #161B2B;
-      --bg-surface-card: #131724;
-      --bg-glass: rgba(16, 19, 30, 0.86);
-      --bg-glass-heavy: rgba(8, 10, 16, 0.94);
-      
-      --border-subtle: rgba(255, 255, 255, 0.07);
-      --border-card: rgba(255, 255, 255, 0.10);
-      --border-focus: rgba(245, 158, 11, 0.45);
-      
-      /* Culinary Accents */
-      --amber-500: #F59E0B;
-      --amber-400: #FBBF24;
-      --amber-600: #D97706;
-      --amber-glow: rgba(245, 158, 11, 0.28);
-      --amber-glass: rgba(245, 158, 11, 0.12);
-      
-      --flame-500: #EF4444;
-      --flame-glow: rgba(239, 68, 68, 0.25);
-      
-      --emerald-500: #10B981;
-      --emerald-glow: rgba(16, 185, 129, 0.25);
-      
-      /* Typography Colors */
-      --text-primary: #FAFDFE;
-      --text-secondary: #9BA3B8;
-      --text-muted: #647087;
-      --text-gold: #FCD34D;
-      
+      /* Surfaces */
+      --bg-base: #0A0A0A;
+      --bg-surface: #141414;
+      --bg-elevated: #1A1A1A;
+      --bg-glass: rgba(14, 14, 14, 0.92);
+
+      /* Gold Accent System */
+      --gold-500: #D4AF37;
+      --gold-400: #E2C566;
+      --gold-600: #B8952E;
+      --gold-glow: rgba(212, 175, 55, 0.18);
+      --gold-border: rgba(212, 175, 55, 0.12);
+      --gold-border-active: rgba(212, 175, 55, 0.35);
+
+      /* Text Hierarchy */
+      --text-primary: #F0EDE6;
+      --text-secondary: #8A8278;
+      --text-muted: #5C564E;
+      --text-gold: #D4AF37;
+
+      /* Borders */
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-card: rgba(255, 255, 255, 0.08);
+
+      /* Functional */
+      --red-500: #C0392B;
+      --green-500: #27AE60;
+
       /* Geometry */
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-      --radius-xl: 28px;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
       --radius-full: 9999px;
-      
-      /* Spring Motion & Easing */
-      --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+      /* Motion */
       --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --duration-fast: 200ms;
+      --duration-normal: 300ms;
     }
 
-    * {
+    /* ==========================================================================
+       RESET & BASE
+       ========================================================================== */
+    *,
+    *::before,
+    *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
       background-color: var(--bg-base);
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 100% 40%, rgba(239, 68, 68, 0.04) 0%, transparent 40%),
-        radial-gradient(circle at 0% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 40%);
-      background-attachment: fixed;
       color: var(--text-primary);
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 400;
+      line-height: 1.5;
       min-height: 100dvh;
       overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      touch-action: manipulation;
     }
 
-    /* Container */
+    /* ==========================================================================
+       APP CONTAINER
+       ========================================================================== */
     .app-container {
       max-width: 640px;
       width: 100%;
@@ -101,159 +110,107 @@ export function qrMenuHTML(): string {
       display: flex;
       flex-direction: column;
       position: relative;
-      padding-bottom: 120px;
     }
 
     /* ==========================================================================
-       HERO & BRAND HEADER
+       HEADER — Luxury Masthead
        ========================================================================== */
-    .header-hero {
+    .header-masthead {
       position: relative;
-      padding: calc(env(safe-area-inset-top, 16px) + 16px) 20px 20px;
-      background: linear-gradient(180deg, rgba(22, 27, 43, 0.85) 0%, rgba(13, 16, 26, 0.95) 100%);
+      padding: calc(env(safe-area-inset-top, 20px) + 24px) 24px 28px;
+      text-align: center;
       border-bottom: 1px solid var(--border-subtle);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
     }
 
-    .brand-top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
+    .header-masthead::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 1px;
+      background: var(--gold-500);
     }
 
-    .brand-identity {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-emblem {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-md);
-      background: linear-gradient(135deg, #2A2F45 0%, #151928 100%);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+    .brand-ornament {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--amber-400);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.15);
+      gap: 12px;
+      margin-bottom: 8px;
+      color: var(--gold-500);
+      opacity: 0.5;
+    }
+
+    .brand-ornament-line {
+      width: 32px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .brand-ornament svg {
       flex-shrink: 0;
     }
 
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-    }
-
     .brand-title {
-      font-family: 'Outfit', 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #FFFFFF 30%, #FDE68A 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      line-height: 1.15;
-    }
-
-    .brand-tagline {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 2px;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--emerald-500);
-      box-shadow: 0 0 8px var(--emerald-glow);
-      display: inline-block;
-    }
-
-    /* Table Badge */
-    .table-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--amber-glass);
-      border: 1px solid rgba(245, 158, 11, 0.35);
-      color: var(--amber-400);
-      padding: 6px 12px;
-      border-radius: var(--radius-full);
-      font-size: 13px;
+      font-family: 'Playfair Display SC', 'Playfair Display', serif;
+      font-size: 26px;
       font-weight: 700;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
+      line-height: 1.2;
+      margin-bottom: 6px;
     }
 
-    /* Quick Action Chips */
-    .quick-service-bar {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
+    .brand-subtitle {
+      font-family: 'Karla', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
-    .service-btn {
-      flex: 1;
+    .table-badge {
+      display: none;
+      margin-top: 12px;
+      justify-content: center;
+    }
+
+    .table-badge-inner {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 7px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      padding: 9px 12px;
-      border-radius: var(--radius-md);
+      gap: 6px;
+      background: var(--gold-glow);
+      border: 1px solid var(--gold-border-active);
+      color: var(--gold-400);
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
       font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s var(--ease-smooth);
-    }
-
-    .service-btn:active {
-      transform: scale(0.96);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .service-btn.waiter:active {
-      border-color: var(--amber-500);
-      color: var(--amber-400);
-    }
-
-    .service-btn.bill:active {
-      border-color: var(--emerald-500);
-      color: var(--emerald-500);
+      font-weight: 700;
+      letter-spacing: 0.04em;
     }
 
     /* ==========================================================================
-       STICKY SEARCH & CATEGORY BAR
+       STICKY NAVIGATION — Search + Categories
        ========================================================================== */
-    .sticky-nav-wrapper {
+    .sticky-nav {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: var(--bg-glass-heavy);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      background: var(--bg-glass);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
       border-bottom: 1px solid var(--border-subtle);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
 
-    /* Search Box */
+    /* Search */
     .search-section {
-      padding: 12px 18px 8px;
+      padding: 14px 20px 8px;
     }
 
-    .search-input-box {
+    .search-box {
       position: relative;
       display: flex;
       align-items: center;
@@ -270,47 +227,53 @@ export function qrMenuHTML(): string {
 
     .search-input {
       width: 100%;
-      height: 42px;
-      background: var(--bg-surface-elevated);
+      height: 44px;
+      background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-full);
-      padding: 0 40px 0 42px;
+      padding: 0 42px 0 44px;
       color: var(--text-primary);
+      font-family: 'Karla', sans-serif;
       font-size: 14px;
       font-weight: 500;
       outline: none;
-      transition: all 0.2s ease;
+      transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
     }
 
     .search-input::placeholder {
       color: var(--text-muted);
+      font-weight: 400;
     }
 
     .search-input:focus {
-      border-color: var(--amber-500);
-      background: var(--bg-surface);
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+      border-color: var(--gold-500);
+      box-shadow: 0 0 0 3px var(--gold-glow);
     }
 
-    .search-clear-btn {
+    .search-clear {
       position: absolute;
       right: 12px;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       border: none;
       color: var(--text-secondary);
       display: none;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
+      transition: background var(--duration-fast);
+    }
+
+    .search-clear:active {
+      background: rgba(255, 255, 255, 0.16);
     }
 
     /* Category Tabs */
-    .cat-scroll-container {
-      padding: 6px 16px 12px;
+    .cat-scroll {
+      padding: 8px 20px 14px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -318,451 +281,378 @@ export function qrMenuHTML(): string {
       gap: 8px;
     }
 
-    .cat-scroll-container::-webkit-scrollbar {
+    .cat-scroll::-webkit-scrollbar {
       display: none;
     }
 
     .cat-pill {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 8px 16px;
-      background: var(--bg-surface);
+      gap: 6px;
+      padding: 7px 16px;
+      background: transparent;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-full);
       color: var(--text-secondary);
+      font-family: 'Karla', sans-serif;
       font-size: 13px;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s var(--ease-smooth);
+      transition: all var(--duration-fast) ease;
       flex-shrink: 0;
+      letter-spacing: 0.01em;
     }
 
     .cat-pill:active {
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
 
     .cat-pill.active {
-      background: linear-gradient(135deg, #241D14 0%, #171A24 100%);
-      border-color: var(--amber-500);
-      color: var(--amber-400);
-      box-shadow: 0 4px 16px var(--amber-glow);
+      background: var(--gold-glow);
+      border-color: var(--gold-500);
+      color: var(--gold-400);
+    }
+
+    .cat-pill-icon {
+      font-size: 14px;
+      line-height: 1;
     }
 
     .cat-pill-count {
       font-size: 11px;
       padding: 1px 6px;
       border-radius: var(--radius-full);
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted);
       font-weight: 700;
     }
 
     .cat-pill.active .cat-pill-count {
-      background: rgba(245, 158, 11, 0.2);
-      color: var(--amber-400);
+      background: rgba(212, 175, 55, 0.2);
+      color: var(--gold-400);
     }
 
     /* ==========================================================================
-       MENU ITEMS & SECTION
-       ========================================================================= */
-    .menu-main-content {
-      padding: 18px 16px;
+       MENU CONTENT AREA
+       ========================================================================== */
+    .menu-content {
+      padding: 24px 20px 60px;
       flex: 1;
     }
 
+    /* Category Group */
     .category-group {
-      margin-bottom: 28px;
+      margin-bottom: 36px;
     }
 
-    .category-group-header {
+    .category-header {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .category-group-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .category-group-title::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 16px;
-      border-radius: 2px;
-      background: var(--amber-500);
-    }
-
-    .category-group-count {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    /* Grid of Dishes */
-    .dish-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
-
-    @media (min-width: 520px) {
-      .dish-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    /* Dish Card */
-    .dish-card {
-      background: var(--bg-surface-card);
-      border: 1px solid var(--border-card);
-      border-radius: var(--radius-lg);
-      padding: 12px;
-      display: flex;
-      gap: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-subtle);
       position: relative;
+    }
+
+    .category-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 40px;
+      height: 1px;
+      background: var(--gold-500);
+    }
+
+    .category-title {
+      font-family: 'Playfair Display SC', serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .category-count {
+      font-family: 'Karla', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* ==========================================================================
+       DISH ITEM — Typography Mode (No Photo)
+       Basılı lüks menü estetiği: Minimal, zarif satır düzeni
+       ========================================================================== */
+    .dish-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .dish-row {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       cursor: pointer;
-      transition: transform 0.2s var(--ease-smooth), border-color 0.2s, box-shadow 0.2s;
+      transition: background var(--duration-fast) ease;
+      position: relative;
+    }
+
+    .dish-row:last-child {
+      border-bottom: none;
+    }
+
+    .dish-row:active {
+      background: rgba(212, 175, 55, 0.04);
+    }
+
+    .dish-row-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 3px;
+    }
+
+    .dish-name {
+      font-family: 'Karla', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dish-dots {
+      flex: 1;
+      min-width: 20px;
+      max-width: 80px;
+      border-bottom: 1px dotted var(--text-muted);
+      margin: 0 8px;
+      opacity: 0.4;
+      align-self: center;
+      transform: translateY(-3px);
+    }
+
+    .dish-price {
+      font-family: 'Karla', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-500);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .dish-desc {
+      font-family: 'Karla', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
+      margin-top: 2px;
     }
 
-    .dish-card:active {
-      transform: scale(0.98);
-      border-color: rgba(245, 158, 11, 0.3);
+    .dish-unit-label {
+      font-family: 'Karla', sans-serif;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
-    /* Thumbnail Box */
-    .dish-thumb-wrapper {
-      width: 104px;
-      height: 104px;
+    /* ==========================================================================
+       DISH ITEM — Rich Card Mode (With Photo)
+       Fotoğraflı ürünler otomatik zengin kart moduna geçer
+       ========================================================================== */
+    .dish-card-rich {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      transition: background var(--duration-fast) ease;
+    }
+
+    .dish-card-rich:last-child {
+      border-bottom: none;
+    }
+
+    .dish-card-rich:active {
+      background: rgba(212, 175, 55, 0.04);
+    }
+
+    .dish-thumb {
+      width: 88px;
+      height: 88px;
       border-radius: var(--radius-md);
       overflow: hidden;
-      position: relative;
       flex-shrink: 0;
-      background: #191E2E;
+      position: relative;
+      background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
     }
 
-    .dish-img {
+    .dish-thumb img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform var(--duration-normal) ease;
     }
 
-    .dish-card:hover .dish-img {
-      transform: scale(1.06);
+    .dish-card-rich:active .dish-thumb img {
+      transform: scale(1.05);
     }
 
-    .dish-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at 50% 40%, #252D42 0%, #121624 100%);
-      color: var(--amber-400);
-      position: relative;
-    }
-
-    .dish-placeholder svg {
-      opacity: 0.85;
-    }
-
-    .dish-placeholder-tag {
-      position: absolute;
-      bottom: 4px;
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    /* Dish Info */
-    .dish-info {
+    .dish-card-info {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       min-width: 0;
+      padding: 2px 0;
     }
 
-    .dish-title-row {
-      margin-bottom: 4px;
-    }
-
-    .dish-title {
+    .dish-card-title {
+      font-family: 'Karla', sans-serif;
       font-size: 15px;
       font-weight: 700;
       color: var(--text-primary);
       line-height: 1.25;
-      margin-bottom: 4px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      margin-bottom: 4px;
     }
 
-    .dish-desc {
+    .dish-card-desc {
+      font-family: 'Karla', sans-serif;
       font-size: 12px;
+      font-weight: 400;
       color: var(--text-secondary);
       line-height: 1.35;
+      font-style: italic;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
 
-    .dish-footer {
+    .dish-card-footer {
       display: flex;
-      align-items: flex-end;
+      align-items: baseline;
       justify-content: space-between;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
-    .dish-price-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .dish-portion-label {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .dish-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--amber-400);
-      letter-spacing: -0.01em;
-    }
-
-    /* Add Button */
-    .dish-add-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-      border: none;
-      color: #080A10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
-      transition: all 0.2s var(--ease-spring);
-      flex-shrink: 0;
-    }
-
-    .dish-add-btn:active {
-      transform: scale(0.88);
-      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
-    }
-
-    /* ==========================================================================
-       FLOATING CART / TRAY SUMMARY BAR
-       ========================================================================== */
-    .floating-tray-bar {
-      position: fixed;
-      bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
-      left: 50%;
-      transform: translateX(-50%) translateY(120px);
-      width: calc(100% - 32px);
-      max-width: 600px;
-      background: linear-gradient(135deg, rgba(26, 32, 50, 0.96) 0%, rgba(16, 20, 32, 0.98) 100%);
-      border: 1px solid rgba(245, 158, 11, 0.35);
-      border-radius: var(--radius-full);
-      padding: 10px 14px 10px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.2);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      z-index: 80;
-      transition: transform 0.4s var(--ease-spring);
-      cursor: pointer;
-    }
-
-    .floating-tray-bar.visible {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .tray-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .tray-badge-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--amber-500);
-      color: #080A10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      font-weight: 800;
-    }
-
-    .tray-item-counter {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      background: var(--flame-500);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--bg-surface);
-      animation: bounceCounter 0.3s var(--ease-spring);
-    }
-
-    @keyframes bounceCounter {
-      0% { transform: scale(0.6); }
-      70% { transform: scale(1.25); }
-      100% { transform: scale(1); }
-    }
-
-    .tray-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tray-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-
-    .tray-total-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-primary);
-    }
-
-    .tray-action-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-      color: #080A10;
-      padding: 10px 18px;
-      border-radius: var(--radius-full);
-      font-size: 13px;
+    .dish-card-price {
+      font-family: 'Karla', sans-serif;
+      font-size: 16px;
       font-weight: 700;
-      border: none;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      color: var(--gold-500);
+    }
+
+    .dish-card-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     /* ==========================================================================
-       MODALS & BOTTOM SHEETS
+       PRODUCT DETAIL — Read-Only Overlay
        ========================================================================== */
-    .sheet-overlay {
+    .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.78);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 100;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
+      transition: opacity var(--duration-normal) ease;
       display: flex;
       align-items: flex-end;
       justify-content: center;
     }
 
-    .sheet-overlay.open {
+    .overlay.open {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .bottom-sheet {
+    .detail-sheet {
       width: 100%;
       max-width: 600px;
-      max-height: 88vh;
-      background: var(--bg-surface-elevated);
+      max-height: 85vh;
+      background: var(--bg-surface);
       border-top: 1px solid var(--border-card);
-      border-radius: 28px 28px 0 0;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
       display: flex;
       flex-direction: column;
       transform: translateY(100%);
-      transition: transform 0.35s var(--ease-spring);
+      transition: transform 0.4s var(--ease-spring);
       overflow: hidden;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
     }
 
-    .sheet-overlay.open .bottom-sheet {
+    .overlay.open .detail-sheet {
       transform: translateY(0);
     }
 
-    .sheet-handle-bar {
-      width: 44px;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-      margin: 12px auto 6px;
-      cursor: grab;
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      margin: 12px auto 8px;
     }
 
-    .sheet-header {
-      padding: 12px 20px 16px;
+    .sheet-top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 4px 20px 14px;
       border-bottom: 1px solid var(--border-subtle);
     }
 
     .sheet-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 19px;
-      font-weight: 800;
-      color: var(--text-primary);
+      font-family: 'Playfair Display SC', serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
     }
 
-    .sheet-close-btn {
+    .sheet-close {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background var(--duration-fast);
+      font-size: 14px;
     }
 
-    .sheet-close-btn:active {
-      background: rgba(255, 255, 255, 0.16);
+    .sheet-close:active {
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .sheet-body {
@@ -772,336 +662,80 @@ export function qrMenuHTML(): string {
       flex: 1;
     }
 
-    .sheet-footer {
-      padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 16px);
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
-    }
-
-    /* Product Detail Sheet Details */
-    .detail-img-container {
+    /* Detail Image */
+    .detail-img-wrap {
       width: 100%;
-      height: 220px;
+      aspect-ratio: 16 / 10;
       border-radius: var(--radius-lg);
       overflow: hidden;
-      margin-bottom: 18px;
-      background: #1C2234;
+      margin-bottom: 20px;
+      background: var(--bg-elevated);
       border: 1px solid var(--border-subtle);
-      position: relative;
     }
 
-    .detail-img {
+    .detail-img-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .detail-tag {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(8, 10, 16, 0.75);
-      backdrop-filter: blur(8px);
-      color: var(--amber-400);
-      padding: 5px 12px;
-      border-radius: var(--radius-full);
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
     .detail-name {
-      font-family: 'Outfit', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
       line-height: 1.2;
+      margin-bottom: 10px;
     }
 
     .detail-price-row {
       display: flex;
       align-items: baseline;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .detail-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--amber-400);
+      font-family: 'Karla', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold-500);
     }
 
     .detail-unit {
       font-size: 13px;
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 500;
     }
 
-    .detail-desc-box {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      font-size: 14px;
+    .detail-desc {
+      font-family: 'Karla', sans-serif;
+      font-size: 15px;
       color: var(--text-secondary);
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-
-    /* Quantity Stepper */
-    .stepper-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 10px 16px;
-      margin-bottom: 16px;
-    }
-
-    .stepper-label {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .stepper-controls {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .stepper-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      font-size: 18px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .stepper-btn:active {
-      transform: scale(0.9);
-      background: var(--amber-500);
-      color: #080A10;
-    }
-
-    .stepper-count {
-      font-family: 'Outfit', sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      min-width: 24px;
-      text-align: center;
-      color: var(--text-primary);
-    }
-
-    /* Note Input */
-    .note-input-box {
-      margin-bottom: 10px;
-    }
-
-    .note-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .note-textarea {
-      width: 100%;
-      height: 72px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 10px 14px;
-      color: var(--text-primary);
-      font-size: 13px;
-      resize: none;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .note-textarea:focus {
-      border-color: var(--amber-500);
-    }
-
-    .cta-button {
-      width: 100%;
-      height: 52px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-      border: none;
-      color: #080A10;
-      font-size: 16px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-      transition: transform 0.15s var(--ease-spring);
-    }
-
-    .cta-button:active {
-      transform: scale(0.97);
-    }
-
-    /* Tray List Items */
-    .tray-item-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .tray-item-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .tray-item-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tray-item-notes {
-      font-size: 11px;
-      color: var(--amber-400);
+      line-height: 1.6;
       font-style: italic;
-      margin-bottom: 2px;
     }
 
-    .tray-item-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text-secondary);
-    }
-
-    .tray-stepper {
-      display: flex;
+    .detail-category-tag {
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-full);
-      padding: 4px 8px;
-    }
-
-    .tray-stepper-btn {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      color: var(--text-primary);
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .tray-stepper-btn.danger {
-      color: var(--flame-500);
-    }
-
-    .tray-stepper-val {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      min-width: 18px;
-      text-align: center;
-    }
-
-    /* Bill Summary Breakdown */
-    .bill-calc-box {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 16px;
+      gap: 6px;
       margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .bill-calc-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .bill-calc-row.total {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--text-primary);
-      border-top: 1px dashed var(--border-subtle);
-      padding-top: 10px;
-      margin-top: 4px;
-    }
-
-    .bill-calc-row.total span:last-child {
-      color: var(--amber-400);
-      font-family: 'Outfit', sans-serif;
-      font-size: 20px;
-    }
-
-    /* ==========================================================================
-       TOAST NOTIFICATIONS
-       ========================================================================== */
-    .toast-pill {
-      position: fixed;
-      top: calc(env(safe-area-inset-top, 16px) + 16px);
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: rgba(22, 27, 43, 0.95);
-      border: 1px solid var(--amber-500);
-      color: var(--text-primary);
-      padding: 10px 20px;
+      background: var(--gold-glow);
+      border: 1px solid var(--gold-border);
+      color: var(--gold-400);
+      padding: 5px 14px;
       border-radius: var(--radius-full);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 16px var(--amber-glow);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      z-index: 200;
-      transition: transform 0.35s var(--ease-spring);
-      pointer-events: none;
-    }
-
-    .toast-pill.show {
-      transform: translateX(-50%) translateY(0);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
 
     /* ==========================================================================
-       EMPTY & LOADING STATES
+       LOADING & EMPTY STATES
        ========================================================================== */
     .shimmer-loader {
       padding: 30px 20px;
@@ -1110,13 +744,18 @@ export function qrMenuHTML(): string {
       gap: 16px;
     }
 
-    .shimmer-card {
-      height: 110px;
-      background: linear-gradient(90deg, #131724 0%, #1E2538 50%, #131724 100%);
+    .shimmer-block {
+      height: 20px;
+      background: linear-gradient(90deg, #141414 0%, #1E1E1E 50%, #141414 100%);
       background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: var(--radius-lg);
+      animation: shimmer 1.6s infinite ease-in-out;
+      border-radius: var(--radius-sm);
     }
+
+    .shimmer-block.w-60 { width: 60%; }
+    .shimmer-block.w-80 { width: 80%; }
+    .shimmer-block.w-40 { width: 40%; }
+    .shimmer-block.h-lg { height: 40px; }
 
     @keyframes shimmer {
       0% { background-position: 200% 0; }
@@ -1129,279 +768,253 @@ export function qrMenuHTML(): string {
       color: var(--text-muted);
     }
 
-    .empty-icon {
-      font-size: 40px;
+    .empty-state-icon {
       margin-bottom: 12px;
-      opacity: 0.6;
+      opacity: 0.4;
+      color: var(--gold-500);
+    }
+
+    .empty-state-title {
+      font-family: 'Karla', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .empty-state-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       TOAST
+       ========================================================================== */
+    .toast {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 16px) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--bg-surface);
+      border: 1px solid var(--gold-border-active);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      font-family: 'Karla', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      z-index: 200;
+      transition: transform 0.4s var(--ease-spring);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ==========================================================================
+       ANIMATIONS
+       ========================================================================== */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fadeUp 0.4s var(--ease-smooth) both;
+    }
+
+    /* Stagger delays applied via JS inline style */
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .menu-footer {
+      text-align: center;
+      padding: 32px 20px 48px;
+      border-top: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .menu-footer::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 1px;
+      background: var(--gold-500);
+    }
+
+    .footer-brand {
+      font-family: 'Playfair Display SC', serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .footer-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      letter-spacing: 0.04em;
+    }
+
+    /* ==========================================================================
+       REDUCED MOTION
+       ========================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="app-container">
-    
-    <!-- Top Hero Header -->
-    <header class="header-hero">
-      <div class="brand-top-row">
-        <div class="brand-identity">
-          <div class="brand-emblem">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-              <line x1="6" y1="1" x2="6" y2="4"></line>
-              <line x1="10" y1="1" x2="10" y2="4"></line>
-              <line x1="14" y1="1" x2="14" y2="4"></line>
-            </svg>
-          </div>
-          <div class="brand-text">
-            <h1 id="isletmeAdi" class="brand-title">RESTO GOURMET</h1>
-            <div class="brand-tagline">
-              <span class="status-dot"></span>
-              <span>Canlı Dijital Menü</span>
-            </div>
-          </div>
-        </div>
 
-        <div id="masaBadge" class="table-badge" style="display:none;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-          </svg>
-          <span id="masaNoText">Masa: 1</span>
-        </div>
+    <!-- ═══════════════════════════════════════════════════════
+         HEADER — Luxury Masthead
+         ═══════════════════════════════════════════════════════ -->
+    <header class="header-masthead">
+      <div class="brand-ornament">
+        <span class="brand-ornament-line"></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l2.09 6.26L20 9.27l-5 3.87L16.18 20 12 16.77 7.82 20 9 13.14l-5-3.87 5.91-1.01L12 2z"></path>
+        </svg>
+        <span class="brand-ornament-line"></span>
       </div>
+      <h1 id="isletmeAdi" class="brand-title">RESTORAN</h1>
+      <div class="brand-subtitle">Dijital Menü</div>
 
-      <!-- Quick Service Actions -->
-      <div class="quick-service-bar">
-        <button class="service-btn waiter" onclick="openServiceModal('garson')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      <div id="masaBadge" class="table-badge">
+        <div class="table-badge-inner">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
           </svg>
-          Garson Çağır
-        </button>
-
-        <button class="service-btn bill" onclick="openServiceModal('hesap')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-            <line x1="2" y1="10" x2="22" y2="10"></line>
-          </svg>
-          Hesap İste
-        </button>
+          <span id="masaNoText">Masa 1</span>
+        </div>
       </div>
     </header>
 
-    <!-- Sticky Navigation (Search & Categories) -->
-    <div class="sticky-nav-wrapper">
-      <!-- Search -->
+    <!-- ═══════════════════════════════════════════════════════
+         STICKY NAVIGATION — Search + Category Tabs
+         ═══════════════════════════════════════════════════════ -->
+    <nav class="sticky-nav">
       <div class="search-section">
-        <div class="search-input-box">
+        <div class="search-box">
           <span class="search-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </span>
-          <input 
-            type="text" 
-            id="searchInput" 
-            class="search-input" 
-            placeholder="Menüde yemek veya içecek ara..."
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Menüde ara..."
             autocomplete="off"
             oninput="handleSearch(this.value)"
           >
-          <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">✕</button>
+          <button id="searchClearBtn" class="search-clear" onclick="clearSearch()">✕</button>
         </div>
       </div>
 
-      <!-- Categories Scroll -->
-      <div id="catTabs" class="cat-scroll-container">
+      <div id="catTabs" class="cat-scroll">
         <!-- Injected via JS -->
       </div>
-    </div>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="menu-main-content">
+    <!-- ═══════════════════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════════════════ -->
+    <main class="menu-content">
       <!-- Loading Skeleton -->
       <div id="loader" class="shimmer-loader">
-        <div class="shimmer-card"></div>
-        <div class="shimmer-card"></div>
-        <div class="shimmer-card"></div>
+        <div class="shimmer-block w-40 h-lg"></div>
+        <div class="shimmer-block w-80"></div>
+        <div class="shimmer-block w-60"></div>
+        <div style="height: 16px"></div>
+        <div class="shimmer-block w-80"></div>
+        <div class="shimmer-block w-60"></div>
+        <div class="shimmer-block w-40"></div>
+        <div style="height: 16px"></div>
+        <div class="shimmer-block w-40 h-lg"></div>
+        <div class="shimmer-block w-80"></div>
+        <div class="shimmer-block w-60"></div>
       </div>
 
       <!-- Menu Items Container -->
       <div id="menuContainer" style="display:none;"></div>
     </main>
 
-    <!-- Floating Tray Bar (Bottom Bar) -->
-    <div id="floatingTray" class="floating-tray-bar" onclick="openTraySheet()">
-      <div class="tray-left">
-        <div class="tray-badge-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-          <span id="trayCountBadge" class="tray-item-counter">0</span>
-        </div>
-        <div class="tray-info">
-          <span class="tray-title">Seçilen Ürünler</span>
-          <span id="trayTotalPrice" class="tray-total-price">₺ 0,00</span>
-        </div>
-      </div>
-
-      <button class="tray-action-btn">
-        <span>Siparişi İncele</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
-    </div>
-
   </div>
 
-  <!-- ==========================================================================
-       PRODUCT DETAIL BOTTOM SHEET
-       ========================================================================== -->
-  <div id="detailSheet" class="sheet-overlay" onclick="closeOnBackdrop(event, 'detailSheet')">
-    <div class="bottom-sheet">
-      <div class="sheet-handle-bar"></div>
-      <div class="sheet-header">
-        <div class="sheet-title">Ürün Detayı</div>
-        <button class="sheet-close-btn" onclick="closeSheet('detailSheet')">✕</button>
+  <!-- ═══════════════════════════════════════════════════════
+       PRODUCT DETAIL — Read-Only Bottom Sheet
+       ═══════════════════════════════════════════════════════ -->
+  <div id="detailOverlay" class="overlay" onclick="closeOnBackdrop(event)">
+    <div class="detail-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-top-bar">
+        <span class="sheet-title">Detay</span>
+        <button class="sheet-close" onclick="closeDetail()" aria-label="Kapat">✕</button>
       </div>
-
       <div class="sheet-body">
-        <div id="detailImgContainer" class="detail-img-container">
+        <div id="detailImgWrap" class="detail-img-wrap" style="display:none;">
           <!-- Injected via JS -->
         </div>
-
-        <h2 id="detailTitle" class="detail-name">-</h2>
+        <h2 id="detailName" class="detail-name">—</h2>
         <div class="detail-price-row">
           <span id="detailPrice" class="detail-price">₺ 0,00</span>
           <span id="detailUnit" class="detail-unit">/ Porsiyon</span>
         </div>
-
-        <div id="detailDescBox" class="detail-desc-box">
-          Geleneksel tarifle özenle hazırlanmış enfes lezzet.
-        </div>
-
-        <!-- Quantity Stepper -->
-        <div class="stepper-row">
-          <span class="stepper-label">Porsiyon Adedi</span>
-          <div class="stepper-controls">
-            <button class="stepper-btn" onclick="detailAdetDegistir(-1)">-</button>
-            <span id="detailAdet" class="stepper-count">1</span>
-            <button class="stepper-btn" onclick="detailAdetDegistir(1)">+</button>
-          </div>
-        </div>
-
-        <!-- Special Note -->
-        <div class="note-input-box">
-          <label class="note-label">Sipariş Notunuz</label>
-          <textarea 
-            id="detailNote" 
-            class="note-textarea" 
-            placeholder="Örn: Az pişmiş, acısız, sosu ayrı olsun..."
-          ></textarea>
-        </div>
-      </div>
-
-      <div class="sheet-footer">
-        <button id="detailAddCta" class="cta-button" onclick="detailSepeteEkle()">
-          <span>Listeme Ekle</span>
-          <span id="detailCtaTotal">₺ 0,00</span>
-        </button>
+        <p id="detailDesc" class="detail-desc"></p>
+        <div id="detailCatTag" class="detail-category-tag" style="display:none;"></div>
       </div>
     </div>
   </div>
 
-  <!-- ==========================================================================
-       CART / TRAY BOTTOM SHEET
-       ========================================================================== -->
-  <div id="traySheet" class="sheet-overlay" onclick="closeOnBackdrop(event, 'traySheet')">
-    <div class="bottom-sheet">
-      <div class="sheet-handle-bar"></div>
-      <div class="sheet-header">
-        <div class="sheet-title">Masa Sipariş Listesi</div>
-        <button class="sheet-close-btn" onclick="closeSheet('traySheet')">✕</button>
-      </div>
-
-      <div class="sheet-body">
-        <div id="trayItemsList">
-          <!-- Injected via JS -->
-        </div>
-
-        <div class="bill-calc-box">
-          <div class="bill-calc-row">
-            <span>Ara Toplam</span>
-            <span id="calcSubtotal">₺ 0,00</span>
-          </div>
-          <div class="bill-calc-row">
-            <span>KDV (Dahil)</span>
-            <span id="calcVat">₺ 0,00</span>
-          </div>
-          <div class="bill-calc-row total">
-            <span>Genel Toplam</span>
-            <span id="calcGrandTotal">₺ 0,00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sheet-footer" style="display: flex; gap: 10px;">
-        <button class="service-btn" style="flex: 1; padding: 14px;" onclick="sepetiTemizle()">
-          Temizle
-        </button>
-        <button class="cta-button" style="flex: 2;" onclick="siparisOzetiGoster()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span>Garsona Bildir</span>
-        </button>
-      </div>
-    </div>
+  <!-- Toast -->
+  <div id="toastEl" class="toast">
+    <span id="toastMsg">—</span>
   </div>
 
-  <!-- ==========================================================================
-       SERVICE ACTION MODAL (Garson Çağır / Hesap İste)
-       ========================================================================== -->
-  <div id="serviceSheet" class="sheet-overlay" onclick="closeOnBackdrop(event, 'serviceSheet')">
-    <div class="bottom-sheet">
-      <div class="sheet-handle-bar"></div>
-      <div class="sheet-header">
-        <div id="serviceSheetTitle" class="sheet-title">Hizmet Talebi</div>
-        <button class="sheet-close-btn" onclick="closeSheet('serviceSheet')">✕</button>
-      </div>
-
-      <div class="sheet-body" id="serviceSheetBody">
-        <!-- Injected via JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification Pill -->
-  <div id="toastPill" class="toast-pill">
-    <span id="toastIcon">✨</span>
-    <span id="toastMsg">İşlem tamamlandı</span>
-  </div>
-
-  <!-- ==========================================================================
+  <!-- ═══════════════════════════════════════════════════════
        CLIENT APPLICATION LOGIC
-       ========================================================================== -->
+       ═══════════════════════════════════════════════════════ -->
   <script>
-    // State Store
+    // ── State ──
     let menuState = {
       isletme_adi: 'Restoran',
       kategoriler: [],
       urunler: [],
       aktifKategoriId: null,
-      aramaMetni: '',
-      sepet: [] // Array of { urun, miktar, notlar, id }
+      aramaMetni: ''
     };
 
-    let aktifDetayUrun = null;
-    let aktifDetayMiktar = 1;
-
-    // Masa Bilgisini Oku
+    // ── Masa Parametresi ──
     const urlParams = new URLSearchParams(window.location.search);
     const masaParam = urlParams.get('masa');
 
@@ -1409,26 +1022,50 @@ export function qrMenuHTML(): string {
       const mb = document.getElementById('masaBadge');
       const mText = document.getElementById('masaNoText');
       mText.textContent = 'Masa ' + masaParam;
-      mb.style.display = 'inline-flex';
+      mb.style.display = 'flex';
     }
 
-    // Helper: Fiyat Formatla
+    // ── Fiyat Formatlayıcı ──
     function formatFiyat(tutar) {
-      return '₺ ' + Number(tutar || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '₺ ' + Number(tutar || 0).toLocaleString('tr-TR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
 
-    // Toast Göster
-    function showToast(msg, icon = '✨') {
-      const toast = document.getElementById('toastPill');
-      document.getElementById('toastIcon').textContent = icon;
+    // ── Toast ──
+    function showToast(msg) {
+      const t = document.getElementById('toastEl');
       document.getElementById('toastMsg').textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 2600);
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    // Menü Verisini Yükle
+    // ── Kategori İkon Haritası ──
+    const categoryIcons = {
+      'çorba': '🍜', 'salata': '🥗', 'et': '🥩', 'kebap': '🔥',
+      'tavuk': '🍗', 'balık': '🐟', 'deniz': '🦐', 'makarna': '🍝',
+      'pizza': '🍕', 'burger': '🍔', 'sandviç': '🥪', 'tatlı': '🍮',
+      'pasta': '🎂', 'dondurma': '🍨', 'kahvaltı': '🍳', 'meze': '🫒',
+      'başlangıç': '🫒', 'ara': '🍢', 'ızgara': '🔥', 'fırın': '♨️',
+      'içecek': '🥤', 'meşrubat': '🥤', 'su': '💧', 'kahve': '☕',
+      'çay': '🍵', 'alkol': '🍷', 'kokteyl': '🍸', 'bira': '🍺',
+      'şarap': '🍷', 'atıştırma': '🍿', 'aperatif': '🧀', 'ana': '🍽️',
+      'yemek': '🍽️', 'pilav': '🍚', 'sebze': '🥬', 'vegan': '🌱',
+      'default': '◆'
+    };
+
+    function getCategoryIcon(name) {
+      const lower = (name || '').toLowerCase();
+      for (const [key, icon] of Object.entries(categoryIcons)) {
+        if (key !== 'default' && lower.includes(key)) return icon;
+      }
+      return categoryIcons['default'];
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MENÜ VERİSİNİ YÜKLE (API çağrısı — korunuyor)
+    // ══════════════════════════════════════════════════════════
     async function menuYukle() {
       try {
         const res = await fetch('/api/qrmenu');
@@ -1440,7 +1077,7 @@ export function qrMenuHTML(): string {
         menuState.urunler = data.urunler || [];
 
         document.getElementById('isletmeAdi').textContent = menuState.isletme_adi;
-        document.title = menuState.isletme_adi + ' - Dijital Menü';
+        document.title = menuState.isletme_adi + ' — Dijital Menü';
 
         renderKategoriTabs();
         renderUrunler();
@@ -1451,15 +1088,23 @@ export function qrMenuHTML(): string {
         console.error(err);
         document.getElementById('loader').innerHTML = \`
           <div class="empty-state">
-            <div class="empty-icon">⚠️</div>
-            <div style="font-weight:700; color:var(--flame-500); margin-bottom:6px;">Menüye Erişilemedi</div>
-            <div style="font-size:13px;">Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.</div>
+            <div class="empty-state-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div class="empty-state-title">Menüye Erişilemedi</div>
+            <div class="empty-state-desc">Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.</div>
           </div>
         \`;
       }
     }
 
-    // Kategori Tabs Çiz
+    // ══════════════════════════════════════════════════════════
+    // KATEGORİ TABS
+    // ══════════════════════════════════════════════════════════
     function renderKategoriTabs() {
       const container = document.getElementById('catTabs');
       container.innerHTML = '';
@@ -1468,7 +1113,8 @@ export function qrMenuHTML(): string {
       const tumuBtn = document.createElement('button');
       tumuBtn.className = 'cat-pill' + (menuState.aktifKategoriId === null ? ' active' : '');
       tumuBtn.innerHTML = \`
-        <span>✨ Tümü</span>
+        <span class="cat-pill-icon">◆</span>
+        <span>Tümü</span>
         <span class="cat-pill-count">\${menuState.urunler.length}</span>
       \`;
       tumuBtn.onclick = () => {
@@ -1481,9 +1127,13 @@ export function qrMenuHTML(): string {
       // Kategoriler
       menuState.kategoriler.forEach(k => {
         const urunSayisi = menuState.urunler.filter(u => u.kategori_id === k.id).length;
+        if (urunSayisi === 0) return;
+
+        const icon = getCategoryIcon(k.ad);
         const btn = document.createElement('button');
         btn.className = 'cat-pill' + (menuState.aktifKategoriId === k.id ? ' active' : '');
         btn.innerHTML = \`
+          <span class="cat-pill-icon">\${icon}</span>
           <span>\${k.ad}</span>
           <span class="cat-pill-count">\${urunSayisi}</span>
         \`;
@@ -1497,20 +1147,9 @@ export function qrMenuHTML(): string {
       });
     }
 
-    // Kategori İkonu / Placeholder SVG Üretici
-    function getCulinaryIconSvg() {
-      return \`
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-          <line x1="6" y1="1" x2="6" y2="4"></line>
-          <line x1="10" y1="1" x2="10" y2="4"></line>
-          <line x1="14" y1="1" x2="14" y2="4"></line>
-        </svg>
-      \`;
-    }
-
-    // Ürünleri Çiz
+    // ══════════════════════════════════════════════════════════
+    // ÜRÜNLERİ ÇİZ — İkili Mod (Tipografi / Zengin Kart)
+    // ══════════════════════════════════════════════════════════
     function renderUrunler() {
       const container = document.getElementById('menuContainer');
       container.innerHTML = '';
@@ -1520,8 +1159,8 @@ export function qrMenuHTML(): string {
       // Arama filtresi
       if (menuState.aramaMetni.trim()) {
         const q = menuState.aramaMetni.toLowerCase();
-        filtrelenmis = filtrelenmis.filter(u => 
-          u.ad.toLowerCase().includes(q) || 
+        filtrelenmis = filtrelenmis.filter(u =>
+          u.ad.toLowerCase().includes(q) ||
           (u.kisaltma && u.kisaltma.toLowerCase().includes(q))
         );
       }
@@ -1534,103 +1173,120 @@ export function qrMenuHTML(): string {
       if (filtrelenmis.length === 0) {
         container.innerHTML = \`
           <div class="empty-state">
-            <div class="empty-icon">🍽️</div>
-            <div style="font-weight:700; margin-bottom:4px; font-size:16px;">Aradığınız ürün bulunamadı</div>
-            <div style="font-size:13px;">Lütfen farklı bir arama terimi deneyin veya diğer kategorilere göz atın.</div>
+            <div class="empty-state-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+            </div>
+            <div class="empty-state-title">Sonuç bulunamadı</div>
+            <div class="empty-state-desc">Farklı bir terim deneyin veya kategorilere göz atın.</div>
           </div>
         \`;
         return;
       }
 
       // Kategoriye Göre Grupla
-      const kategorilerListesi = menuState.aktifKategoriId !== null 
+      const kategorilerListesi = menuState.aktifKategoriId !== null
         ? menuState.kategoriler.filter(k => k.id === menuState.aktifKategoriId)
         : menuState.kategoriler;
+
+      let globalIndex = 0;
 
       kategorilerListesi.forEach(kat => {
         const katUrunler = filtrelenmis.filter(u => u.kategori_id === kat.id);
         if (katUrunler.length === 0) return;
 
         const groupDiv = document.createElement('div');
-        groupDiv.className = 'category-group';
+        groupDiv.className = 'category-group animate-in';
+        groupDiv.style.animationDelay = (globalIndex * 0.06) + 's';
 
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'category-group-header';
-        headerDiv.innerHTML = \`
-          <div class="category-group-title">\${kat.ad}</div>
-          <div class="category-group-count">\${katUrunler.length} Çeşit</div>
+        groupDiv.innerHTML = \`
+          <div class="category-header">
+            <div class="category-title">\${kat.ad}</div>
+            <div class="category-count">\${katUrunler.length} çeşit</div>
+          </div>
         \`;
-        groupDiv.appendChild(headerDiv);
 
-        const gridDiv = document.createElement('div');
-        gridDiv.className = 'dish-grid';
+        const listDiv = document.createElement('div');
+        listDiv.className = 'dish-list';
 
-        katUrunler.forEach(urun => {
-          const card = document.createElement('div');
-          card.className = 'dish-card';
-          card.onclick = (e) => {
-            // Butona tıklanmadıysa modalı aç
-            if (!e.target.closest('.dish-add-btn')) {
-              openDetailSheet(urun);
-            }
-          };
+        katUrunler.forEach((urun, idx) => {
+          const delay = ((globalIndex + idx) * 0.04) + 's';
 
-          // Resim HTML
-          let imgHtml = '';
           if (urun.resim_yolu) {
-            imgHtml = \`<img src="\${urun.resim_yolu}" class="dish-img" alt="\${urun.ad}" loading="lazy">\`;
-          } else {
-            imgHtml = \`
-              <div class="dish-placeholder">
-                \${getCulinaryIconSvg()}
-                <span class="dish-placeholder-tag">\${kat.ad}</span>
+            // ── ZENGİN KART MODU (fotoğraflı) ──
+            const card = document.createElement('div');
+            card.className = 'dish-card-rich animate-in';
+            card.style.animationDelay = delay;
+            card.onclick = () => openDetail(urun);
+
+            const descText = urun.kisaltma || '';
+
+            card.innerHTML = \`
+              <div class="dish-thumb">
+                <img src="\${urun.resim_yolu}" alt="\${urun.ad}" loading="lazy">
+              </div>
+              <div class="dish-card-info">
+                <div>
+                  <div class="dish-card-title">\${urun.ad}</div>
+                  \${descText ? '<div class="dish-card-desc">' + descText + '</div>' : ''}
+                </div>
+                <div class="dish-card-footer">
+                  <span class="dish-card-price">\${formatFiyat(urun.fiyat)}</span>
+                  <span class="dish-card-unit">\${urun.birim || 'Porsiyon'}</span>
+                </div>
               </div>
             \`;
+
+            listDiv.appendChild(card);
+          } else {
+            // ── TİPOGRAFİ MODU (fotoğrafsız) ──
+            const row = document.createElement('div');
+            row.className = 'dish-row animate-in';
+            row.style.animationDelay = delay;
+            row.onclick = () => openDetail(urun);
+
+            const descText = urun.kisaltma || '';
+
+            row.innerHTML = \`
+              <div class="dish-row-top">
+                <span class="dish-name">\${urun.ad}</span>
+                <span class="dish-dots"></span>
+                <span class="dish-price">\${formatFiyat(urun.fiyat)}</span>
+              </div>
+              \${descText ? '<div class="dish-desc">' + descText + '</div>' : ''}
+              <div class="dish-unit-label">\${urun.birim || 'Porsiyon'}</div>
+            \`;
+
+            listDiv.appendChild(row);
           }
-
-          const descText = urun.kisaltma ? urun.kisaltma : 'Taze malzemelerle hazırlanan özel lezzet.';
-
-          card.innerHTML = \`
-            <div class="dish-thumb-wrapper">
-              \${imgHtml}
-            </div>
-            <div class="dish-info">
-              <div class="dish-title-row">
-                <div class="dish-title">\${urun.ad}</div>
-                <div class="dish-desc">\${descText}</div>
-              </div>
-              <div class="dish-footer">
-                <div class="dish-price-group">
-                  <span class="dish-portion-label">\${urun.birim || 'Porsiyon'}</span>
-                  <span class="dish-price">\${formatFiyat(urun.fiyat)}</span>
-                </div>
-                <button class="dish-add-btn" title="Hızlı Ekle" onclick="hizliEkle(event, \${urun.id})">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          \`;
-
-          gridDiv.appendChild(card);
         });
 
-        groupDiv.appendChild(gridDiv);
+        groupDiv.appendChild(listDiv);
         container.appendChild(groupDiv);
+        globalIndex += katUrunler.length;
       });
+
+      // Footer
+      const footer = document.createElement('div');
+      footer.className = 'menu-footer animate-in';
+      footer.style.animationDelay = (globalIndex * 0.03 + 0.2) + 's';
+      footer.innerHTML = \`
+        <div class="footer-brand">\${menuState.isletme_adi}</div>
+        <div class="footer-sub">Dijital Menü</div>
+      \`;
+      container.appendChild(footer);
     }
 
-    // Arama İşlemi
+    // ══════════════════════════════════════════════════════════
+    // ARAMA
+    // ══════════════════════════════════════════════════════════
     function handleSearch(val) {
       menuState.aramaMetni = val;
       const clearBtn = document.getElementById('searchClearBtn');
-      if (val.trim()) {
-        clearBtn.style.display = 'flex';
-      } else {
-        clearBtn.style.display = 'none';
-      }
+      clearBtn.style.display = val.trim() ? 'flex' : 'none';
       renderUrunler();
     }
 
@@ -1642,269 +1298,57 @@ export function qrMenuHTML(): string {
       renderUrunler();
     }
 
-    // Hızlı Sepete Ekle (+) Butonu
-    function hizliEkle(event, urunId) {
-      event.stopPropagation();
-      const urun = menuState.urunler.find(u => u.id === urunId);
-      if (!urun) return;
-
-      const varMi = menuState.sepet.find(item => item.urun.id === urunId && !item.notlar);
-      if (varMi) {
-        varMi.miktar += 1;
-      } else {
-        menuState.sepet.push({
-          id: Date.now() + Math.random(),
-          urun: urun,
-          miktar: 1,
-          notlar: ''
-        });
-      }
-
-      updateTrayUI();
-      showToast(\`\${urun.ad} listeye eklendi\`, '🛒');
-    }
-
-    // Ürün Detay Modalı
-    function openDetailSheet(urun) {
-      aktifDetayUrun = urun;
-      aktifDetayMiktar = 1;
-
-      document.getElementById('detailTitle').textContent = urun.ad;
+    // ══════════════════════════════════════════════════════════
+    // ÜRÜN DETAY — Sade, Read-Only Modal
+    // ══════════════════════════════════════════════════════════
+    function openDetail(urun) {
+      document.getElementById('detailName').textContent = urun.ad;
       document.getElementById('detailPrice').textContent = formatFiyat(urun.fiyat);
       document.getElementById('detailUnit').textContent = '/ ' + (urun.birim || 'Porsiyon');
-      document.getElementById('detailDescBox').textContent = urun.kisaltma || 'Taze ve kaliteli malzemelerle şeflerimiz tarafından özenle hazırlanmıştır.';
-      document.getElementById('detailAdet').textContent = '1';
-      document.getElementById('detailNote').value = '';
-      document.getElementById('detailCtaTotal').textContent = formatFiyat(urun.fiyat);
 
-      // Resim
-      const imgCont = document.getElementById('detailImgContainer');
+      // Açıklama
+      const descEl = document.getElementById('detailDesc');
+      descEl.textContent = urun.kisaltma || '';
+      descEl.style.display = urun.kisaltma ? 'block' : 'none';
+
+      // Fotoğraf
+      const imgWrap = document.getElementById('detailImgWrap');
       if (urun.resim_yolu) {
-        imgCont.innerHTML = \`<img src="\${urun.resim_yolu}" class="detail-img" alt="\${urun.ad}">\`;
+        imgWrap.innerHTML = '<img src="' + urun.resim_yolu + '" alt="' + urun.ad + '">';
+        imgWrap.style.display = 'block';
       } else {
-        const kat = menuState.kategoriler.find(k => k.id === urun.kategori_id);
-        imgCont.innerHTML = \`
-          <div class="dish-placeholder">
-            \${getCulinaryIconSvg()}
-            <span class="detail-tag">\${kat ? kat.ad : 'Gurme Lezzet'}</span>
-          </div>
-        \`;
+        imgWrap.style.display = 'none';
+        imgWrap.innerHTML = '';
       }
 
-      openSheet('detailSheet');
-    }
-
-    function detailAdetDegistir(delta) {
-      const yeni = aktifDetayMiktar + delta;
-      if (yeni < 1) return;
-      aktifDetayMiktar = yeni;
-      document.getElementById('detailAdet').textContent = aktifDetayMiktar;
-      if (aktifDetayUrun) {
-        document.getElementById('detailCtaTotal').textContent = formatFiyat(aktifDetayUrun.fiyat * aktifDetayMiktar);
-      }
-    }
-
-    function detailSepeteEkle() {
-      if (!aktifDetayUrun) return;
-      const note = document.getElementById('detailNote').value.trim();
-
-      menuState.sepet.push({
-        id: Date.now() + Math.random(),
-        urun: aktifDetayUrun,
-        miktar: aktifDetayMiktar,
-        notlar: note
-      });
-
-      closeSheet('detailSheet');
-      updateTrayUI();
-      showToast(\`\${aktifDetayUrun.ad} (\${aktifDetayMiktar} adet) eklendi\`, '🛒');
-    }
-
-    // Sepet / Tepsi UI Güncelleme
-    function updateTrayUI() {
-      const totalCount = menuState.sepet.reduce((sum, i) => sum + i.miktar, 0);
-      const totalPrice = menuState.sepet.reduce((sum, i) => sum + (i.urun.fiyat * i.miktar), 0);
-
-      const tray = document.getElementById('floatingTray');
-      const badge = document.getElementById('trayCountBadge');
-      const priceEl = document.getElementById('trayTotalPrice');
-
-      badge.textContent = totalCount;
-      priceEl.textContent = formatFiyat(totalPrice);
-
-      if (totalCount > 0) {
-        tray.classList.add('visible');
+      // Kategori etiketi
+      const catTag = document.getElementById('detailCatTag');
+      const kat = menuState.kategoriler.find(k => k.id === urun.kategori_id);
+      if (kat) {
+        catTag.textContent = kat.ad;
+        catTag.style.display = 'inline-flex';
       } else {
-        tray.classList.remove('visible');
-        closeSheet('traySheet');
+        catTag.style.display = 'none';
       }
 
-      renderTrayList();
-    }
-
-    // Sepet Listesini Çiz
-    function renderTrayList() {
-      const list = document.getElementById('trayItemsList');
-      list.innerHTML = '';
-
-      if (menuState.sepet.length === 0) {
-        list.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div>Sipariş listeniz henüz boş.</div></div>';
-      } else {
-        menuState.sepet.forEach(item => {
-          const row = document.createElement('div');
-          row.className = 'tray-item-row';
-
-          const noteHtml = item.notlar ? \`<div class="tray-item-notes">Not: \${item.notlar}</div>\` : '';
-
-          row.innerHTML = \`
-            <div class="tray-item-info">
-              <div class="tray-item-name">\${item.urun.ad}</div>
-              \${noteHtml}
-              <div class="tray-item-price">\${formatFiyat(item.urun.fiyat * item.miktar)}</div>
-            </div>
-            <div class="tray-stepper">
-              <button class="tray-stepper-btn \${item.miktar === 1 ? 'danger' : ''}" onclick="trayAdetDegistir('\${item.id}', -1)">
-                \${item.miktar === 1 ? '🗑' : '-'}
-              </button>
-              <span class="tray-stepper-val">\${item.miktar}</span>
-              <button class="tray-stepper-btn" onclick="trayAdetDegistir('\${item.id}', 1)">+</button>
-            </div>
-          \`;
-
-          list.appendChild(row);
-        });
-      }
-
-      // Hesaplama kutusu
-      const totalPrice = menuState.sepet.reduce((sum, i) => sum + (i.urun.fiyat * i.miktar), 0);
-      const vat = totalPrice * 0.10;
-      const subtotal = totalPrice - vat;
-
-      document.getElementById('calcSubtotal').textContent = formatFiyat(subtotal);
-      document.getElementById('calcVat').textContent = formatFiyat(vat);
-      document.getElementById('calcGrandTotal').textContent = formatFiyat(totalPrice);
-    }
-
-    function trayAdetDegistir(itemId, delta) {
-      const item = menuState.sepet.find(i => String(i.id) === String(itemId));
-      if (!item) return;
-
-      item.miktar += delta;
-      if (item.miktar <= 0) {
-        menuState.sepet = menuState.sepet.filter(i => String(i.id) !== String(itemId));
-      }
-      updateTrayUI();
-    }
-
-    function sepetiTemizle() {
-      menuState.sepet = [];
-      updateTrayUI();
-      closeSheet('traySheet');
-      showToast('Sipariş listeniz temizlendi', '🧹');
-    }
-
-    function openTraySheet() {
-      renderTrayList();
-      openSheet('traySheet');
-    }
-
-    function siparisOzetiGoster() {
-      closeSheet('traySheet');
-      const masaInfo = masaParam ? \`Masa \${masaParam}\` : 'Masanız';
-      showToast(\`\${masaInfo} için sipariş listeniz hazır! Lütfen garsona gösterin.\`, '✅');
-    }
-
-    // Hizmet Talepleri Modalı (Garson Çağır / Hesap İste)
-    function openServiceModal(type) {
-      const title = document.getElementById('serviceSheetTitle');
-      const body = document.getElementById('serviceSheetBody');
-      const masaInfo = masaParam ? \`Masa: \${masaParam}\` : 'Masa Numarası Belirtilmemiş';
-
-      if (type === 'garson') {
-        title.textContent = 'Garson Çağır';
-        body.innerHTML = \`
-          <div style="text-align:center; padding: 10px 0 20px;">
-            <div style="font-size:44px; margin-bottom:12px;">🔔</div>
-            <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:6px;">Garson Masanıza Yönlendirilsin mi?</div>
-            <div style="font-size:14px; color:var(--amber-400); font-weight:700; margin-bottom:20px;">\${masaInfo}</div>
-            
-            <div style="display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:20px;">
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="garson_neden" checked style="accent-color:var(--amber-500); margin-right:8px;"> Sipariş vermek istiyorum
-              </label>
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="garson_neden" style="accent-color:var(--amber-500); margin-right:8px;"> Servis / Peçete / Baharat talebi
-              </label>
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="garson_neden" style="accent-color:var(--amber-500); margin-right:8px;"> Bir soru sormak istiyorum
-              </label>
-            </div>
-
-            <button class="cta-button" onclick="garsonCagirOnay()">
-              <span>Çağrıyı Gönder</span>
-            </button>
-          </div>
-        \`;
-      } else {
-        title.textContent = 'Hesap İste';
-        body.innerHTML = \`
-          <div style="text-align:center; padding: 10px 0 20px;">
-            <div style="font-size:44px; margin-bottom:12px;">💳</div>
-            <div style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:6px;">Hesap Masanıza Getirilsin mi?</div>
-            <div style="font-size:14px; color:var(--emerald-500); font-weight:700; margin-bottom:20px;">\${masaInfo}</div>
-            
-            <div style="display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:20px;">
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="odeme_yontem" checked style="accent-color:var(--emerald-500); margin-right:8px;"> Kredi Kartı / Temassız POS
-              </label>
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="odeme_yontem" style="accent-color:var(--emerald-500); margin-right:8px;"> Nakit Ödeme
-              </label>
-              <label class="service-btn" style="cursor:pointer;">
-                <input type="radio" name="odeme_yontem" style="accent-color:var(--emerald-500); margin-right:8px;"> Yemek Kartı (Multinet / Sodexo / Setcard)
-              </label>
-            </div>
-
-            <button class="cta-button" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%); color:#fff;" onclick="hesapIsteOnay()">
-              <span>Hesap Talebini İlet</span>
-            </button>
-          </div>
-        \`;
-      }
-
-      openSheet('serviceSheet');
-    }
-
-    function garsonCagirOnay() {
-      closeSheet('serviceSheet');
-      showToast('Garson masanıza yönlendirildi 🔔', '🔔');
-    }
-
-    function hesapIsteOnay() {
-      closeSheet('serviceSheet');
-      showToast('Hesap talebiniz garsona iletildi 💳', '💳');
-    }
-
-    // Modal Helpers
-    function openSheet(id) {
-      const sheet = document.getElementById(id);
-      if (sheet) sheet.classList.add('open');
+      // Aç
+      const overlay = document.getElementById('detailOverlay');
+      overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
 
-    function closeSheet(id) {
-      const sheet = document.getElementById(id);
-      if (sheet) sheet.classList.remove('open');
+    function closeDetail() {
+      document.getElementById('detailOverlay').classList.remove('open');
       document.body.style.overflow = '';
     }
 
-    function closeOnBackdrop(e, id) {
-      if (e.target.id === id) {
-        closeSheet(id);
+    function closeOnBackdrop(e) {
+      if (e.target.id === 'detailOverlay') {
+        closeDetail();
       }
     }
 
-    // INIT
+    // ── INIT ──
     menuYukle();
   </script>
 </body>
