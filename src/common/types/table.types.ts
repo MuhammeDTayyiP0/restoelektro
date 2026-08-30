@@ -32,7 +32,9 @@ export interface Masa {
   aktif_hesap_id?: number
   aktif_hesap_tutari?: number
   acik_sure?: string  // Ne kadar süredir açık
+  acilis_zamani?: string
   garson_adi?: string
+  urun_sayisi?: number
 }
 
 /** Masa birleştirme */

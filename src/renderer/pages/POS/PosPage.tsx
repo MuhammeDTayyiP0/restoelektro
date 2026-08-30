@@ -21,10 +21,10 @@ export default function PosPage() {
   const masaId = masaIdParam ? parseInt(masaIdParam, 10) : null
 
   const navigate = useNavigate()
-  const { error } = useToast()
+  const { error, info } = useToast()
   
   const { menuyuGetir, yukleniyor: menuYukleniyor } = useMenuStore()
-  const { hesapAyarla, aktifHesap } = usePosStore()
+  const { hesapAyarla, hesapGuncelle, aktifHesap } = usePosStore()
   const [hesapYukleniyor, setHesapYukleniyor] = useState(true)
 
   // Sayfa yüklendiğinde menüyü getir
@@ -61,14 +61,35 @@ export default function PosPage() {
     hesabiYukle()
   }, [hesabiYukle])
 
-  // Anlık güncellemeleri dinle
-  useIPCListener('siparis:guncellendi', (guncellenenHesapId: number, guncellenenMasaId?: number) => {
-    if (aktifHesap && aktifHesap.id === guncellenenHesapId) {
-      // Eğer ekranda o hesaba bakıyorsak, yeniden yükle
-      hesabiYukle()
-    } else if (!aktifHesap && masaId && masaId === guncellenenMasaId) {
-      // Eğer boş bir masaya bakıyorsak ve garson telefondan sipariş göndererek bu masaya hesap açtıysa
-      navigate(`/pos/${guncellenenHesapId}`)
+  // Anlık güncellemeleri dinle (Garson El Terminali vb.)
+  useIPCListener('siparis:guncellendi', async (guncellenenHesapId: number, guncellenenMasaId?: number) => {
+    try {
+      if (aktifHesap && aktifHesap.id === guncellenenHesapId) {
+        // Kasa görevlisinin o an açık tuttuğu masaya yeni ürün eklendi veya güncellendi
+        // Ekranı yenilemeden (unmount/re-render blink olmadan) arka planda güncelle
+        const guncelHesap = await ipcInvoke<Hesap>(HESAP_KANALLARI.DETAY, guncellenenHesapId)
+        if (guncelHesap) {
+          const eskiSiparisSayisi = aktifHesap.siparisler?.length || 0
+          const yeniSiparisSayisi = guncelHesap.siparisler?.length || 0
+          hesapGuncelle(guncelHesap)
+
+          if (yeniSiparisSayisi > eskiSiparisSayisi) {
+            info('Yeni Ürün Eklendi', 'Garson terminalinden bu masaya yeni sipariş(ler) eklendi.')
+          }
+        }
+      } else if (!aktifHesap && masaId && masaId === guncellenenMasaId) {
+        // Kasa görevlisi boş bir masaya bakıyorken garson sipariş gönderip hesap açtıysa
+        // Kullanıcının taslak sepetini ve odağını bozmadan arka planda hesabı bağla
+        const guncelHesap = await ipcInvoke<Hesap>(HESAP_KANALLARI.DETAY, guncellenenHesapId)
+        if (guncelHesap) {
+          hesapGuncelle(guncelHesap)
+          window.history.replaceState(null, '', `#/pos/${guncellenenHesapId}`)
+          info('Yeni Sipariş Eklendi', 'Garson terminalinden bu masaya sipariş girildi.')
+        }
+      }
+      // Farklı bir masaya ait siparişlerde hiçbir odak değişikliği veya yönlendirme yapılmaz
+    } catch (err: any) {
+      console.error('Anlık sipariş senkronizasyon hatası:', err)
     }
   })
 

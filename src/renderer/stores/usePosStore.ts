@@ -43,6 +43,7 @@ interface PosState {
   
   // Hesap İşlemleri
   hesapAyarla: (hesap: Hesap | null, masaId?: number | null) => void
+  hesapGuncelle: (hesap: Hesap) => void
 }
 
 export const usePosStore = create<PosState>((set, get) => ({
@@ -138,10 +139,23 @@ export const usePosStore = create<PosState>((set, get) => ({
   
   iptalleriTemizle: () => set({ iptalEdilecekSiparisler: [] }),
   
-  hesapAyarla: (hesap, masaId = null) => set({ 
-    aktifHesap: hesap, 
-    aktifMasaId: masaId || hesap?.masa_id || null,
-    sepet: [], // Farklı hesaba geçildiğinde sepeti temizle
-    iptalEdilecekSiparisler: [] // Hesaba geçildiğinde iptalleri de temizle
-  })
+  hesapAyarla: (hesap, masaId = null) => set((state) => {
+    const hedefMasaId = masaId || hesap?.masa_id || null
+    // Aynı hesap veya aynı masa açılıyorsa taslak sepeti koru
+    const ayniHesap = !!(state.aktifHesap?.id && hesap?.id && state.aktifHesap.id === hesap.id)
+    const ayniMasa = !!(!hesap?.id && !state.aktifHesap?.id && state.aktifMasaId === hedefMasaId)
+
+    return {
+      aktifHesap: hesap, 
+      aktifMasaId: hedefMasaId,
+      sepet: (ayniHesap || ayniMasa) ? state.sepet : [], // Farklı hesaba/masaya geçilirse sepeti temizle
+      iptalEdilecekSiparisler: (ayniHesap || ayniMasa) ? state.iptalEdilecekSiparisler : []
+    }
+  }),
+
+  // Arka plandan (Garson vs.) gelen sipariş güncellemesi: Taslak sepeti ASLA sıfırlamaz
+  hesapGuncelle: (hesap) => set((state) => ({
+    aktifHesap: hesap,
+    aktifMasaId: hesap.masa_id || state.aktifMasaId,
+  }))
 }))

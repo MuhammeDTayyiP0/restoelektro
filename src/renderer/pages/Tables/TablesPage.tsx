@@ -48,8 +48,10 @@ const TableCard = React.memo(function TableCard({
   const birlestiMi = masa.durum === 'birlesti'
 
   // Geçen süre hesabı
-  const gecenSure = doluMu && masa.acik_sure
-    ? parseInt(masa.acik_sure, 10) || 0
+  const gecenSure = doluMu
+    ? (masa.acilis_zamani
+        ? Math.max(0, Math.floor((Date.now() - new Date(masa.acilis_zamani).getTime()) / 60000))
+        : (parseInt(masa.acik_sure || '0', 10) || 0))
     : 0
 
   const handleClick = useCallback(() => {
@@ -125,10 +127,15 @@ const TableCard = React.memo(function TableCard({
       <div className="flex items-end justify-between w-full mt-auto pt-2 border-t border-[#1E2638]">
         {doluMu ? (
           <div className="flex flex-col w-full">
-            <span className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
-              ADİSYON TUTARI
-            </span>
-            <div className="flex items-baseline justify-between w-full">
+            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+              <span>ADİSYON TUTARI</span>
+              {typeof masa.urun_sayisi === 'number' && masa.urun_sayisi > 0 && (
+                <span className="text-[10px] font-mono font-bold text-amber-300/90 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                  {masa.urun_sayisi} Ürün
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline justify-between w-full mt-0.5">
               <span className="text-base 2xl:text-lg font-black font-mono text-emerald-400 tabular-nums tracking-tight">
                 {formatPara(masa.aktif_hesap_tutari || 0)}
               </span>

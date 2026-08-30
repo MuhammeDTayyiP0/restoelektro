@@ -50,7 +50,8 @@ export function masaIPCKaydet(ipcMain: IpcMain): void {
       ? `SELECT m.*, b.ad as bolum_adi,
            h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
            p.ad || ' ' || p.soyad as garson_adi,
-           h.acilis_zamani
+           h.acilis_zamani,
+           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi
          FROM masa m
          JOIN bolum b ON b.id = m.bolum_id
          LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
@@ -60,7 +61,8 @@ export function masaIPCKaydet(ipcMain: IpcMain): void {
       : `SELECT m.*, b.ad as bolum_adi,
            h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
            p.ad || ' ' || p.soyad as garson_adi,
-           h.acilis_zamani
+           h.acilis_zamani,
+           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi
          FROM masa m
          JOIN bolum b ON b.id = m.bolum_id
          LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
