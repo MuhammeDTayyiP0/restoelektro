@@ -29,6 +29,7 @@ export const MENU_KANALLARI = {
   URUN_GUNCELLE: 'menu:urun-guncelle',
   URUN_SIL: 'menu:urun-sil',
   URUN_ARA: 'menu:urun-ara',
+  RESIM_YUKLE: 'menu:resim-yukle',
 } as const
 
 /** Masa kanalları */

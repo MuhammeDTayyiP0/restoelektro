@@ -3,10 +3,12 @@
 // Kategori ve ürün CRUD işlemleri
 // =====================================================
 
-import { IpcMain } from 'electron'
+import { IpcMain, app as electronApp } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { MENU_KANALLARI } from '../../common/ipc-channels'
 import type { YeniKategori, YeniUrun } from '../../common/types/menu.types'
+import path from 'path'
+import fs from 'fs'
 
 export function menuIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
@@ -107,13 +109,15 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
   ipcMain.handle(MENU_KANALLARI.URUN_GUNCELLE, async (_event, id: number, veri: Partial<YeniUrun>) => {
     const alanlar: string[] = []
     const degerler: any[] = []
-    if (veri.ad) { alanlar.push('ad = ?'); degerler.push(veri.ad) }
+    if (veri.ad !== undefined) { alanlar.push('ad = ?'); degerler.push(veri.ad) }
+    if (veri.kisaltma !== undefined) { alanlar.push('kisaltma = ?'); degerler.push(veri.kisaltma) }
     if (veri.fiyat !== undefined) { alanlar.push('fiyat = ?'); degerler.push(veri.fiyat) }
-    if (veri.kategori_id) { alanlar.push('kategori_id = ?'); degerler.push(veri.kategori_id) }
+    if (veri.kategori_id !== undefined) { alanlar.push('kategori_id = ?'); degerler.push(veri.kategori_id) }
     if (veri.barkod !== undefined) { alanlar.push('barkod = ?'); degerler.push(veri.barkod) }
     if (veri.kdv_orani !== undefined) { alanlar.push('kdv_orani = ?'); degerler.push(veri.kdv_orani) }
-    if (veri.yazici_grup) { alanlar.push('yazici_grup = ?'); degerler.push(veri.yazici_grup) }
-    if (veri.birim) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
+    if (veri.birim !== undefined) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
+    if (veri.resim_yolu !== undefined) { alanlar.push('resim_yolu = ?'); degerler.push(veri.resim_yolu) }
+    if (veri.yazici_grup !== undefined) { alanlar.push('yazici_grup = ?'); degerler.push(veri.yazici_grup) }
     alanlar.push('updated_at = CURRENT_TIMESTAMP')
     degerler.push(id)
     if (alanlar.length > 1) {
@@ -138,5 +142,48 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       ORDER BY u.ad
       LIMIT 20
     `).all(`%${arama}%`, `%${arama}%`, `%${arama}%`)
+  })
+
+  // Ürün görseli yükle (IPC üzerinden base64/buffer)
+  ipcMain.handle(MENU_KANALLARI.RESIM_YUKLE, async (_event, veri: { base64: string; dosyaAdi?: string; uzanti?: string }) => {
+    try {
+      const isDev = !electronApp.isPackaged
+      const baseDir = isDev ? process.cwd() : electronApp.getPath('userData')
+      const uploadsDir = path.join(baseDir, 'public', 'uploads', 'products')
+      
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
+      }
+
+      let rawBase64 = veri.base64
+      let ext = veri.uzanti || '.jpg'
+
+      if (rawBase64.startsWith('data:image/')) {
+        const match = rawBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/)
+        if (match) {
+          ext = '.' + (match[1] === 'jpeg' ? 'jpg' : match[1])
+          rawBase64 = match[2]
+        }
+      }
+
+      const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext.toLowerCase()) ? ext.toLowerCase() : '.jpg'
+      const filename = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
+      const hedefYol = path.join(uploadsDir, filename)
+      const buffer = Buffer.from(rawBase64, 'base64')
+      
+      fs.writeFileSync(hedefYol, buffer)
+
+      const resimYolu = `/uploads/products/${filename}`
+      return {
+        basarili: true,
+        resim_yolu: resimYolu,
+        url: resimYolu,
+        dosya_adi: filename,
+        boyut: buffer.length
+      }
+    } catch (err: any) {
+      console.error('IPC Resim yükleme hatası:', err)
+      return { basarili: false, hata: err.message || 'Görsel kaydedilemedi' }
+    }
   })
 }

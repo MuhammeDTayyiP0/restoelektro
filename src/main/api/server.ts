@@ -1,8 +1,3 @@
-// =====================================================
-// Express.js REST API Sunucusu
-// Boss Modülü ve Garson Mobil Uygulama için
-// =====================================================
-
 import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
@@ -15,6 +10,8 @@ import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
 import { bossMobilHTML } from './boss-mobile'
 import path from 'path'
+import fs from 'fs'
+import multer from 'multer'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 import { varsayilanYerelIpGetir } from '../services/network.service'
 
@@ -25,6 +22,47 @@ let sunucu: any = null
 let io: Server | null = null
 
 /**
+ * Ürün görselleri için yükleme dizinini döndürür ve yoksa oluşturur
+ */
+export function uploadsDizininiGetir(): string {
+  const isDev = !electronApp.isPackaged
+  const base = isDev ? process.cwd() : electronApp.getPath('userData')
+  const productsDir = path.join(base, 'public', 'uploads', 'products')
+  if (!fs.existsSync(productsDir)) {
+    fs.mkdirSync(productsDir, { recursive: true })
+  }
+  return productsDir
+}
+
+// Multer Disk Depolama Yapılandırması
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDizininiGetir())
+  },
+  filename: (_req, file, cb) => {
+    const ext = (path.extname(file.originalname) || '.jpg').toLowerCase()
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext) ? ext : '.jpg'
+    const uniqueSuffix = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
+    cb(null, uniqueSuffix)
+  }
+})
+
+const uploadMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/jpg']
+    if (allowedMimes.includes(file.mimetype.toLowerCase()) || file.mimetype.startsWith('image/')) {
+      cb(null, true)
+    } else {
+      cb(new Error('Yalnızca geçerli bir görsel dosyası (JPG, PNG, WEBP, GIF, SVG) yükleyebilirsiniz.'))
+    }
+  }
+})
+
+/**
  * API sunucusunu başlatır
  */
 export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
@@ -33,7 +71,92 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   io = new Server(httpServer, { cors: { origin: '*' } })
 
   app.use(cors())
-  app.use(express.json())
+  app.use(express.json({ limit: '20mb' }))
+  app.use(express.urlencoded({ extended: true, limit: '20mb' }))
+
+  // ===== STATİK DOSYA SUNUCUSU (PUBLIC & UPLOADS) =====
+  const isDev = !electronApp.isPackaged
+  const devPublicDir = path.join(process.cwd(), 'public')
+  const prodPublicDir = path.join(electronApp.getPath('userData'), 'public')
+  const uploadsProductDir = uploadsDizininiGetir()
+
+  // Dizinleri garantiye al
+  if (!fs.existsSync(devPublicDir)) {
+    try { fs.mkdirSync(devPublicDir, { recursive: true }) } catch {}
+  }
+  if (!fs.existsSync(prodPublicDir)) {
+    try { fs.mkdirSync(prodPublicDir, { recursive: true }) } catch {}
+  }
+
+  // Statik dosyaları sun
+  app.use('/uploads', express.static(path.join(devPublicDir, 'uploads')))
+  app.use('/uploads', express.static(path.join(prodPublicDir, 'uploads')))
+  app.use(express.static(devPublicDir))
+  app.use(express.static(prodPublicDir))
+
+  // ===== DOSYA YÜKLEME ENDPOINT'İ =====
+  app.post('/api/upload', (req, res) => {
+    uploadMiddleware.single('image')(req, res, (err: any) => {
+      if (err) {
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
+          }
+          return res.status(400).json({ basarili: false, hata: `Yükleme hatası: ${err.message}` })
+        }
+        return res.status(400).json({ basarili: false, hata: err.message || 'Dosya yüklenemedi' })
+      }
+
+      // Multipart dosya yüklendiyse
+      if (req.file) {
+        const resimYolu = `/uploads/products/${req.file.filename}`
+        return res.json({
+          basarili: true,
+          resim_yolu: resimYolu,
+          url: resimYolu,
+          dosya_adi: req.file.filename,
+          boyut: req.file.size
+        })
+      }
+
+      // Base64 JSON formatında gönderildiyse
+      if (req.body && req.body.image && typeof req.body.image === 'string') {
+        try {
+          const raw = req.body.image
+          let ext = '.jpg'
+          let base64Data = raw
+
+          if (raw.startsWith('data:image/')) {
+            const match = raw.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/)
+            if (match) {
+              ext = '.' + (match[1] === 'jpeg' ? 'jpg' : match[1])
+              base64Data = match[2]
+            }
+          }
+
+          const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext.toLowerCase()) ? ext.toLowerCase() : '.jpg'
+          const filename = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
+          const uploadPath = path.join(uploadsProductDir, filename)
+          const buffer = Buffer.from(base64Data, 'base64')
+
+          fs.writeFileSync(uploadPath, buffer)
+
+          const resimYolu = `/uploads/products/${filename}`
+          return res.json({
+            basarili: true,
+            resim_yolu: resimYolu,
+            url: resimYolu,
+            dosya_adi: filename,
+            boyut: buffer.length
+          })
+        } catch (base64Err: any) {
+          return res.status(500).json({ basarili: false, hata: `Base64 kaydetme hatası: ${base64Err.message}` })
+        }
+      }
+
+      return res.status(400).json({ basarili: false, hata: 'Yüklenecek görsel dosyası bulunamadı' })
+    })
+  })
 
   // JWT doğrulama middleware
   const jwtDogrula = (req: any, res: any, next: any) => {

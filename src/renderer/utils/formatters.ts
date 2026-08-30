@@ -85,3 +85,17 @@ export function gecenDakikaHesapla(baslangicIso: string | undefined | null): num
     return 0
   }
 }
+
+/**
+ * Ürün veya medya görsel URL'sini formatlar.
+ * Relative path (/uploads/products/xyz.jpg) durumunda API sunucu portuyla (3847) tam URL üretir.
+ */
+export function formatResimUrl(resimYolu: string | null | undefined, apiPort: number = 3847): string {
+  if (!resimYolu) return ''
+  if (resimYolu.startsWith('http://') || resimYolu.startsWith('https://') || resimYolu.startsWith('data:') || resimYolu.startsWith('blob:')) {
+    return resimYolu
+  }
+  const temizYol = resimYolu.startsWith('/') ? resimYolu : `/${resimYolu}`
+  return `http://localhost:${apiPort}${temizYol}`
+}
+

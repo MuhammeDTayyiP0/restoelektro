@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef } from 'react'
 import { clsx } from 'clsx'
 import { useMenuStore } from '../../../stores/useMenuStore'
 import { usePosStore } from '../../../stores/usePosStore'
-import { formatPara } from '../../../utils/formatters'
+import { formatPara, formatResimUrl } from '../../../utils/formatters'
 import type { Urun } from '../../../../common/types/menu.types'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
@@ -271,7 +271,7 @@ export default function PosMenu() {
                     {/* Görsel / Monogram */}
                     <div className="w-10 h-10 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center shrink-0 overflow-hidden text-slate-300 group-hover:text-cyan-400 group-hover:border-cyan-500/40 transition-colors">
                       {urun.resim_yolu ? (
-                        <img src={urun.resim_yolu} alt={urun.ad} className="w-full h-full object-cover" />
+                        <img src={formatResimUrl(urun.resim_yolu)} alt={urun.ad} className="w-full h-full object-cover" />
                       ) : (
                         <span className="font-mono font-black text-sm">
                           {urun.ad.charAt(0).toUpperCase()}

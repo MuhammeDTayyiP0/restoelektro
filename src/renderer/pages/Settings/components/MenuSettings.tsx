@@ -22,11 +22,14 @@ import {
   ArrowRight,
   TrendingUp,
   RefreshCw,
-  FolderPlus
+  FolderPlus,
+  UploadCloud,
+  Image as ImageIcon,
+  Camera
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatPara } from '../../../utils/formatters'
+import { formatPara, formatResimUrl } from '../../../utils/formatters'
 
 export default function MenuSettings() {
   const [subTab, setSubTab] = useState<'urunler' | 'fiyat-guncelleme' | 'kategoriler'>('urunler')
@@ -56,6 +59,10 @@ export default function MenuSettings() {
   const [urunBirim, setUrunBirim] = useState('Porsiyon')
   const [urunKdv, setUrunKdv] = useState('10')
   const [urunYaziciGrup, setUrunYaziciGrup] = useState('mutfak')
+  const [urunResimYolu, setUrunResimYolu] = useState('')
+  const [resimYukleniyor, setResimYukleniyor] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   // Toplu Fiyat Güncelleme State
   const [topluKategoriId, setTopluKategoriId] = useState<string>('tum')
@@ -179,6 +186,7 @@ export default function MenuSettings() {
       setUrunBirim(urun.birim || 'Porsiyon')
       setUrunKdv(urun.kdv_orani ? String(urun.kdv_orani) : '10')
       setUrunYaziciGrup(urun.yazici_grup || 'mutfak')
+      setUrunResimYolu(urun.resim_yolu || '')
     } else {
       setDuzenlenenUrun(null)
       setUrunAd('')
@@ -189,8 +197,87 @@ export default function MenuSettings() {
       setUrunBirim('Porsiyon')
       setUrunKdv('10')
       setUrunYaziciGrup('mutfak')
+      setUrunResimYolu('')
     }
+    setResimYukleniyor(false)
+    setIsDragging(false)
     setUrunModalAcik(true)
+  }
+
+  // Görsel Seçme & Yükleme İşleyicisi
+  const handleResimSec = async (file?: File | null) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      error('Geçersiz Dosya', 'Lütfen geçerli bir görsel formatı (JPG, PNG, WEBP, SVG) seçiniz.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      error('Dosya Çok Büyük', 'Görsel boyutu maksimum 10MB olmalıdır.')
+      return
+    }
+
+    setResimYukleniyor(true)
+    try {
+      // 1. Öncelik: Fetch ile Express REST API (/api/upload)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
+        const res = await fetch('http://localhost:3847/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.basarili && data.resim_yolu) {
+            setUrunResimYolu(data.resim_yolu)
+            success('Görsel Yüklendi', 'Ürün görseli başarıyla yüklendi.')
+            setResimYukleniyor(false)
+            return
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('Fetch upload başarısız oldu, IPC yedek mekanizması deneniyor...', fetchErr)
+      }
+
+      // 2. Yedek Öncelik: Electron IPC üzerinden base64 aktarımı
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string
+          const res = await ipcInvoke<any>(MENU_KANALLARI.RESIM_YUKLE, {
+            base64,
+            dosyaAdi: file.name
+          })
+          if (res && res.basarili && res.resim_yolu) {
+            setUrunResimYolu(res.resim_yolu)
+            success('Görsel Yüklendi', 'Ürün görseli başarıyla yüklendi.')
+          } else {
+            error('Yükleme Hatası', res?.hata || 'Görsel kaydedilemedi')
+          }
+        } catch (ipcErr: any) {
+          error('Yükleme Hatası', ipcErr.message || 'Görsel kaydedilemedi')
+        } finally {
+          setResimYukleniyor(false)
+        }
+      }
+      reader.onerror = () => {
+        error('Dosya Hatası', 'Görsel dosyası okunamadı')
+        setResimYukleniyor(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (err: any) {
+      error('Hata', err.message || 'Görsel yüklenirken bir hata oluştu')
+      setResimYukleniyor(false)
+    }
+  }
+
+  // Görsel Kaldırma İşleyicisi
+  const handleResimKaldir = () => {
+    setUrunResimYolu('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+    info('Görsel Kaldırıldı', 'Ürün görseli kaldırıldı.')
   }
 
   const urunKaydet = async (e: React.FormEvent) => {
@@ -206,7 +293,8 @@ export default function MenuSettings() {
         barkod: urunBarkod.trim() || null,
         birim: urunBirim,
         kdv_orani: Number(urunKdv),
-        yazici_grup: urunYaziciGrup
+        yazici_grup: urunYaziciGrup,
+        resim_yolu: urunResimYolu.trim() || null
       }
 
       if (duzenlenenUrun) {
@@ -511,10 +599,29 @@ export default function MenuSettings() {
                             </span>
                           </div>
 
-                          {/* Ürün Adı */}
-                          <h3 className="font-bold text-white text-sm tracking-tight line-clamp-2 mb-2" title={urun.ad}>
-                            {urun.ad}
-                          </h3>
+                          {/* Görsel Thumbnail & Ürün Adı */}
+                          <div className="flex items-start gap-2.5 mb-2.5">
+                            <div className="w-11 h-11 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center shrink-0 overflow-hidden text-slate-300 shadow-inner group-hover:border-brand-500/40 transition-colors">
+                              {urun.resim_yolu ? (
+                                <img src={formatResimUrl(urun.resim_yolu)} alt={urun.ad} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="font-mono font-black text-xs text-surface-400">
+                                  {urun.ad.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-white text-sm tracking-tight line-clamp-2 leading-snug" title={urun.ad}>
+                                {urun.ad}
+                              </h3>
+                              {urun.kisaltma && (
+                                <span className="text-[10px] font-mono text-surface-500 block truncate mt-0.5">
+                                  #{urun.kisaltma}
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
                           {/* Ekstra Bilgi Rozetleri */}
                           <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-surface-400 mb-3">
@@ -988,6 +1095,122 @@ export default function MenuSettings() {
                 <option value="kasa">Sadece Kasa / Fiş</option>
               </select>
             </div>
+          </div>
+
+          {/* Ürün Görseli (Upload, Sürükle-Bırak & Önizleme) */}
+          <div className="flex flex-col gap-1.5 pt-1">
+            <label className="text-xs font-mono text-surface-400 uppercase flex items-center justify-between">
+              <span>Ürün Görseli (Fotoğraf)</span>
+              {urunResimYolu && (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Görsel Yüklendi
+                </span>
+              )}
+            </label>
+
+            {urunResimYolu ? (
+              // Görsel Yüklü İse: Önizleme & Kaldır / Değiştir
+              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                <div className="relative w-20 h-20 rounded-xl bg-[#141A26] border border-[#222C42] overflow-hidden shrink-0 shadow-md group">
+                  <img
+                    src={formatResimUrl(urunResimYolu)}
+                    alt="Ürün Görsel Önizleme"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-white block truncate mb-0.5">
+                    {urunResimYolu.split('/').pop()}
+                  </span>
+                  <span className="text-[10px] font-mono text-surface-400 block mb-2.5">
+                    Menü, POS ve QR Menü ekranlarında gösterilecek
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={resimYukleniyor}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
+                    >
+                      {resimYukleniyor ? (
+                        <RefreshCw size={13} className="animate-spin text-brand-400" />
+                      ) : (
+                        <UploadCloud size={13} />
+                      )}
+                      <span>Görseli Değiştir</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleResimKaldir}
+                      disabled={resimYukleniyor}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-rose-950/70 hover:text-rose-300 border border-[#1E2538] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
+                    >
+                      <Trash2 size={13} />
+                      <span>Görseli Kaldır</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Görsel Yok İse: Sürükle-Bırak / Dosya Seçme Alanı
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleResimSec(e.dataTransfer.files[0])
+                  }
+                }}
+                onClick={() => !resimYukleniyor && fileInputRef.current?.click()}
+                className={clsx(
+                  "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer touch-feedback group",
+                  isDragging
+                    ? "border-brand-400 bg-brand-950/40"
+                    : "border-[#1E2436] hover:border-brand-500/60 bg-[#090C15] hover:bg-[#0E1322]"
+                )}
+              >
+                {resimYukleniyor ? (
+                  <div className="flex flex-col items-center py-2 text-brand-400">
+                    <RefreshCw size={24} className="animate-spin mb-1.5" />
+                    <span className="text-xs font-mono font-bold">Görsel yükleniyor...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#141826] border border-[#222C42] flex items-center justify-center text-surface-400 group-hover:text-brand-400 group-hover:border-brand-500/40 mb-2 transition-colors">
+                      <UploadCloud size={20} />
+                    </div>
+                    <p className="text-xs font-semibold text-white mb-0.5">
+                      Görsel yüklemek için tıklayın veya sürükleyip bırakın
+                    </p>
+                    <p className="text-[10px] font-mono text-surface-500">
+                      PNG, JPG, JPEG, WEBP, SVG • Maksimum 10MB
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gizli Dosya Girişi */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/gif"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleResimSec(e.target.files[0])
+                }
+              }}
+            />
           </div>
 
           {/* Footer */}
