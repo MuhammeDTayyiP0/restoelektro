@@ -24,11 +24,12 @@ export interface Urun {
   barkod: string | null
   ad: string
   kisaltma: string | null
+  aciklama?: string | null
   fiyat: number
   kdv_orani: number
-  birim: 'Adet' | 'Porsiyon' | 'Tane' | 'KG' | 'Gram' | 'Litre' | 'Dilim'
+  birim: 'Adet' | 'Porsiyon' | 'Tane' | 'KG' | 'Gram' | 'Litre' | 'Dilim' | 'Şişe' | 'Kutu' | 'Kilo / Gramaj' | string
   resim_yolu: string | null
-  yazici_grup: 'mutfak' | 'bar' | 'tatli' | 'direkt'
+  yazici_grup: 'mutfak' | 'bar' | 'tatli' | 'direkt' | 'firin' | 'kasa' | string
   aktif: boolean
   sira: number
   created_at: string
@@ -63,6 +64,7 @@ export interface YeniUrun {
   barkod?: string
   ad: string
   kisaltma?: string
+  aciklama?: string
   fiyat: number
   kdv_orani?: number
   birim?: string

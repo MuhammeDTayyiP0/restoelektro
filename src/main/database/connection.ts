@@ -9,6 +9,7 @@ import { join } from 'path'
 import { existsSync, mkdirSync, copyFileSync } from 'fs'
 import { migrationlariCalistir } from './migration-runner'
 import { otomatikYedekAl } from './backup'
+import { varsayilanIzgaraVeIcecekleriEkle } from './seed'
 
 // Veritabanı örneği (singleton)
 let db: Database.Database | null = null
@@ -96,6 +97,13 @@ export async function veritabaniBaslat(): Promise<void> {
 
   // Otomatik Migration ve Şema Senkronizasyonu
   await migrationlariCalistir(db)
+
+  // Varsayılan Izgara & İçecekler Veri Kontrolü ve Tamamlama (Seed)
+  try {
+    varsayilanIzgaraVeIcecekleriEkle(db)
+  } catch (seedErr) {
+    console.warn('⚠️ [Seed] Varsayılan veriler kontrol edilirken uyarı:', seedErr)
+  }
 
   console.log('✅ Veritabanı başarıyla başlatıldı ve güncellendi')
 }

@@ -9,6 +9,7 @@ import { migration002 } from './002_add_missing_columns'
 import { migration003 } from './003_seed_defaults'
 import { migration004 } from './004_add_cost_price_and_stock_improvements'
 import { migration005 } from './005_performance_indexes'
+import { migration006 } from './006_seed_izgara_ve_icecekler'
 
 export interface Migration {
   /** Benzersiz sürüm numarası (sıralı artan) */
@@ -28,4 +29,5 @@ export const migrations: Migration[] = [
   migration003,
   migration004,
   migration005,
+  migration006,
 ]

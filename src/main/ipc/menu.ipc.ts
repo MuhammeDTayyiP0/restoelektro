@@ -95,10 +95,11 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
   // Ürün ekle
   ipcMain.handle(MENU_KANALLARI.URUN_EKLE, async (_event, veri: YeniUrun) => {
     const sonuc = db.prepare(`
-      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, fiyat, kdv_orani, birim, resim_yolu, yazici_grup)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       veri.kategori_id, veri.barkod || null, veri.ad, veri.kisaltma || null,
+      veri.aciklama || veri.kisaltma || null,
       veri.fiyat, veri.kdv_orani || 10, veri.birim || 'Adet',
       veri.resim_yolu || null, veri.yazici_grup || 'mutfak'
     )
@@ -111,6 +112,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     const degerler: any[] = []
     if (veri.ad !== undefined) { alanlar.push('ad = ?'); degerler.push(veri.ad) }
     if (veri.kisaltma !== undefined) { alanlar.push('kisaltma = ?'); degerler.push(veri.kisaltma) }
+    if (veri.aciklama !== undefined) { alanlar.push('aciklama = ?'); degerler.push(veri.aciklama) }
     if (veri.fiyat !== undefined) { alanlar.push('fiyat = ?'); degerler.push(veri.fiyat) }
     if (veri.kategori_id !== undefined) { alanlar.push('kategori_id = ?'); degerler.push(veri.kategori_id) }
     if (veri.barkod !== undefined) { alanlar.push('barkod = ?'); degerler.push(veri.barkod) }

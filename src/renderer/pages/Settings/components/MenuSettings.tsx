@@ -179,7 +179,7 @@ export default function MenuSettings() {
     if (urun) {
       setDuzenlenenUrun(urun)
       setUrunAd(urun.ad || '')
-      setUrunKisaltma(urun.kisaltma || '')
+      setUrunKisaltma(urun.aciklama || urun.kisaltma || '')
       setUrunFiyat(urun.fiyat ? String(urun.fiyat) : '')
       setUrunKategoriId(String(urun.kategori_id))
       setUrunBarkod(urun.barkod || '')
@@ -288,6 +288,7 @@ export default function MenuSettings() {
       const payload = {
         ad: urunAd.trim(),
         kisaltma: urunKisaltma.trim() || null,
+        aciklama: urunKisaltma.trim() || null,
         fiyat: Number(urunFiyat),
         kategori_id: Number(urunKategoriId),
         barkod: urunBarkod.trim() || null,
@@ -1057,6 +1058,7 @@ export default function MenuSettings() {
                 className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
               >
                 <option value="Porsiyon">Porsiyon</option>
+                <option value="Kilo / Gramaj">Kilo / Gramaj</option>
                 <option value="Adet">Adet</option>
                 <option value="Tane">Tane</option>
                 <option value="KG">KG</option>
