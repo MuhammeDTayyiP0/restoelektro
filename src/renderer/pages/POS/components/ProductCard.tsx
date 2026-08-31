@@ -76,13 +76,25 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
         </div>
 
         {/* Çizginin Üstünde Sol Tarafta Ürün İsmi */}
-        <div className="pt-1">
+        <div
+          className="pt-2 pb-1.5 px-3 -mx-3 -mb-3 mt-auto"
+          style={
+            hasImage
+              ? { background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 65%, transparent 100%)' }
+              : undefined
+          }
+        >
           <span
-            className={`font-bold text-[13px] sm:text-[14px] line-clamp-2 leading-tight block ${
+            className={`font-bold text-[16px] sm:text-[17px] xl:text-[1.1rem] line-clamp-2 leading-tight tracking-tight block ${
               hasImage
-                ? 'text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] [text-shadow:_0_1px_4px_rgba(0,0,0,0.9)]'
+                ? 'text-white'
                 : 'text-slate-100 group-hover:text-white'
             }`}
+            style={
+              hasImage
+                ? { textShadow: '0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.7)' }
+                : undefined
+            }
           >
             {urun.ad}
           </span>
