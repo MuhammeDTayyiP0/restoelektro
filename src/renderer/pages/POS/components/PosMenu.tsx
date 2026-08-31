@@ -1,15 +1,14 @@
-import React, { useMemo, useState, useRef } from 'react'
+import React, { useMemo, useState, useRef, useCallback } from 'react'
 import { clsx } from 'clsx'
 import { useMenuStore } from '../../../stores/useMenuStore'
 import { usePosStore } from '../../../stores/usePosStore'
 import { formatPara, formatResimUrl } from '../../../utils/formatters'
-import type { Urun } from '../../../../common/types/menu.types'
+import type { Urun, UrunVaryant, UrunOpsiyonu } from '../../../../common/types/menu.types'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
 import {
   Search,
-  Sparkles,
   Flame,
   Layers,
   Scale,
@@ -17,9 +16,159 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Plus
+  Plus,
+  SlidersHorizontal
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+
+// ─── ÜRÜN KARTI ─────────────────────────────────────────────
+// resim_yolu doluysa: thumbnail + ad + fiyat
+// resim_yolu boşsa : sadece tipografik buton (ad + fiyat), placeholder YOK
+// ─────────────────────────────────────────────────────────────
+
+interface ProductCardProps {
+  urun: Urun
+  aktifPorsiyon: number
+  onClick: () => void
+}
+
+function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) {
+  const birimUpper = (urun.birim || '').toUpperCase()
+  const isAgirlik = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
+  const hasImage = !!urun.resim_yolu
+  const hasVaryant = urun.varyantlar && urun.varyantlar.length > 0
+  const hasOpsiyon = urun.opsiyonlar && urun.opsiyonlar.length > 0
+
+  // ── GÖRSEL KART (thumbnail üstte) ──
+  if (hasImage) {
+    return (
+      <motion.button
+        layout
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.12 }}
+        onClick={onClick}
+        className="relative flex flex-col h-44 rounded-2xl bg-gradient-to-b from-[#0F1420] to-[#0A0D15] border border-[#1E2638] hover:border-cyan-400/60 text-left transition-all touch-feedback group overflow-hidden shadow-md"
+      >
+        {/* Thumbnail */}
+        <div className="relative w-full h-[52%] overflow-hidden shrink-0 bg-[#0C1017]">
+          <img
+            src={formatResimUrl(urun.resim_yolu)}
+            alt={urun.ad}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            loading="lazy"
+          />
+          {/* Gradient overlay for legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0D15]/80 via-transparent to-transparent" />
+
+          {/* Hızlı Satış Badge — üst sağ köşede */}
+          {(urun as any).hizli_satis && (
+            <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 bg-amber-500/25 backdrop-blur-sm text-amber-300 border border-amber-500/40 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded-full z-10">
+              <Flame size={9} className="fill-amber-400" />
+              <span>HIZLI</span>
+            </div>
+          )}
+
+          {/* Varyant/Opsiyon göstergesi */}
+          {(hasVaryant || hasOpsiyon) && (
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-violet-500/25 backdrop-blur-sm text-violet-300 border border-violet-500/40 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded-full z-10">
+              <SlidersHorizontal size={9} />
+              <span>SEÇİM</span>
+            </div>
+          )}
+        </div>
+
+        {/* Alt içerik */}
+        <div className="flex flex-col justify-between flex-1 p-2.5 min-h-0">
+          <span className="font-bold text-[13px] text-slate-100 group-hover:text-white line-clamp-1 leading-tight">
+            {urun.ad}
+          </span>
+
+          <div className="flex items-end justify-between w-full mt-auto">
+            <span className="text-base font-black font-mono text-emerald-400 tabular-nums group-hover:text-emerald-300 transition-colors leading-none">
+              {formatPara(urun.fiyat * aktifPorsiyon)}
+            </span>
+
+            {isAgirlik ? (
+              <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-1 py-0.5 rounded-md">
+                <Scale size={9} />
+                {urun.birim || 'KG'}
+              </span>
+            ) : (
+              <span className="w-5 h-5 rounded-md bg-[#141A26] border border-[#222C42] group-hover:bg-cyan-500 group-hover:text-black group-hover:border-cyan-400 text-slate-400 flex items-center justify-center text-xs transition-colors">
+                <Plus size={12} />
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.button>
+    )
+  }
+
+  // ── TİPOGRAFİK KART (resim yok → placeholder YOK) ──
+  return (
+    <motion.button
+      layout
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ duration: 0.12 }}
+      onClick={onClick}
+      className="relative flex flex-col justify-between h-[88px] rounded-xl bg-[#0E131E] border border-[#1E2638] hover:border-cyan-400/60 p-2.5 text-left transition-all touch-feedback group overflow-hidden shadow-sm"
+    >
+      {/* Hızlı Satış Vurgusu */}
+      {(urun as any).hizli_satis && (
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[8px] font-mono font-bold px-1 py-0.5 rounded-full z-10">
+          <Flame size={9} className="fill-amber-400" />
+        </div>
+      )}
+
+      {/* Varyant/Opsiyon göstergesi */}
+      {(hasVaryant || hasOpsiyon) && !(urun as any).hizli_satis && (
+        <div className="absolute top-1.5 right-1.5">
+          <SlidersHorizontal size={11} className="text-violet-400" />
+        </div>
+      )}
+
+      {/* Ürün Adı — tipografik vurgu */}
+      <span className="font-bold text-[13px] text-slate-200 group-hover:text-white line-clamp-2 leading-snug pr-5">
+        {urun.ad}
+      </span>
+
+      {/* Alt: Fiyat + Birim */}
+      <div className="flex items-end justify-between w-full mt-auto">
+        <div className="flex flex-col">
+          <span className="text-sm font-black font-mono text-emerald-400 tabular-nums group-hover:text-emerald-300 transition-colors leading-none">
+            {formatPara(urun.fiyat * aktifPorsiyon)}
+          </span>
+          {aktifPorsiyon !== 1 && (
+            <span className="text-[8px] font-mono text-cyan-400 font-semibold">
+              {aktifPorsiyon === 0.5 ? '0.5x' : aktifPorsiyon === 2 ? '2x' : `${aktifPorsiyon}x`}
+            </span>
+          )}
+        </div>
+
+        {isAgirlik ? (
+          <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-1 py-0.5 rounded-md">
+            <Scale size={9} />
+            {urun.birim || 'KG'}
+          </span>
+        ) : (
+          <span className="w-5 h-5 rounded-md bg-[#141A26] border border-[#222C42] group-hover:bg-cyan-500 group-hover:text-black group-hover:border-cyan-400 text-slate-400 flex items-center justify-center text-xs transition-colors">
+            <Plus size={12} />
+          </span>
+        )}
+      </div>
+    </motion.button>
+  )
+}
+
+// ─── ANA MENU BİLEŞENİ ──────────────────────────────────────
 
 export default function PosMenu() {
   const { seciliKategoriId, kategoriSec } = usePosStore(state => ({
@@ -34,6 +183,11 @@ export default function PosMenu() {
   const [girilenMiktar, setGirilenMiktar] = useState('1')
   const [aktifPorsiyon, setAktifPorsiyon] = useState<number>(1)
   const [hizliFiltre, setHizliFiltre] = useState<'hepsi' | 'populer' | 'indirimli'>('hepsi')
+
+  // Varyasyon/Opsiyon seçim state'leri
+  const [varyantModalUrun, setVaryantModalUrun] = useState<Urun | null>(null)
+  const [secilenVaryant, setSecilenVaryant] = useState<UrunVaryant | null>(null)
+  const [secilenOpsiyonlar, setSecilenOpsiyonlar] = useState<UrunOpsiyonu[]>([])
 
   const kategoriScrollRef = useRef<HTMLDivElement>(null)
 
@@ -70,15 +224,51 @@ export default function PosMenu() {
     return sonuc
   }, [tumUrunler, seciliKategoriId, aramaMetni, hizliFiltre])
 
-  const urunTikla = (urun: Urun) => {
+  // Ürüne tıklanınca: tartılı → miktar modalı, varyantlı → varyant modalı, diğer → direkt sepet
+  const urunTikla = useCallback((urun: Urun) => {
     const birimUpper = (urun.birim || '').toUpperCase()
-    if (['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)) {
+    const tartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
+    const hasVaryant = urun.varyantlar && urun.varyantlar.length > 0
+    const hasOpsiyon = urun.opsiyonlar && urun.opsiyonlar.length > 0
+
+    if (hasVaryant || hasOpsiyon) {
+      // Varyant/opsiyon seçim modalı aç
+      setVaryantModalUrun(urun)
+      setSecilenVaryant(null)
+      setSecilenOpsiyonlar([])
+    } else if (tartili) {
       setGirilenMiktar('1')
       setMiktarSoranUrun(urun)
     } else {
       sepeteEkle(urun, 1, aktifPorsiyon)
     }
-  }
+  }, [aktifPorsiyon, sepeteEkle])
+
+  // Varyant modalında onaylama
+  const varyantOnayla = useCallback(() => {
+    if (!varyantModalUrun) return
+
+    const birimUpper = (varyantModalUrun.birim || '').toUpperCase()
+    const tartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
+
+    if (tartili) {
+      // Tartılı ürünlerde varyant seçildikten sonra miktar modalına yönlendir
+      setVaryantModalUrun(null)
+      setGirilenMiktar('1')
+      setMiktarSoranUrun(varyantModalUrun)
+    } else {
+      sepeteEkle(varyantModalUrun, 1, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
+      setVaryantModalUrun(null)
+    }
+  }, [varyantModalUrun, secilenVaryant, secilenOpsiyonlar, aktifPorsiyon, sepeteEkle])
+
+  const opsiyonToggle = useCallback((opsiyon: UrunOpsiyonu) => {
+    setSecilenOpsiyonlar(prev => {
+      const exists = prev.find(o => o.id === opsiyon.id)
+      if (exists) return prev.filter(o => o.id !== opsiyon.id)
+      return [...prev, opsiyon]
+    })
+  }, [])
 
   const scrollKategori = (direction: 'left' | 'right') => {
     if (kategoriScrollRef.current) {
@@ -86,6 +276,11 @@ export default function PosMenu() {
       kategoriScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
     }
   }
+
+  // Grid: resimli ürünler büyük kart, resimsizler kompakt
+  // Karışık gösterim — CSS subgrid yerine "grupla" yaklaşımı
+  const resimliUrunler = gosterilenUrunler.filter(u => !!u.resim_yolu)
+  const resimsizUrunler = gosterilenUrunler.filter(u => !u.resim_yolu)
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none">
@@ -237,91 +432,52 @@ export default function PosMenu() {
         </div>
       )}
 
-      {/* 3. ÜRÜN KARTLARI GRİDİ (HIGH-CONTRAST INDUSTRIAL CARDS) */}
+      {/* 3. ÜRÜN KARTLARI — ADAPTİF GRİD */}
       <div className="flex-1 overflow-y-auto pos-scrollbar p-3.5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 pb-16">
-          <AnimatePresence>
-            {gosterilenUrunler.map(urun => {
-              const birimUpper = (urun.birim || '').toUpperCase()
-              const isAgirlik = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
 
-              return (
-                <motion.button
+        {/* Görsel kartlar (resimli ürünler) — büyük ızgara */}
+        {resimliUrunler.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+            <AnimatePresence>
+              {resimliUrunler.map(urun => (
+                <ProductCard
                   key={urun.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.96 }}
-                  transition={{ duration: 0.12 }}
+                  urun={urun}
+                  aktifPorsiyon={aktifPorsiyon}
                   onClick={() => urunTikla(urun)}
-                  className="relative flex flex-col justify-between h-36 rounded-2xl bg-gradient-to-b from-[#0F1420] to-[#0A0D15] border border-[#1E2638] hover:border-cyan-400/60 p-3 text-left transition-all touch-feedback group overflow-hidden shadow-md"
-                >
-                  {/* Hızlı Satış Vurgusu */}
-                  {(urun as any).hizli_satis && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full z-10">
-                      <Flame size={10} className="fill-amber-400" />
-                      <span>HIZLI</span>
-                    </div>
-                  )}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
-                  {/* Üst Kısım: Monogram veya Resim */}
-                  <div className="flex items-start gap-2.5">
-                    {/* Görsel / Monogram */}
-                    <div className="w-10 h-10 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center shrink-0 overflow-hidden text-slate-300 group-hover:text-cyan-400 group-hover:border-cyan-500/40 transition-colors">
-                      {urun.resim_yolu ? (
-                        <img src={formatResimUrl(urun.resim_yolu)} alt={urun.ad} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-mono font-black text-sm">
-                          {urun.ad.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
+        {/* Ayırıcı — her iki grup da varsa */}
+        {resimliUrunler.length > 0 && resimsizUrunler.length > 0 && (
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-[#1E2638]" />
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Diğer Ürünler</span>
+            <div className="flex-1 h-px bg-[#1E2638]" />
+          </div>
+        )}
 
-                    {/* Ürün Adı */}
-                    <div className="flex flex-col min-w-0 pr-1">
-                      <span className="font-bold text-sm text-slate-100 group-hover:text-white line-clamp-2 leading-snug">
-                        {urun.ad}
-                      </span>
-                      {urun.kisaltma && (
-                        <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-                          #{urun.kisaltma}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+        {/* Tipografik kartlar (resimsiz ürünler) — kompakt ızgara */}
+        {resimsizUrunler.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 gap-2 pb-16">
+            <AnimatePresence>
+              {resimsizUrunler.map(urun => (
+                <ProductCard
+                  key={urun.id}
+                  urun={urun}
+                  aktifPorsiyon={aktifPorsiyon}
+                  onClick={() => urunTikla(urun)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
-                  {/* Alt Kısım: Fiyat & Birim Rozeti */}
-                  <div className="flex items-end justify-between w-full pt-2 border-t border-[#161E2E] mt-auto">
-                    <div className="flex flex-col">
-                      <span className="text-base font-black font-mono text-emerald-400 tabular-nums group-hover:text-emerald-300 transition-colors">
-                        {formatPara(urun.fiyat * aktifPorsiyon)}
-                      </span>
-                      {aktifPorsiyon !== 1 && (
-                        <span className="text-[9px] font-mono text-cyan-400 font-semibold">
-                          ({aktifPorsiyon === 0.5 ? '0.5x Yarım' : aktifPorsiyon === 2 ? '2x Double' : `${aktifPorsiyon}x Porsiyon`})
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Tartılı Ürün veya Birim Rozeti */}
-                    {isAgirlik ? (
-                      <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-1.5 py-0.5 rounded-lg">
-                        <Scale size={10} />
-                        {urun.birim || 'KG'}
-                      </span>
-                    ) : (
-                      <span className="w-6 h-6 rounded-lg bg-[#141A26] border border-[#222C42] group-hover:bg-cyan-500 group-hover:text-black group-hover:border-cyan-400 text-slate-400 flex items-center justify-center text-xs transition-colors">
-                        <Plus size={14} />
-                      </span>
-                    )}
-                  </div>
-                </motion.button>
-              )
-            })}
-          </AnimatePresence>
-        </div>
+        {/* Boş Grid padding — sadece resimli varsa */}
+        {resimliUrunler.length > 0 && resimsizUrunler.length === 0 && <div className="pb-16" />}
 
         {gosterilenUrunler.length === 0 && (
           <div className="flex flex-col items-center justify-center h-72 text-slate-400 text-center">
@@ -376,8 +532,10 @@ export default function PosMenu() {
                   if (e.key === 'Enter') {
                     const parsed = parseFloat(girilenMiktar)
                     if (!isNaN(parsed) && parsed > 0) {
-                      sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon)
+                      sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
                       setMiktarSoranUrun(null)
+                      setSecilenVaryant(null)
+                      setSecilenOpsiyonlar([])
                     }
                   }
                 }}
@@ -437,7 +595,7 @@ export default function PosMenu() {
               <Button
                 variant="ghost"
                 size="md"
-                onClick={() => setMiktarSoranUrun(null)}
+                onClick={() => { setMiktarSoranUrun(null); setSecilenVaryant(null); setSecilenOpsiyonlar([]) }}
                 className="font-mono text-xs h-10"
               >
                 İptal
@@ -449,11 +607,164 @@ export default function PosMenu() {
                 onClick={() => {
                   const parsed = parseFloat(girilenMiktar)
                   if (!isNaN(parsed) && parsed > 0) {
-                    sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon)
+                    sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
                     setMiktarSoranUrun(null)
+                    setSecilenVaryant(null)
+                    setSecilenOpsiyonlar([])
                   }
                 }}
               >
+                Sepete Ekle
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 5. VARYASYON / OPSİYON SEÇİM MODALI */}
+      {varyantModalUrun && (
+        <Modal
+          isOpen={!!varyantModalUrun}
+          onClose={() => setVaryantModalUrun(null)}
+          title={varyantModalUrun.ad}
+          size="md"
+        >
+          <div className="flex flex-col gap-4 bg-[#0E121B] text-slate-100 select-none">
+
+            {/* Ürün Özet Başlığı */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141926] border border-[#222C42]">
+              {varyantModalUrun.resim_yolu && (
+                <img
+                  src={formatResimUrl(varyantModalUrun.resim_yolu)}
+                  alt={varyantModalUrun.ad}
+                  className="w-14 h-14 rounded-xl object-cover border border-[#222C42]"
+                />
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm text-white truncate">{varyantModalUrun.ad}</span>
+                <span className="text-xs font-mono text-emerald-400 font-bold">
+                  {formatPara(varyantModalUrun.fiyat * aktifPorsiyon)}
+                </span>
+              </div>
+            </div>
+
+            {/* Varyantlar (Pirzola: Kilo/Porsiyon vb.) */}
+            {varyantModalUrun.varyantlar && varyantModalUrun.varyantlar.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <SlidersHorizontal size={14} className="text-violet-400" />
+                  <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+                    Varyant Seçimi
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {varyantModalUrun.varyantlar.filter(v => v.aktif).map(varyant => {
+                    const isSelected = secilenVaryant?.id === varyant.id
+                    return (
+                      <motion.button
+                        key={varyant.id}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => setSecilenVaryant(isSelected ? null : varyant)}
+                        className={clsx(
+                          'relative flex items-center justify-between h-14 px-3.5 rounded-xl border font-mono text-sm font-bold transition-all',
+                          isSelected
+                            ? 'bg-violet-500/15 border-violet-400 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.25)]'
+                            : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
+                        )}
+                      >
+                        <span className="truncate">{varyant.ad}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {varyant.fiyat_farki !== 0 && (
+                            <span className={clsx(
+                              'text-[11px] font-mono font-bold',
+                              varyant.fiyat_farki > 0 ? 'text-amber-400' : 'text-emerald-400'
+                            )}>
+                              {varyant.fiyat_farki > 0 ? '+' : ''}{formatPara(varyant.fiyat_farki)}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <Check size={16} className="text-violet-400" />
+                          )}
+                        </div>
+                      </motion.button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Opsiyonlar (Şalgam: Acılı/Acısız vb.) */}
+            {varyantModalUrun.opsiyonlar && varyantModalUrun.opsiyonlar.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Plus size={14} className="text-cyan-400" />
+                  <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+                    Opsiyonlar
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500">(Birden fazla seçilebilir)</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {varyantModalUrun.opsiyonlar.filter(o => o.aktif).map(opsiyon => {
+                    const isSelected = secilenOpsiyonlar.some(o => o.id === opsiyon.id)
+                    return (
+                      <motion.button
+                        key={opsiyon.id}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => opsiyonToggle(opsiyon)}
+                        className={clsx(
+                          'relative flex items-center justify-between h-12 px-3 rounded-xl border font-mono text-sm font-bold transition-all',
+                          isSelected
+                            ? 'bg-cyan-500/15 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                            : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
+                        )}
+                      >
+                        <span className="truncate">{opsiyon.ad}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {opsiyon.fiyat > 0 && (
+                            <span className="text-[11px] font-mono font-bold text-amber-400">
+                              +{formatPara(opsiyon.fiyat)}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <Check size={16} className="text-cyan-400" />
+                          )}
+                        </div>
+                      </motion.button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Toplam Fiyat Önizleme */}
+            {(secilenVaryant || secilenOpsiyonlar.length > 0) && (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#090D15] border border-[#1E2638]">
+                <span className="text-xs font-mono text-slate-400 uppercase">Toplam</span>
+                <span className="text-lg font-black font-mono text-emerald-400 tabular-nums">
+                  {formatPara(
+                    (varyantModalUrun.fiyat + (secilenVaryant?.fiyat_farki || 0) + secilenOpsiyonlar.reduce((t, o) => t + o.fiyat, 0)) * aktifPorsiyon
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Aksiyon Butonları */}
+            <div className="flex gap-2.5 justify-end pt-3 border-t border-[#1E2436]">
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => setVaryantModalUrun(null)}
+                className="font-mono text-xs h-10"
+              >
+                İptal
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                className="font-mono font-bold text-xs px-6 h-10"
+                onClick={varyantOnayla}
+              >
+                <Check size={14} className="mr-1.5" />
                 Sepete Ekle
               </Button>
             </div>
