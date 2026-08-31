@@ -108,7 +108,7 @@ function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) {
     )
   }
 
-  // ── TİPOGRAFİK KART (resim yok → placeholder YOK) ──
+  // ── TİPOGRAFİK KART (resim yok → placeholder YOK, aynı sabit yükseklik) ──
   return (
     <motion.button
       layout
@@ -119,7 +119,7 @@ function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) {
       whileTap={{ scale: 0.96 }}
       transition={{ duration: 0.12 }}
       onClick={onClick}
-      className="relative flex flex-col justify-between h-[88px] rounded-xl bg-[#0E131E] border border-[#1E2638] hover:border-cyan-400/60 p-2.5 text-left transition-all touch-feedback group overflow-hidden shadow-sm"
+      className="relative flex flex-col items-center justify-center h-44 rounded-2xl bg-gradient-to-b from-[#0F1420] to-[#0A0D15] border border-[#1E2638] hover:border-cyan-400/60 p-3 text-center transition-all touch-feedback group overflow-hidden shadow-md"
     >
       {/* Hızlı Satış Vurgusu */}
       {(urun as any).hizli_satis && (
@@ -135,35 +135,28 @@ function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) {
         </div>
       )}
 
-      {/* Ürün Adı — tipografik vurgu */}
-      <span className="font-bold text-[13px] text-slate-200 group-hover:text-white line-clamp-2 leading-snug pr-5">
+      {/* Ürün Adı — büyük tipografik vurgu, ortada */}
+      <span className="font-bold text-[15px] text-slate-100 group-hover:text-white line-clamp-3 leading-snug mb-2">
         {urun.ad}
       </span>
 
-      {/* Alt: Fiyat + Birim */}
-      <div className="flex items-end justify-between w-full mt-auto">
-        <div className="flex flex-col">
-          <span className="text-sm font-black font-mono text-emerald-400 tabular-nums group-hover:text-emerald-300 transition-colors leading-none">
-            {formatPara(urun.fiyat * aktifPorsiyon)}
-          </span>
-          {aktifPorsiyon !== 1 && (
-            <span className="text-[8px] font-mono text-cyan-400 font-semibold">
-              {aktifPorsiyon === 0.5 ? '0.5x' : aktifPorsiyon === 2 ? '2x' : `${aktifPorsiyon}x`}
-            </span>
-          )}
-        </div>
+      {/* Fiyat — belirgin, ortada */}
+      <span className="text-lg font-black font-mono text-emerald-400 tabular-nums group-hover:text-emerald-300 transition-colors leading-none">
+        {formatPara(urun.fiyat * aktifPorsiyon)}
+      </span>
 
-        {isAgirlik ? (
-          <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-1 py-0.5 rounded-md">
-            <Scale size={9} />
-            {urun.birim || 'KG'}
-          </span>
-        ) : (
-          <span className="w-5 h-5 rounded-md bg-[#141A26] border border-[#222C42] group-hover:bg-cyan-500 group-hover:text-black group-hover:border-cyan-400 text-slate-400 flex items-center justify-center text-xs transition-colors">
-            <Plus size={12} />
-          </span>
-        )}
-      </div>
+      {aktifPorsiyon !== 1 && (
+        <span className="text-[9px] font-mono text-cyan-400 font-semibold mt-0.5">
+          {aktifPorsiyon === 0.5 ? '0.5x' : aktifPorsiyon === 2 ? '2x' : `${aktifPorsiyon}x`}
+        </span>
+      )}
+
+      {isAgirlik && (
+        <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-1.5 py-0.5 rounded-md mt-1.5">
+          <Scale size={9} />
+          {urun.birim || 'KG'}
+        </span>
+      )}
     </motion.button>
   )
 }
@@ -277,10 +270,7 @@ export default function PosMenu() {
     }
   }
 
-  // Grid: resimli ürünler büyük kart, resimsizler kompakt
-  // Karışık gösterim — CSS subgrid yerine "grupla" yaklaşımı
-  const resimliUrunler = gosterilenUrunler.filter(u => !!u.resim_yolu)
-  const resimsizUrunler = gosterilenUrunler.filter(u => !u.resim_yolu)
+  // Grid: Tüm ürünler aynı boyutta, tek bir ızgara
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none">
@@ -435,11 +425,11 @@ export default function PosMenu() {
       {/* 3. ÜRÜN KARTLARI — ADAPTİF GRİD */}
       <div className="flex-1 overflow-y-auto pos-scrollbar p-3.5">
 
-        {/* Görsel kartlar (resimli ürünler) — büyük ızgara */}
-        {resimliUrunler.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+        {/* Tek Uniform Grid — tüm ürünler aynı boyutta */}
+        {gosterilenUrunler.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 pb-16">
             <AnimatePresence>
-              {resimliUrunler.map(urun => (
+              {gosterilenUrunler.map(urun => (
                 <ProductCard
                   key={urun.id}
                   urun={urun}
@@ -450,34 +440,6 @@ export default function PosMenu() {
             </AnimatePresence>
           </div>
         )}
-
-        {/* Ayırıcı — her iki grup da varsa */}
-        {resimliUrunler.length > 0 && resimsizUrunler.length > 0 && (
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-[#1E2638]" />
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Diğer Ürünler</span>
-            <div className="flex-1 h-px bg-[#1E2638]" />
-          </div>
-        )}
-
-        {/* Tipografik kartlar (resimsiz ürünler) — kompakt ızgara */}
-        {resimsizUrunler.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 gap-2 pb-16">
-            <AnimatePresence>
-              {resimsizUrunler.map(urun => (
-                <ProductCard
-                  key={urun.id}
-                  urun={urun}
-                  aktifPorsiyon={aktifPorsiyon}
-                  onClick={() => urunTikla(urun)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-
-        {/* Boş Grid padding — sadece resimli varsa */}
-        {resimliUrunler.length > 0 && resimsizUrunler.length === 0 && <div className="pb-16" />}
 
         {gosterilenUrunler.length === 0 && (
           <div className="flex flex-col items-center justify-center h-72 text-slate-400 text-center">
