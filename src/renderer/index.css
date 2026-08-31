@@ -12,7 +12,7 @@
     --text-main: #f1f5f9;
     --text-muted: #94a3b8;
   }
-  
+
   .dark {
     --brand-primary: #3b82f6;
     --brand-dark: #60a5fa;
@@ -32,7 +32,9 @@
   }
 
   /* Form elemanlarının seçilebilir ve yazılabilir olmasını sağla */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     @apply select-text touch-auto;
     user-select: text !important;
     -webkit-user-select: text !important;
@@ -40,6 +42,7 @@
 }
 
 @layer utilities {
+
   /* Endüstriyel POS Izgara Deseni */
   .bg-pos-grid {
     background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
@@ -95,7 +98,7 @@
   .touch-feedback {
     @apply transition-transform active:scale-[0.97] cursor-pointer select-none duration-100 ease-out;
   }
-  
+
   /* Seçim engelleme */
   .no-select {
     user-select: none;
@@ -143,6 +146,7 @@
    (1366x768, 1024x768 ve dikey yüksekliği 768px ve altı olan monitörler)
    ============================================================ */
 @media (max-height: 768px) {
+
   /* Scrollbar daha ince */
   .pos-scrollbar::-webkit-scrollbar {
     width: 5px;
