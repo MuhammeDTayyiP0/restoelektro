@@ -329,7 +329,9 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     const db = veritabaniGetir()
     const kategoriler = db.prepare('SELECT * FROM kategori WHERE aktif = 1 ORDER BY sira').all()
     const urunler = db.prepare('SELECT * FROM urun WHERE aktif = 1 ORDER BY sira').all()
-    res.json({ kategoriler, urunler })
+    const opsiyonlar = db.prepare('SELECT * FROM urun_opsiyonu WHERE aktif = 1').all()
+    const varyantlar = db.prepare('SELECT * FROM urun_varyant WHERE aktif = 1').all()
+    res.json({ kategoriler, urunler, opsiyonlar, varyantlar })
   })
 
   // Realtime yayın aracı

@@ -886,20 +886,18 @@ export function garsonMobilHTML(): string {
     /* Product Grid */
     .urun-catalog-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
 
     .urun-pos-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 14px 12px;
-      min-height: 94px;
+      border-radius: var(--radius-md);
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      overflow: hidden;
       transition: all 0.12s ease;
       position: relative;
       touch-action: manipulation;
@@ -911,31 +909,286 @@ export function garsonMobilHTML(): string {
       transform: scale(0.95);
     }
 
+    /* Card with image */
+    .urun-pos-card.has-img .urun-thumb-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: var(--bg-base);
+      position: relative;
+    }
+
+    .urun-pos-card.has-img .urun-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .urun-pos-card.has-img .urun-thumb-wrap img.loaded {
+      opacity: 1;
+    }
+
+    .urun-thumb-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      background: linear-gradient(135deg, var(--bg-base) 0%, var(--bg-surface) 100%);
+    }
+
+    .urun-thumb-placeholder svg {
+      opacity: 0.3;
+    }
+
+    .urun-pos-card.has-img .urun-card-body {
+      padding: 8px 8px 10px;
+    }
+
+    /* Card without image — text-only clean */
+    .urun-pos-card.no-img {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 94px;
+      padding: 12px 8px;
+    }
+
+    .urun-pos-card.no-img .urun-card-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
     .urun-pos-title {
-      font-size: 13.5px;
+      font-size: 12.5px;
       font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.35;
-      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .urun-pos-card.no-img .urun-pos-title {
+      font-size: 13px;
     }
 
     .urun-pos-bottom {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
+      width: 100%;
+    }
+
+    .urun-pos-card.no-img .urun-pos-bottom {
+      justify-content: center;
+      gap: 6px;
     }
 
     .urun-pos-price {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 900;
       color: var(--pos-cyan);
       letter-spacing: -0.3px;
     }
 
     .urun-pos-unit {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-muted);
+    }
+
+    /* Variation indicator badge */
+    .urun-varyant-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-full);
+      background: var(--pos-amber);
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 900;
+      z-index: 2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .urun-pos-card.no-img .urun-varyant-badge {
+      top: 4px;
+      right: 4px;
+    }
+
+    /* ===== VARIATION/OPTION PICKER MODAL ===== */
+    .picker-modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .picker-modal-bg.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .picker-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-focus);
+      border-radius: 20px 20px 0 0;
+      max-height: 70dvh;
+      display: flex;
+      flex-direction: column;
+      z-index: 301;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .picker-sheet.active {
+      transform: translateY(0);
+    }
+
+    .picker-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .picker-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .picker-body {
+      padding: 14px 18px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .picker-section-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      margin-top: 10px;
+    }
+
+    .picker-section-label:first-child {
+      margin-top: 0;
+    }
+
+    .picker-option-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .picker-option-btn {
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.12s ease;
+    }
+
+    .picker-option-btn:active {
+      transform: scale(0.95);
+    }
+
+    .picker-option-btn.selected {
+      border-color: var(--pos-cyan);
+      background: var(--pos-cyan-deep);
+      color: var(--pos-cyan);
+      box-shadow: 0 0 12px var(--pos-cyan-glow);
+    }
+
+    .picker-option-price {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .picker-option-btn.selected .picker-option-price {
+      color: var(--pos-cyan);
+    }
+
+    .picker-footer {
+      padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .btn-picker-confirm {
+      width: 100%;
+      min-height: 50px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--pos-green);
+      color: var(--text-dark);
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 18px var(--pos-green-glow);
+      transition: all 0.15s ease;
+    }
+
+    .btn-picker-confirm:active {
+      transform: scale(0.97);
+      background: #059669;
+    }
+
+    /* Skip button (add without options) */
+    .btn-picker-skip {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-picker-skip:active {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      transform: scale(0.97);
     }
 
     /* ===== FLOATING SEPET (CART) BAR ===== */
@@ -1471,6 +1724,22 @@ export function garsonMobilHTML(): string {
     </div>
   </div>
 
+  <!-- 5. VARIATION/OPTION PICKER MODAL -->
+  <div id="pickerBg" class="picker-modal-bg" onclick="pickerKapat()"></div>
+  <div id="pickerSheet" class="picker-sheet">
+    <div class="picker-header">
+      <div class="picker-title" id="pickerTitle">Seçenekler</div>
+      <button class="btn-modal-close" onclick="pickerKapat()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="picker-body" id="pickerBody"></div>
+    <div class="picker-footer">
+      <button class="btn-picker-confirm" id="btnPickerConfirm" onclick="pickerOnayla()">Sepete Ekle</button>
+      <button class="btn-picker-skip" id="btnPickerSkip" onclick="pickerAtla()">Seçim Yapmadan Ekle</button>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION -->
   <div id="toast" class="pos-toast"></div>
 
@@ -1484,7 +1753,7 @@ let token = null;
 let kullanici = null;
 let pin = '';
 let masalar = [];
-let menu = { kategoriler: [], urunler: [] };
+let menu = { kategoriler: [], urunler: [], opsiyonlar: [], varyantlar: [] };
 let aktifKategori = null;
 let aktifMasa = null;
 let sepet = [];
@@ -1492,6 +1761,8 @@ let sadeceAcik = false;
 let seciliBolum = null;
 let aktifPorsiyon = 1;
 let urunAramaMetni = '';
+let pickerUrun = null;
+let pickerSecimler = { opsiyonlar: [], varyant: null };
 
 // Haptic feedback helper for mobile POS terminals
 function triggerHaptic(duration = 15) {
@@ -1720,7 +1991,12 @@ function bolumGeri() {
 async function menuYukle() {
   const data = await apiFetch('/api/garson/menu');
   if (!data) return;
-  menu = data;
+  menu = {
+    kategoriler: data.kategoriler || [],
+    urunler: data.urunler || [],
+    opsiyonlar: data.opsiyonlar || [],
+    varyantlar: data.varyantlar || []
+  };
 }
 
 // Masa Seçimi
@@ -1886,20 +2162,51 @@ function siparisEkraniCiz() {
     gosterilecekUrunler.forEach(u => {
       const birim = u.birim || 'Adet';
       const fiyat = Number(u.fiyat * aktifPorsiyon).toFixed(0);
-      html += '<div class="urun-pos-card" onclick="sepeteEkle('+u.id+', \\''+u.ad.replace(/'/g, "\\\\'")+'\\', '+u.fiyat+', \\''+birim+'\\')">';
+      const hasImg = u.resim_yolu && u.resim_yolu.trim() !== '';
+      const cardCls = hasImg ? 'has-img' : 'no-img';
+      const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === u.id);
+      const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === u.id);
+      const hasExtras = urunOps.length > 0 || urunVar.length > 0;
+      const onclickFn = hasExtras
+        ? 'urunSecimAc('+u.id+')'
+        : 'sepeteEkle('+u.id+', \\''+u.ad.replace(/'/g, "\\\\'")+'\\', '+u.fiyat+', \\''+birim+'\\')';
+
+      html += '<div class="urun-pos-card '+cardCls+'" onclick="'+onclickFn+'">';
+
+      // Variant/option indicator badge
+      if (hasExtras) {
+        html += '<span class="urun-varyant-badge" title="Seçenek mevcut">⚙</span>';
+      }
+
+      if (hasImg) {
+        // Thumbnail image with lazy loading
+        html += '<div class="urun-thumb-wrap">';
+        html += '  <div class="urun-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
+        html += '  <img data-src="'+u.resim_yolu+'" alt="'+u.ad+'" loading="lazy">';
+        html += '</div>';
+      }
+
+      html += '<div class="urun-card-body">';
       html += '  <div class="urun-pos-title">'+u.ad+'</div>';
       html += '  <div class="urun-pos-bottom">';
       html += '    <span class="urun-pos-price">₺'+fiyat+'</span>';
       html += '    <span class="urun-pos-unit">'+birim+'</span>';
       html += '  </div>';
       html += '</div>';
+      html += '</div>';
     });
     html += '</div>';
+
+    // Lazy-load images after DOM update
+    requestAnimationFrame(() => lazyLoadImages());
   } else {
     html += '<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-weight:600;">Eşleşen ürün bulunamadı.</div>';
   }
 
   document.getElementById('pageSiparis').innerHTML = html;
+
+  // Trigger lazy load after innerHTML
+  requestAnimationFrame(() => lazyLoadImages());
 }
 
 function urunAra(val) {
@@ -1928,6 +2235,187 @@ function masalaraGeri() {
 }
 
 // ===== 7. SEPET & KALEM YÖNETİMİ =====
+// ===== LAZY IMAGE LOADING (IntersectionObserver) =====
+let imgObserver = null;
+function lazyLoadImages() {
+  const imgs = document.querySelectorAll('.urun-thumb-wrap img[data-src]');
+  if (!imgs.length) return;
+
+  if (!imgObserver) {
+    imgObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          const src = img.getAttribute('data-src');
+          if (src) {
+            img.src = src;
+            img.removeAttribute('data-src');
+            img.onload = () => img.classList.add('loaded');
+            img.onerror = () => { img.style.display = 'none'; };
+          }
+          imgObserver.unobserve(img);
+        }
+      });
+    }, { rootMargin: '200px 0px', threshold: 0.01 });
+  }
+
+  imgs.forEach(img => imgObserver.observe(img));
+}
+
+// ===== VARIATION/OPTION PICKER =====
+function urunSecimAc(urunId) {
+  triggerHaptic(15);
+  const urun = menu.urunler.find(u => u.id === urunId);
+  if (!urun) return;
+
+  pickerUrun = urun;
+  pickerSecimler = { opsiyonlar: [], varyant: null };
+
+  const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === urunId);
+  const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === urunId);
+
+  document.getElementById('pickerTitle').textContent = urun.ad;
+
+  let html = '';
+
+  // Varyantlar (radio: tek seçim)
+  if (urunVar.length > 0) {
+    html += '<div class="picker-section-label">Varyant Seçimi</div>';
+    html += '<div class="picker-option-grid">';
+    urunVar.forEach(v => {
+      const farkMetin = v.fiyat_farki > 0 ? '+₺'+Number(v.fiyat_farki).toFixed(0) : (v.fiyat_farki < 0 ? '-₺'+Math.abs(v.fiyat_farki).toFixed(0) : '');
+      html += '<button class="picker-option-btn" data-type="varyant" data-id="'+v.id+'" data-ad="'+v.ad+'" data-fark="'+(v.fiyat_farki||0)+'" onclick="pickerVaryantSec(this)">';
+      html += v.ad;
+      if (farkMetin) html += ' <span class="picker-option-price">'+farkMetin+'</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+  }
+
+  // Opsiyonlar (multi-select)
+  if (urunOps.length > 0) {
+    html += '<div class="picker-section-label">Opsiyonlar'+(urunOps.length > 1 ? ' (birden fazla seçilebilir)' : '')+'</div>';
+    html += '<div class="picker-option-grid">';
+    urunOps.forEach(o => {
+      const fiyatMetin = o.fiyat > 0 ? '+₺'+Number(o.fiyat).toFixed(0) : '';
+      html += '<button class="picker-option-btn" data-type="opsiyon" data-id="'+o.id+'" data-ad="'+o.ad+'" data-fiyat="'+(o.fiyat||0)+'" onclick="pickerOpsiyonSec(this)">';
+      html += o.ad;
+      if (fiyatMetin) html += ' <span class="picker-option-price">'+fiyatMetin+'</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('pickerBody').innerHTML = html;
+
+  // Show modal
+  document.getElementById('pickerBg').classList.add('active');
+  setTimeout(() => document.getElementById('pickerSheet').classList.add('active'), 10);
+}
+
+function pickerVaryantSec(btn) {
+  triggerHaptic(10);
+  // Deselect all varyant buttons
+  document.querySelectorAll('#pickerBody .picker-option-btn[data-type="varyant"]').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  pickerSecimler.varyant = {
+    id: parseInt(btn.dataset.id),
+    ad: btn.dataset.ad,
+    fiyat_farki: parseFloat(btn.dataset.fark || 0)
+  };
+}
+
+function pickerOpsiyonSec(btn) {
+  triggerHaptic(10);
+  btn.classList.toggle('selected');
+  const id = parseInt(btn.dataset.id);
+  const idx = pickerSecimler.opsiyonlar.findIndex(o => o.id === id);
+  if (idx >= 0) {
+    pickerSecimler.opsiyonlar.splice(idx, 1);
+  } else {
+    pickerSecimler.opsiyonlar.push({
+      id,
+      ad: btn.dataset.ad,
+      fiyat: parseFloat(btn.dataset.fiyat || 0)
+    });
+  }
+}
+
+function pickerOnayla() {
+  triggerHaptic(15);
+  if (!pickerUrun) return;
+
+  const u = pickerUrun;
+  const birim = u.birim || 'Adet';
+  let notParts = [];
+
+  // Build note from selections
+  if (pickerSecimler.varyant) {
+    notParts.push(pickerSecimler.varyant.ad);
+  }
+  pickerSecimler.opsiyonlar.forEach(o => notParts.push(o.ad));
+
+  // Calculate extra price
+  let ekFiyat = 0;
+  if (pickerSecimler.varyant) ekFiyat += pickerSecimler.varyant.fiyat_farki;
+  pickerSecimler.opsiyonlar.forEach(o => { ekFiyat += o.fiyat; });
+
+  const efektifFiyat = u.fiyat + ekFiyat;
+  const notStr = notParts.join(', ');
+
+  // Add to cart with note
+  sepeteEkleDetayli(u.id, u.ad + (notStr ? ' ('+notStr+')' : ''), efektifFiyat, birim, notStr);
+  pickerKapat();
+}
+
+function pickerAtla() {
+  triggerHaptic(10);
+  if (!pickerUrun) return;
+  const u = pickerUrun;
+  const birim = u.birim || 'Adet';
+  sepeteEkle(u.id, u.ad, u.fiyat, birim);
+  pickerKapat();
+}
+
+function pickerKapat() {
+  document.getElementById('pickerSheet').classList.remove('active');
+  setTimeout(() => document.getElementById('pickerBg').classList.remove('active'), 250);
+  pickerUrun = null;
+}
+
+function sepeteEkleDetayli(urunId, ad, fiyat, birim, notlar) {
+  triggerHaptic(15);
+  let baslangicMiktari = 1;
+  const birimUpper = birim ? birim.toUpperCase() : '';
+  
+  if (['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)) {
+    const newVal = window.prompt('Miktar giriniz (' + (birim || 'KG') + '):', '1');
+    if (newVal === null) return;
+    const parsed = parseFloat(newVal.replace(',', '.'));
+    if (isNaN(parsed) || parsed <= 0) return;
+    baslangicMiktari = parsed;
+  }
+
+  sepet.push({
+    id: Math.random().toString(36).substring(7),
+    urun_id: urunId,
+    ad,
+    fiyat,
+    birim,
+    miktar: baslangicMiktari,
+    notlar: notlar || '',
+    ikram: false,
+    porsiyon: aktifPorsiyon
+  });
+
+  sepetGuncelle();
+  const bar = document.getElementById('sepetBar');
+  bar.classList.remove('haptic-active');
+  void bar.offsetWidth;
+  bar.classList.add('haptic-active');
+  toast(ad + ' eklendi');
+}
+
 function sepeteEkle(urunId, ad, fiyat, birim) {
   triggerHaptic(15);
   let baslangicMiktari = 1;
