@@ -30,6 +30,38 @@ import {
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPara, formatResimUrl } from '../../../utils/formatters'
+import { ProductImageCropper } from './ProductImageCropper'
+
+const ISTEK_ZAMAN_ASIMI = 12_000
+
+const zamanAsimliFetch = async (input: RequestInfo | URL, init?: RequestInit, timeout = ISTEK_ZAMAN_ASIMI) => {
+  const controller = new AbortController()
+  const zamanAsimi = window.setTimeout(() => controller.abort(), timeout)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.')
+    }
+    throw err
+  } finally {
+    window.clearTimeout(zamanAsimi)
+  }
+}
+
+const zamanAsimli = async <T,>(islem: Promise<T>, timeout = ISTEK_ZAMAN_ASIMI): Promise<T> => {
+  let zamanAsimi: number | undefined
+  try {
+    return await Promise.race([
+      islem,
+      new Promise<T>((_resolve, reject) => {
+        zamanAsimi = window.setTimeout(() => reject(new Error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.')), timeout)
+      })
+    ])
+  } finally {
+    if (zamanAsimi !== undefined) window.clearTimeout(zamanAsimi)
+  }
+}
 
 export default function MenuSettings() {
   const [subTab, setSubTab] = useState<'urunler' | 'fiyat-guncelleme' | 'kategoriler'>('urunler')
@@ -61,6 +93,8 @@ export default function MenuSettings() {
   const [urunYaziciGrup, setUrunYaziciGrup] = useState('mutfak')
   const [urunResimYolu, setUrunResimYolu] = useState('')
   const [resimYukleniyor, setResimYukleniyor] = useState(false)
+  const [kirpmaKaynagi, setKirpmaKaynagi] = useState<string | null>(null)
+  const [resimUrl, setResimUrl] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -204,7 +238,12 @@ export default function MenuSettings() {
     setUrunModalAcik(true)
   }
 
-  // Görsel Seçme & Yükleme İşleyicisi
+  const kirpmaModaliniAc = (base64: string) => {
+    setKirpmaKaynagi(base64)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // Görsel Seçme İşleyicisi: yüklemeden önce kart oranında kırpma açılır.
   const handleResimSec = async (file?: File | null) => {
     if (!file) return
     if (!file.type.startsWith('image/')) {
@@ -216,57 +255,65 @@ export default function MenuSettings() {
       return
     }
 
+    const reader = new FileReader()
+    reader.onload = () => kirpmaModaliniAc(reader.result as string)
+    reader.onerror = () => error('Dosya Hatası', 'Görsel dosyası okunamadı')
+    reader.readAsDataURL(file)
+  }
+
+  const kirpilmisGorseliYukle = async (gorsel: Blob) => {
     setResimYukleniyor(true)
     try {
-      // 1. Öncelik: Fetch ile Express REST API (/api/upload)
-      try {
-        const formData = new FormData()
-        formData.append('image', file)
-        const res = await fetch('http://localhost:3847/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.basarili && data.resim_yolu) {
-            setUrunResimYolu(data.resim_yolu)
-            success('Görsel Yüklendi', 'Ürün görseli başarıyla yüklendi.')
-            setResimYukleniyor(false)
-            return
-          }
-        }
-      } catch (fetchErr) {
-        console.warn('Fetch upload başarısız oldu, IPC yedek mekanizması deneniyor...', fetchErr)
-      }
+      const formData = new FormData()
+      formData.append('image', new File([gorsel], 'product.jpg', { type: 'image/jpeg' }))
 
-      // 2. Yedek Öncelik: Electron IPC üzerinden base64 aktarımı
-      const reader = new FileReader()
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result as string
-          const res = await ipcInvoke<any>(MENU_KANALLARI.RESIM_YUKLE, {
-            base64,
-            dosyaAdi: file.name
-          })
-          if (res && res.basarili && res.resim_yolu) {
-            setUrunResimYolu(res.resim_yolu)
-            success('Görsel Yüklendi', 'Ürün görseli başarıyla yüklendi.')
-          } else {
-            error('Yükleme Hatası', res?.hata || 'Görsel kaydedilemedi')
-          }
-        } catch (ipcErr: any) {
-          error('Yükleme Hatası', ipcErr.message || 'Görsel kaydedilemedi')
-        } finally {
-          setResimYukleniyor(false)
-        }
+      const res = await zamanAsimliFetch('http://localhost:3847/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.basarili || !data.resim_yolu) throw new Error(data?.hata || 'Görsel sunucuya kaydedilemedi')
+      setUrunResimYolu(data.resim_yolu)
+      setKirpmaKaynagi(null)
+      success('Görsel Hazır', 'Kırpılmış ve optimize edilmiş ürün görseli kaydedildi.')
+    } catch (fetchErr: any) {
+      try {
+        const base64 = await zamanAsimli(new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Görsel verisi okunamadı'))
+          reader.onerror = () => reject(new Error('Görsel dosyası okunamadı'))
+          reader.readAsDataURL(gorsel)
+        }))
+        const res = await zamanAsimli(ipcInvoke<any>(MENU_KANALLARI.RESIM_YUKLE, { base64, dosyaAdi: 'product.jpg', uzanti: '.jpg' }))
+        if (!res?.basarili || !res.resim_yolu) throw new Error(res?.hata || 'Görsel kaydedilemedi')
+        setUrunResimYolu(res.resim_yolu)
+        setKirpmaKaynagi(null)
+        success('Görsel Hazır', 'Kırpılmış ve optimize edilmiş ürün görseli kaydedildi.')
+      } catch (ipcErr: any) {
+        error('Yükleme Hatası', ipcErr.message || fetchErr.message || 'Görsel kaydedilemedi')
       }
-      reader.onerror = () => {
-        error('Dosya Hatası', 'Görsel dosyası okunamadı')
-        setResimYukleniyor(false)
-      }
-      reader.readAsDataURL(file)
+    } finally {
+      setResimYukleniyor(false)
+    }
+  }
+
+  const urlIleGorselGetir = async () => {
+    const url = resimUrl.trim()
+    if (!url) return
+    setResimYukleniyor(true)
+    try {
+      const res = await zamanAsimliFetch('http://localhost:3847/api/upload/from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.basarili || !data.image) throw new Error(data?.hata || 'Görsel bağlantısından indirilemedi')
+      setResimUrl('')
+      kirpmaModaliniAc(data.image)
     } catch (err: any) {
-      error('Hata', err.message || 'Görsel yüklenirken bir hata oluştu')
+      error('URL Görseli Alınamadı', err.message || 'Görsel bağlantısı kontrol edilemedi')
+    } finally {
       setResimYukleniyor(false)
     }
   }
@@ -1147,6 +1194,16 @@ export default function MenuSettings() {
 
                     <button
                       type="button"
+                      onClick={() => document.getElementById('urun-gorsel-url')?.focus()}
+                      disabled={resimYukleniyor}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
+                    >
+                      <ImageIcon size={13} />
+                      <span>URL ile Değiştir</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={handleResimKaldir}
                       disabled={resimYukleniyor}
                       className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-rose-950/70 hover:text-rose-300 border border-[#1E2538] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
@@ -1201,6 +1258,37 @@ export default function MenuSettings() {
               </div>
             )}
 
+            <div className="flex flex-col gap-1.5 rounded-xl border border-[#1E2436] bg-[#090C15] p-2.5">
+              <label htmlFor="urun-gorsel-url" className="text-[10px] font-mono uppercase text-surface-500">URL ile Ekle</label>
+              <div className="flex gap-2">
+                <input
+                  id="urun-gorsel-url"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://ornek.com/urun-fotografi.jpg"
+                  value={resimUrl}
+                  onChange={event => setResimUrl(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      urlIleGorselGetir()
+                    }
+                  }}
+                  disabled={resimYukleniyor}
+                  className="min-w-0 flex-1 h-10 px-3 rounded-lg border border-[#1E2436] bg-[#0D101A] text-white text-xs placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={urlIleGorselGetir}
+                  disabled={resimYukleniyor || !resimUrl.trim()}
+                  className="shrink-0 h-10 px-3 rounded-lg border border-brand-500/40 bg-brand-950/40 text-xs font-semibold text-brand-300 hover:bg-brand-900/55 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resimYukleniyor ? <RefreshCw size={15} className="animate-spin" /> : 'İndir'}
+                </button>
+              </div>
+              <p className="text-[10px] text-surface-500">Görsel uygulama sunucusundan indirilir; harici bağlantı olarak saklanmaz.</p>
+            </div>
+
             {/* Gizli Dosya Girişi */}
             <input
               ref={fileInputRef}
@@ -1226,6 +1314,13 @@ export default function MenuSettings() {
           </div>
         </form>
       </Modal>
+
+      <ProductImageCropper
+        kaynak={kirpmaKaynagi}
+        yukleniyor={resimYukleniyor}
+        onIptal={() => setKirpmaKaynagi(null)}
+        onKaydet={kirpilmisGorseliYukle}
+      />
 
     </div>
   )

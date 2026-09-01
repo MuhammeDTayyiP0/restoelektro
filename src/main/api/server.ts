@@ -21,6 +21,9 @@ const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
 let sunucu: any = null
 let io: Server | null = null
 
+const yuklemeHataYaniti = (res: any, status: number, message: string) =>
+  res.status(status).json({ success: false, message, basarili: false, hata: message })
+
 /**
  * Ürün görselleri için yükleme dizinini döndürür ve yoksa oluşturur
  */
@@ -37,13 +40,21 @@ export function uploadsDizininiGetir(): string {
 // Multer Disk Depolama Yapılandırması
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, uploadsDizininiGetir())
+    try {
+      cb(null, uploadsDizininiGetir())
+    } catch (err) {
+      cb(err instanceof Error ? err : new Error('Yükleme dizini oluşturulamadı'), '')
+    }
   },
   filename: (_req, file, cb) => {
-    const ext = (path.extname(file.originalname) || '.jpg').toLowerCase()
-    const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext) ? ext : '.jpg'
-    const uniqueSuffix = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
-    cb(null, uniqueSuffix)
+    try {
+      const ext = (path.extname(file.originalname) || '.jpg').toLowerCase()
+      const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext) ? ext : '.jpg'
+      const uniqueSuffix = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
+      cb(null, uniqueSuffix)
+    } catch (err) {
+      cb(err instanceof Error ? err : new Error('Dosya adı oluşturulamadı'), '')
+    }
   }
 })
 
@@ -96,15 +107,15 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
 
   // ===== DOSYA YÜKLEME ENDPOINT'İ =====
   app.post('/api/upload', (req, res) => {
-    uploadMiddleware.single('image')(req, res, (err: any) => {
+    uploadMiddleware.single('image')(req, res, async (err: any) => {
       if (err) {
         if (err instanceof multer.MulterError) {
           if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
+            return yuklemeHataYaniti(res, 400, 'Görsel boyutu en fazla 10MB olabilir')
           }
-          return res.status(400).json({ basarili: false, hata: `Yükleme hatası: ${err.message}` })
+          return yuklemeHataYaniti(res, 400, `Yükleme hatası: ${err.message}`)
         }
-        return res.status(400).json({ basarili: false, hata: err.message || 'Dosya yüklenemedi' })
+        return yuklemeHataYaniti(res, 400, err.message || 'Dosya yüklenemedi')
       }
 
       // Multipart dosya yüklendiyse
@@ -139,7 +150,8 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
           const uploadPath = path.join(uploadsProductDir, filename)
           const buffer = Buffer.from(base64Data, 'base64')
 
-          fs.writeFileSync(uploadPath, buffer)
+          if (!buffer.length) throw new Error('Görsel verisi boş')
+          await fs.promises.writeFile(uploadPath, buffer)
 
           const resimYolu = `/uploads/products/${filename}`
           return res.json({
@@ -150,12 +162,60 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
             boyut: buffer.length
           })
         } catch (base64Err: any) {
-          return res.status(500).json({ basarili: false, hata: `Base64 kaydetme hatası: ${base64Err.message}` })
+          return yuklemeHataYaniti(res, 500, `Base64 kaydetme hatası: ${base64Err.message}`)
         }
       }
 
-      return res.status(400).json({ basarili: false, hata: 'Yüklenecek görsel dosyası bulunamadı' })
+      return yuklemeHataYaniti(res, 400, 'Yüklenecek görsel dosyası bulunamadı')
     })
+  })
+
+  // URL'den görsel alma: dış bağlantı kalıcı olarak kullanılmaz; kırpma sonrası
+  // istemcinin gönderdiği JPEG, yukarıdaki /api/upload ile yerel uploads dizinine kaydedilir.
+  app.post('/api/upload/from-url', async (req, res) => {
+    const kaynakUrl = typeof req.body?.url === 'string' ? req.body.url.trim() : ''
+    let url: URL
+    try {
+      url = new URL(kaynakUrl)
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Geçersiz protokol')
+      if (['localhost', '127.0.0.1', '::1'].includes(url.hostname.toLowerCase())) throw new Error('Yerel adreslere izin verilmiyor')
+    } catch {
+      return res.status(400).json({ basarili: false, hata: 'Geçerli bir HTTP(S) görsel bağlantısı girin' })
+    }
+
+    const controller = new AbortController()
+    const zamanAsimi = setTimeout(() => controller.abort(), 5_000)
+    try {
+      const cevap = await fetch(url.toString(), { signal: controller.signal, redirect: 'follow' })
+      if (!cevap.ok) return res.status(400).json({ basarili: false, hata: `Görsel indirilemedi (HTTP ${cevap.status})` })
+
+      const contentType = (cevap.headers.get('content-type') || '').split(';')[0].trim().toLowerCase()
+      const izinliTurler = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+      if (!izinliTurler.includes(contentType)) {
+        return res.status(400).json({ basarili: false, hata: 'Bağlantı geçerli bir görsel dosyası döndürmüyor' })
+      }
+
+      const contentLength = Number(cevap.headers.get('content-length') || 0)
+      if (contentLength > 10 * 1024 * 1024) {
+        return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
+      }
+
+      const buffer = Buffer.from(await cevap.arrayBuffer())
+      if (!buffer.length || buffer.length > 10 * 1024 * 1024) {
+        return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
+      }
+
+      return res.json({
+        basarili: true,
+        image: `data:${contentType};base64,${buffer.toString('base64')}`,
+        boyut: buffer.length
+      })
+    } catch (err: any) {
+      const hata = err?.name === 'AbortError' ? 'Görsel indirme zaman aşımına uğradı' : 'Görsel bağlantısından indirilemedi'
+      return res.status(400).json({ basarili: false, hata })
+    } finally {
+      clearTimeout(zamanAsimi)
+    }
   })
 
   // JWT doğrulama middleware
