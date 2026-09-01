@@ -928,7 +928,16 @@ export function garsonMobilHTML(): string {
     }
 
     .urun-pos-card.has-img .urun-thumb-wrap img.loaded {
+      display: block;
       opacity: 1;
+    }
+
+    .urun-pos-card.has-img .urun-thumb-wrap img.failed {
+      display: none;
+    }
+
+    .urun-pos-card.has-img .urun-thumb-wrap:has(img.loaded) .urun-thumb-placeholder {
+      display: none;
     }
 
     .urun-thumb-placeholder {
@@ -1763,6 +1772,9 @@ let aktifPorsiyon = 1;
 let urunAramaMetni = '';
 let pickerUrun = null;
 let pickerSecimler = { opsiyonlar: [], varyant: null };
+const productImageSourceCache = new Map();
+const productImageState = new Map();
+const productCardCache = new Map();
 
 // Haptic feedback helper for mobile POS terminals
 function triggerHaptic(duration = 15) {
@@ -2158,55 +2170,13 @@ function siparisEkraniCiz() {
   }
 
   if (gosterilecekUrunler.length > 0) {
-    html += '<div class="urun-catalog-grid">';
-    gosterilecekUrunler.forEach(u => {
-      const birim = u.birim || 'Adet';
-      const fiyat = Number(u.fiyat * aktifPorsiyon).toFixed(0);
-      const hasImg = u.resim_yolu && u.resim_yolu.trim() !== '';
-      const cardCls = hasImg ? 'has-img' : 'no-img';
-      const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === u.id);
-      const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === u.id);
-      const hasExtras = urunOps.length > 0 || urunVar.length > 0;
-      const onclickFn = hasExtras
-        ? 'urunSecimAc('+u.id+')'
-        : 'sepeteEkle('+u.id+', \\''+u.ad.replace(/'/g, "\\\\'")+'\\', '+u.fiyat+', \\''+birim+'\\')';
-
-      html += '<div class="urun-pos-card '+cardCls+'" onclick="'+onclickFn+'">';
-
-      // Variant/option indicator badge
-      if (hasExtras) {
-        html += '<span class="urun-varyant-badge" title="Seçenek mevcut">⚙</span>';
-      }
-
-      if (hasImg) {
-        // Thumbnail image with lazy loading
-        html += '<div class="urun-thumb-wrap">';
-        html += '  <div class="urun-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
-        html += '  <img data-src="'+u.resim_yolu+'" alt="'+u.ad+'" loading="lazy">';
-        html += '</div>';
-      }
-
-      html += '<div class="urun-card-body">';
-      html += '  <div class="urun-pos-title">'+u.ad+'</div>';
-      html += '  <div class="urun-pos-bottom">';
-      html += '    <span class="urun-pos-price">₺'+fiyat+'</span>';
-      html += '    <span class="urun-pos-unit">'+birim+'</span>';
-      html += '  </div>';
-      html += '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Lazy-load images after DOM update
-    requestAnimationFrame(() => lazyLoadImages());
+    html += '<div id="urunCatalogGrid" class="urun-catalog-grid"></div>';
   } else {
     html += '<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-weight:600;">Eşleşen ürün bulunamadı.</div>';
   }
 
   document.getElementById('pageSiparis').innerHTML = html;
-
-  // Trigger lazy load after innerHTML
-  requestAnimationFrame(() => lazyLoadImages());
+  if (gosterilecekUrunler.length > 0) renderProductCards(gosterilecekUrunler);
 }
 
 function urunAra(val) {
@@ -2234,32 +2204,86 @@ function masalaraGeri() {
   masalariYukle();
 }
 
-// ===== 7. SEPET & KALEM YÖNETİMİ =====
-// ===== LAZY IMAGE LOADING (IntersectionObserver) =====
-let imgObserver = null;
-function lazyLoadImages() {
-  const imgs = document.querySelectorAll('.urun-thumb-wrap img[data-src]');
-  if (!imgs.length) return;
+// ===== 7. ÜRÜN GÖRSELLERİ (PERSISTENT CARD & IMAGE CACHE) =====
+function getProductImageSrc(urun) {
+  const source = typeof urun.resim_yolu === 'string' ? urun.resim_yolu : '';
+  if (!source || !source.trim()) return '';
 
-  if (!imgObserver) {
-    imgObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          const src = img.getAttribute('data-src');
-          if (src) {
-            img.src = src;
-            img.removeAttribute('data-src');
-            img.onload = () => img.classList.add('loaded');
-            img.onerror = () => { img.style.display = 'none'; };
-          }
-          imgObserver.unobserve(img);
-        }
-      });
-    }, { rootMargin: '200px 0px', threshold: 0.01 });
+  // QR Menü ile aynı yol formatını kullan; yalnızca aynı kaynak stringini bellekte sabitle.
+  if (!productImageSourceCache.has(source)) productImageSourceCache.set(source, source);
+  return productImageSourceCache.get(source);
+}
+
+function markProductImageLoaded(img, source) {
+  productImageState.set(source, 'loaded');
+  img.classList.remove('failed');
+  img.classList.add('loaded');
+  img.style.display = 'block';
+  img.style.opacity = '1';
+}
+
+function handleProductImageError(img, source) {
+  // Mevcut, doğrulanmış bir görsel için geç gelen/geçersiz hata olayını yok say.
+  if (productImageState.get(source) === 'loaded' || img.dataset.imageSource !== source) return;
+
+  productImageState.set(source, 'failed');
+  img.classList.remove('loaded');
+  img.classList.add('failed');
+}
+
+function createProductCard(urun, source, signature) {
+  const birim = urun.birim || 'Adet';
+  const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === urun.id);
+  const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === urun.id);
+  const hasExtras = urunOps.length > 0 || urunVar.length > 0;
+  const onclickFn = hasExtras
+    ? 'urunSecimAc('+urun.id+')'
+    : 'sepeteEkle('+urun.id+', \\''+urun.ad.replace(/'/g, "\\\\'")+'\\', '+urun.fiyat+', \\''+birim+'\\')';
+  const card = document.createElement('div');
+  card.className = 'urun-pos-card ' + (source ? 'has-img' : 'no-img');
+  card.dataset.signature = signature;
+  card.onclick = null;
+  card.setAttribute('onclick', onclickFn);
+
+  let cardHtml = hasExtras ? '<span class="urun-varyant-badge" title="Seçenek mevcut">⚙</span>' : '';
+  if (source) {
+    cardHtml += '<div class="urun-thumb-wrap">';
+    cardHtml += '<div class="urun-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
+    cardHtml += '<img alt="'+urun.ad+'" loading="lazy" decoding="async">';
+    cardHtml += '</div>';
+  }
+  cardHtml += '<div class="urun-card-body"><div class="urun-pos-title">'+urun.ad+'</div><div class="urun-pos-bottom"><span class="urun-pos-price"></span><span class="urun-pos-unit">'+birim+'</span></div></div>';
+  card.innerHTML = cardHtml;
+
+  if (source) {
+    const img = card.querySelector('img');
+    img.dataset.imageSource = source;
+    img.onload = () => markProductImageLoaded(img, source);
+    img.onerror = () => handleProductImageError(img, source);
+    if (productImageState.get(source) === 'loaded') markProductImageLoaded(img, source);
+    if (productImageState.get(source) !== 'failed') img.src = source;
+    else img.classList.add('failed');
   }
 
-  imgs.forEach(img => imgObserver.observe(img));
+  return card;
+}
+
+function renderProductCards(urunler) {
+  const grid = document.getElementById('urunCatalogGrid');
+  if (!grid) return;
+
+  urunler.forEach(urun => {
+    const source = getProductImageSrc(urun);
+    const signature = [urun.ad, urun.fiyat, urun.birim || 'Adet', source, (menu.opsiyonlar || []).filter(o => o.urun_id === urun.id).length, (menu.varyantlar || []).filter(v => v.urun_id === urun.id).length].join('|');
+    let card = productCardCache.get(urun.id);
+    if (!card || card.dataset.signature !== signature) {
+      card = createProductCard(urun, source, signature);
+      productCardCache.set(urun.id, card);
+    }
+
+    card.querySelector('.urun-pos-price').textContent = '₺' + Number(urun.fiyat * aktifPorsiyon).toFixed(0);
+    grid.appendChild(card);
+  });
 }
 
 // ===== VARIATION/OPTION PICKER =====
