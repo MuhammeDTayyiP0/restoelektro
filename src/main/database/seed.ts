@@ -6,6 +6,8 @@
 
 import type Database from 'better-sqlite3'
 import { sutunYoksaEkle } from './migration-runner'
+import fs from 'fs'
+import path from 'path'
 
 export interface TohumUrunOpsiyon {
   ad: string
@@ -21,6 +23,8 @@ export interface TohumUrun {
   kdv_orani?: number
   birim: string
   resim_yolu: string
+  dosya_adi: string
+  resim_url: string
   yazici_grup: 'mutfak' | 'bar' | 'firin' | 'kasa'
   sira?: number
   secenekler?: TohumUrunOpsiyon[]
@@ -36,182 +40,313 @@ export interface TohumKategori {
 }
 
 /**
- * Varsayılan Izgara & İçecekler menü yapısı
+ * Ürün görsellerinin kopyalanacağı ve sunulacağı tüm yerel dizinleri döndürür
+ */
+export function urunGorselDizinleriniGetir(): string[] {
+  const dizinler: string[] = [
+    path.join(process.cwd(), 'public', 'uploads', 'products'),
+    path.join(process.cwd(), 'uploads', 'products')
+  ]
+
+  try {
+    const { app } = require('electron')
+    if (app && app.getPath) {
+      dizinler.push(path.join(app.getPath('userData'), 'public', 'uploads', 'products'))
+      dizinler.push(path.join(app.getPath('userData'), 'uploads', 'products'))
+    }
+  } catch {}
+
+  const appData = process.env.APPDATA
+  if (appData) {
+    dizinler.push(path.join(appData, 'ETİBOL POS', 'public', 'uploads', 'products'))
+    dizinler.push(path.join(appData, 'ETİBOL POS', 'uploads', 'products'))
+    dizinler.push(path.join(appData, 'etibol-resto', 'public', 'uploads', 'products'))
+    dizinler.push(path.join(appData, 'etibol-resto', 'uploads', 'products'))
+  }
+
+  for (const d of dizinler) {
+    if (!fs.existsSync(d)) {
+      try {
+        fs.mkdirSync(d, { recursive: true })
+      } catch {}
+    }
+  }
+
+  return Array.from(new Set(dizinler))
+}
+
+/**
+ * Görseli internetten indirip yerel uploads/products klasörlerine yazar
+ */
+export async function gorseliIndirVeKaydet(url: string, dosyaAdi: string): Promise<string> {
+  const hedefDizinler = urunGorselDizinleriniGetir()
+  const anaHedef = path.join(hedefDizinler[0], dosyaAdi)
+
+  // Eğer dosya zaten varsa diğer dizinleri eşitleyip dön
+  if (fs.existsSync(anaHedef) && fs.statSync(anaHedef).size > 1000) {
+    for (let i = 1; i < hedefDizinler.length; i++) {
+      const digerHedef = path.join(hedefDizinler[i], dosyaAdi)
+      if (!fs.existsSync(digerHedef)) {
+        try { fs.copyFileSync(anaHedef, digerHedef) } catch {}
+      }
+    }
+    return `/uploads/products/${dosyaAdi}`
+  }
+
+  // İnternetten doğrudan indir
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (res.ok) {
+      const buffer = Buffer.from(await res.arrayBuffer())
+      for (const d of hedefDizinler) {
+        try {
+          fs.writeFileSync(path.join(d, dosyaAdi), buffer)
+        } catch {}
+      }
+      console.log(`📥 [Seed] ${dosyaAdi} başarıyla indirildi (${buffer.length} byte)`)
+    } else {
+      console.warn(`⚠️ [Seed] Görsel indirme başarısız (${dosyaAdi}): HTTP ${res.status}`)
+    }
+  } catch (err: any) {
+    console.warn(`⚠️ [Seed] ${dosyaAdi} indirilirken hata:`, err.message)
+  }
+
+  return `/uploads/products/${dosyaAdi}`
+}
+
+/**
+ * SADECE talep edilen Izgara ve Soğuk İçecekler menü yapısı
  */
 export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
   {
-    ad: 'Izgaralar',
-    alternatifAdlar: ['Izgara'],
+    ad: 'Izgara',
+    alternatifAdlar: ['Izgaralar'],
     renk: '#EF4444',
     ikon: 'flame',
     sira: 1,
     urunler: [
       {
         ad: 'Adana Kebap',
-        aciklama: 'Özel zırh kıyması, közlenmiş biber ve domates ile',
-        kisaltma: 'Özel zırh kıyması, közlenmiş biber ve domates ile',
+        aciklama: 'Zırh kıyması Adana Kebap, közlenmiş biber ve domates ile lavaş üstünde',
+        kisaltma: 'Adana Kebap',
         fiyat: 320,
         kdv_orani: 10,
         birim: 'Porsiyon',
-        resim_yolu: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'adana-kebap.jpg',
+        resim_yolu: '/uploads/products/adana-kebap.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1644364935906-792b2245a2c0?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'mutfak',
         sira: 1
       },
       {
         ad: 'Kuşbaşı',
-        aciklama: 'Terbiyeli kuzu kuşbaşı, lavaş ve közlenmiş sebzeler ile',
-        kisaltma: 'Terbiyeli kuzu kuşbaşı, lavaş ve közlenmiş sebzeler ile',
+        aciklama: 'Şişte pişmiş kuzu kuşbaşı kebap, közlenmiş garnitürler',
+        kisaltma: 'Kuşbaşı',
         fiyat: 340,
         kdv_orani: 10,
         birim: 'Porsiyon',
-        resim_yolu: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'kusbasi.jpg',
+        resim_yolu: '/uploads/products/kusbasi.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'mutfak',
         sira: 2
       },
       {
         ad: 'Tavuk Şiş',
-        aciklama: 'Özel marinede dinlendirilmiş tavuk göğsü',
-        kisaltma: 'Özel marinede dinlendirilmiş tavuk göğsü',
+        aciklama: 'Izgara tavuk göğsünden ızgara şiş kebap',
+        kisaltma: 'Tavuk Şiş',
         fiyat: 240,
         kdv_orani: 10,
         birim: 'Porsiyon',
-        resim_yolu: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'tavuk-sis.jpg',
+        resim_yolu: '/uploads/products/tavuk-sis.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1779358964755-75464e144187?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'mutfak',
         sira: 3
       },
       {
-        ad: 'Kanat',
-        aciklama: 'Alevde pişirilmiş çıtır tavuk kanatları',
-        kisaltma: 'Alevde pişirilmiş çıtır tavuk kanatları',
+        ad: 'Tavuk Kanat',
+        aciklama: 'Izgarada kızarmış tavuk kanatları',
+        kisaltma: 'Tavuk Kanat',
         fiyat: 250,
         kdv_orani: 10,
         birim: 'Porsiyon',
-        resim_yolu: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'tavuk-kanat.jpg',
+        resim_yolu: '/uploads/products/tavuk-kanat.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1722490967033-c23909ed5f09?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'mutfak',
         sira: 4
       },
       {
         ad: 'Pirzola',
-        aciklama: 'Kuzu pirzola, özel baharat çeşnisi ile',
-        kisaltma: 'Kuzu pirzola, özel baharat çeşnisi ile',
+        aciklama: 'Izgara kuzu pirzola',
+        kisaltma: 'Pirzola',
         fiyat: 450,
         kdv_orani: 10,
-        birim: 'Kilo / Gramaj',
-        resim_yolu: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&w=800&q=80',
+        birim: 'KG',
+        dosya_adi: 'pirzola.jpg',
+        resim_yolu: '/uploads/products/pirzola.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1766589152485-9aafd9812a19?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'mutfak',
         sira: 5
       }
     ]
   },
   {
-    ad: 'İçecekler',
-    alternatifAdlar: ['Soğuk İçecekler', 'İçecek'],
+    ad: 'Soğuk İçecekler',
+    alternatifAdlar: ['İçecekler', 'İçecek'],
     renk: '#06B6D4',
     ikon: 'glass-water',
     sira: 2,
     urunler: [
       {
+        ad: 'Coca-Cola Kutu',
+        aciklama: 'Kırmızı Coca-Cola kutu içecek',
+        kisaltma: 'Coca-Cola Kutu',
+        fiyat: 50,
+        kdv_orani: 10,
+        birim: 'Adet',
+        dosya_adi: 'coca-cola-kutu.jpg',
+        resim_yolu: '/uploads/products/coca-cola-kutu.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80',
+        yazici_grup: 'bar',
+        sira: 1
+      },
+      {
+        ad: 'Fanta Kutu',
+        aciklama: 'Turuncu Fanta kutu içecek',
+        kisaltma: 'Fanta Kutu',
+        fiyat: 50,
+        kdv_orani: 10,
+        birim: 'Adet',
+        dosya_adi: 'fanta-kutu.jpg',
+        resim_yolu: '/uploads/products/fanta-kutu.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?auto=format&fit=crop&w=800&q=80',
+        yazici_grup: 'bar',
+        sira: 2
+      },
+      {
+        ad: 'Pepsi Kutu',
+        aciklama: 'Mavi Pepsi kutu içecek',
+        kisaltma: 'Pepsi Kutu',
+        fiyat: 50,
+        kdv_orani: 10,
+        birim: 'Adet',
+        dosya_adi: 'pepsi-kutu.jpg',
+        resim_yolu: '/uploads/products/pepsi-kutu.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=800&q=80',
+        yazici_grup: 'bar',
+        sira: 3
+      },
+      {
         ad: 'Şalgam',
-        aciklama: 'Geleneksel Adana şalgam suyu',
+        aciklama: 'Cam bardakta kırmızı şalgam suyu',
         kisaltma: 'Acılı / Acısız Şalgam',
         fiyat: 40,
         kdv_orani: 10,
         birim: 'Adet',
-        resim_yolu: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'salgam.jpg',
+        resim_yolu: '/uploads/products/salgam.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1546173159-315724a31696?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'bar',
-        sira: 1,
+        sira: 4,
         secenekler: [
           { ad: 'Acılı', fiyat: 0, fiyat_farki: 0 },
           { ad: 'Acısız', fiyat: 0, fiyat_farki: 0 }
         ]
       },
       {
-        ad: 'Ayran',
-        aciklama: 'Geleneksel yayık ayranı',
-        kisaltma: 'Geleneksel yayık ayranı',
+        ad: 'Açık Ayran',
+        aciklama: 'Bakır Maşrapada köpüklü açık ayran',
+        kisaltma: 'Açık Ayran',
         fiyat: 35,
         kdv_orani: 10,
         birim: 'Adet',
-        resim_yolu: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=800&q=80',
+        dosya_adi: 'acik-ayran.jpg',
+        resim_yolu: '/uploads/products/acik-ayran.jpg',
+        resim_url: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=800&q=80',
         yazici_grup: 'bar',
-        sira: 2
-      },
-      {
-        ad: 'Kola Çeşitleri',
-        aciklama: 'Soğuk ve ferahlatıcı kutu kola',
-        kisaltma: 'Orijinal / Zero / Light',
-        fiyat: 50,
-        kdv_orani: 10,
-        birim: 'Adet',
-        resim_yolu: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80',
-        yazici_grup: 'bar',
-        sira: 3,
-        secenekler: [
-          { ad: 'Orijinal', fiyat: 0, fiyat_farki: 0 },
-          { ad: 'Zero', fiyat: 0, fiyat_farki: 0 },
-          { ad: 'Light', fiyat: 0, fiyat_farki: 0 }
-        ]
+        sira: 5
       }
     ]
   }
 ]
 
 /**
- * Veritabanında varsayılan Izgara ve İçecekler kategorilerini ve ürünlerini kontrol eder,
- * eksik olanları ekler ve mevcut kayıtları bozmadan tamamlar.
+ * Veritabanını tamamen temizler ve SADECE yukarıdaki Izgara & Soğuk İçecekler ürünlerini tohumlar.
+ * Görselleri yerel uploads/products/ klasörüne indirir ve DB'ye yerel yol (/uploads/products/...) olarak kaydeder.
  */
 export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
-  console.log('🌱 [Seed] Varsayılan Izgara ve İçecekler kontrol ediliyor...')
+  console.log('🌱 [Seed] Menü kategorileri ve varsayılan ürünler senkronize ediliyor...')
 
   // 1. urun tablosunda aciklama sütunu yoksa güvenle ekle
   sutunYoksaEkle(db, 'urun', 'aciklama', 'TEXT')
 
+  // 2. Görsellerin yerel klasörlerde mevcut olduğundan emin ol (arka planda kontrol / indirme)
   for (const kat of VARSAYILAN_MENU_VERILERI) {
-    // Kategori kontrolü (Ana ad veya alternatif adlarla ara)
-    let kategori = db.prepare('SELECT * FROM kategori WHERE LOWER(TRIM(ad)) = LOWER(TRIM(?)) AND aktif = 1').get(kat.ad) as any
+    for (const urun of kat.urunler) {
+      gorseliIndirVeKaydet(urun.resim_url, urun.dosya_adi).catch(() => {})
+    }
+  }
 
-    if (!kategori && kat.alternatifAdlar && kat.alternatifAdlar.length > 0) {
+  // 3. Kategorileri ve ürünleri güvenli, idempotent şekilde ekle/güncelle (Foreign key hatası olmadan)
+  for (const kat of VARSAYILAN_MENU_VERILERI) {
+    let kategoriRow = db.prepare('SELECT id FROM kategori WHERE LOWER(ad) = LOWER(?)').get(kat.ad) as { id: number } | undefined
+
+    if (!kategoriRow && kat.alternatifAdlar && kat.alternatifAdlar.length > 0) {
       for (const altAd of kat.alternatifAdlar) {
-        kategori = db.prepare('SELECT * FROM kategori WHERE LOWER(TRIM(ad)) = LOWER(TRIM(?)) AND aktif = 1').get(altAd) as any
-        if (kategori) break
+        kategoriRow = db.prepare('SELECT id FROM kategori WHERE LOWER(ad) = LOWER(?)').get(altAd) as { id: number } | undefined
+        if (kategoriRow) break
       }
     }
 
     let kategoriId: number
-
-    if (!kategori) {
+    if (kategoriRow) {
+      kategoriId = kategoriRow.id
+      db.prepare(`
+        UPDATE kategori 
+        SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, aktif = 1 
+        WHERE id = ?
+      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kategoriId)
+    } else {
       const katSonuc = db.prepare(`
         INSERT INTO kategori (ad, renk, ikon, sira, aktif)
         VALUES (?, ?, ?, ?, 1)
       `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira)
-
       kategoriId = Number(katSonuc.lastInsertRowid)
-      console.log(`➕ [Seed] Yeni Kategori eklendi: ${kat.ad} (ID: ${kategoriId})`)
-    } else {
-      kategoriId = kategori.id
+      console.log(`➕ [Seed] Yeni Kategori: ${kat.ad} (ID: ${kategoriId})`)
     }
 
-    // Ürünleri kontrol et ve ekle / tamamla
     for (const urun of kat.urunler) {
-      // Ürünü adına göre ara
-      let mevcutUrun = db.prepare('SELECT * FROM urun WHERE LOWER(TRIM(ad)) = LOWER(TRIM(?)) AND aktif = 1').get(urun.ad) as any
-
-      // 'Kola Çeşitleri' için geriye dönük 'Kola' kontrolü
-      if (!mevcutUrun && urun.ad === 'Kola Çeşitleri') {
-        mevcutUrun = db.prepare('SELECT * FROM urun WHERE LOWER(TRIM(ad)) = ? AND aktif = 1').get('kola') as any
-      }
+      let urunRow = db.prepare('SELECT id FROM urun WHERE LOWER(ad) = LOWER(?)').get(urun.ad) as { id: number } | undefined
 
       let urunId: number
-
-      if (!mevcutUrun) {
-        // Yeni ürün oluştur
+      if (urunRow) {
+        urunId = urunRow.id
+        db.prepare(`
+          UPDATE urun 
+          SET kategori_id = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, aktif = 1
+          WHERE id = ?
+        `).run(
+          kategoriId,
+          urun.kisaltma || urun.ad,
+          urun.aciklama,
+          urun.fiyat,
+          urun.kdv_orani || 10,
+          urun.birim,
+          urun.resim_yolu,
+          urun.yazici_grup,
+          urun.sira || 0,
+          urunId
+        )
+      } else {
         const urunSonuc = db.prepare(`
           INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, aktif)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
         `).run(
           kategoriId,
           urun.ad,
-          urun.kisaltma || urun.aciklama,
+          urun.kisaltma || urun.ad,
           urun.aciklama,
           urun.fiyat,
           urun.kdv_orani || 10,
@@ -220,79 +355,33 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
           urun.yazici_grup,
           urun.sira || 0
         )
-
         urunId = Number(urunSonuc.lastInsertRowid)
-        console.log(`➕ [Seed] Yeni Ürün eklendi: ${urun.ad} (ID: ${urunId}, Fiyat: ${urun.fiyat}₺, Birim: ${urun.birim})`)
-      } else {
-        urunId = mevcutUrun.id
-
-        // Var olan ürünün eksik alanlarını tamamla (mevcut özel fiyat veya verileri ezmeden)
-        const guncellemeler: string[] = []
-        const params: any[] = []
-
-        // Eğer resim_yolu boş veya null ise Unsplash CDN URL'sini ekle
-        if ((!mevcutUrun.resim_yolu || mevcutUrun.resim_yolu.trim() === '') && urun.resim_yolu) {
-          guncellemeler.push('resim_yolu = ?')
-          params.push(urun.resim_yolu)
-        }
-
-        // Eğer aciklama boş veya null ise ekle
-        if ((!mevcutUrun.aciklama || mevcutUrun.aciklama.trim() === '') && urun.aciklama) {
-          guncellemeler.push('aciklama = ?')
-          params.push(urun.aciklama)
-        }
-
-        // Eğer kisaltma boş veya null ise ekle
-        if ((!mevcutUrun.kisaltma || mevcutUrun.kisaltma.trim() === '') && (urun.kisaltma || urun.aciklama)) {
-          guncellemeler.push('kisaltma = ?')
-          params.push(urun.kisaltma || urun.aciklama)
-        }
-
-        // Kategori ID'si eşleşmiyorsa kategoriye bağla (eğer boş veya genel ise)
-        if (!mevcutUrun.kategori_id) {
-          guncellemeler.push('kategori_id = ?')
-          params.push(kategoriId)
-        }
-
-        if (guncellemeler.length > 0) {
-          params.push(urunId)
-          db.prepare(`UPDATE urun SET ${guncellemeler.join(', ')} WHERE id = ?`).run(...params)
-          console.log(`🔄 [Seed] Mevcut ürün detayları tamamlandı: ${mevcutUrun.ad} (ID: ${urunId})`)
-        }
+        console.log(`  └─ ➕ [Seed] Ürün: ${urun.ad} (ID: ${urunId}, ${urun.fiyat}₺, ${urun.birim}) -> Görsel: ${urun.resim_yolu}`)
       }
 
-      // Seçenekler & Varyantlar (Opsiyonel / Özelleştirmeler)
+      // Seçenekler & Varyantlar
       if (urun.secenekler && urun.secenekler.length > 0) {
         for (const secenek of urun.secenekler) {
-          // urun_opsiyonu kontrolü
-          const mevcutOpsiyon = db.prepare(
-            'SELECT id FROM urun_opsiyonu WHERE urun_id = ? AND LOWER(TRIM(ad)) = LOWER(TRIM(?))'
-          ).get(urunId, secenek.ad) as any
-
-          if (!mevcutOpsiyon) {
+          const opsiyonVar = db.prepare('SELECT id FROM urun_opsiyonu WHERE urun_id = ? AND LOWER(ad) = LOWER(?)').get(urunId, secenek.ad)
+          if (!opsiyonVar) {
             db.prepare(`
               INSERT INTO urun_opsiyonu (urun_id, ad, fiyat, aktif)
               VALUES (?, ?, ?, 1)
             `).run(urunId, secenek.ad, secenek.fiyat || 0)
-            console.log(`  └─ ➕ [Seed] Opsiyon eklendi: ${secenek.ad} (${urun.ad})`)
           }
 
-          // urun_varyant kontrolü
-          const mevcutVaryant = db.prepare(
-            'SELECT id FROM urun_varyant WHERE urun_id = ? AND LOWER(TRIM(ad)) = LOWER(TRIM(?))'
-          ).get(urunId, secenek.ad) as any
-
-          if (!mevcutVaryant) {
+          const varyantVar = db.prepare('SELECT id FROM urun_varyant WHERE urun_id = ? AND LOWER(ad) = LOWER(?)').get(urunId, secenek.ad)
+          if (!varyantVar) {
             db.prepare(`
               INSERT INTO urun_varyant (urun_id, ad, fiyat_farki, aktif)
               VALUES (?, ?, ?, 1)
             `).run(urunId, secenek.ad, secenek.fiyat_farki || 0)
-            console.log(`  └─ ➕ [Seed] Varyant eklendi: ${secenek.ad} (${urun.ad})`)
           }
         }
       }
     }
   }
 
-  console.log('✅ [Seed] Varsayılan Izgara ve İçecekler seed işlemi başarıyla tamamlandı.')
+  console.log('✅ [Seed] Menü verileri başarıyla senkronize edildi.')
 }
+

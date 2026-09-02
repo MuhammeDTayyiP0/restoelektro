@@ -63,6 +63,7 @@ const uploadMiddleware = multer({
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB
   },
+
   fileFilter: (_req, file, cb) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/jpg']
     if (allowedMimes.includes(file.mimetype.toLowerCase()) || file.mimetype.startsWith('image/')) {
@@ -102,8 +103,11 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   // Statik dosyaları sun
   app.use('/uploads', express.static(path.join(devPublicDir, 'uploads')))
   app.use('/uploads', express.static(path.join(prodPublicDir, 'uploads')))
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+  app.use('/uploads', express.static(path.join(electronApp.getPath('userData'), 'uploads')))
   app.use(express.static(devPublicDir))
   app.use(express.static(prodPublicDir))
+
 
   // ===== DOSYA YÜKLEME ENDPOINT'İ =====
   app.post('/api/upload', (req, res) => {

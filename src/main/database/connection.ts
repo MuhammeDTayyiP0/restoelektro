@@ -6,47 +6,13 @@
 import Database from 'better-sqlite3'
 import { app } from 'electron'
 import { join } from 'path'
-import { existsSync, mkdirSync, copyFileSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs'
 import { migrationlariCalistir } from './migration-runner'
 import { otomatikYedekAl } from './backup'
 import { varsayilanIzgaraVeIcecekleriEkle } from './seed'
 
 // Veritabanı örneği (singleton)
 let db: Database.Database | null = null
-
-/**
- * Eski konumlardaki veritabanı dosyalarını tespit edip userData altına güvenle taşır
- */
-function eskiVeritabaniniGocEt(hedefYol: string): void {
-  if (existsSync(hedefYol)) return // Zaten hedef dosya mevcut, taşımaya gerek yok
-
-  const userData = app.getPath('userData')
-  const appData = app.getPath('appData')
-
-  const olasiEskiKonumlar = [
-    join(userData, 'data', 'restoelektro.db'),
-    join(userData, 'restoelektro.db'),
-    join(userData, 'data', 'database.sqlite'),
-    join(appData, 'etibol-resto', 'data', 'restoelektro.db'),
-    join(appData, 'etibol-pos', 'data', 'restoelektro.db'),
-    join(process.cwd(), 'restoelektro.db'),
-    join(process.cwd(), 'database.sqlite'),
-  ]
-
-  for (const eskiYol of olasiEskiKonumlar) {
-    if (existsSync(eskiYol)) {
-      try {
-        console.log(`📦 Eski veritabanı bulundu: ${eskiYol}`)
-        console.log(`🚚 Veriler yeni konuma taşınıyor: ${hedefYol}...`)
-        copyFileSync(eskiYol, hedefYol)
-        console.log('✅ Eski veritabanı verileri başarıyla yeni userData konumuna aktarıldı.')
-        return
-      } catch (err) {
-        console.error(`❌ Eski veritabanı kopyalanırken hata (${eskiYol}):`, err)
-      }
-    }
-  }
-}
 
 /**
  * Veritabanı dosya yolunu belirler (userData/database.sqlite)
@@ -60,12 +26,7 @@ export function veritabaniYoluGetir(): string {
     mkdirSync(userData, { recursive: true })
   }
 
-  const dbYolu = join(userData, 'database.sqlite')
-
-  // Geriye dönük uyumluluk: Eski veritabanı varsa taşı
-  eskiVeritabaniniGocEt(dbYolu)
-
-  return dbYolu
+  return join(userData, 'database.sqlite')
 }
 
 /**
