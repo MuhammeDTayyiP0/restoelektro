@@ -11,6 +11,7 @@ import { migration004 } from './004_add_cost_price_and_stock_improvements'
 import { migration005 } from './005_performance_indexes'
 import { migration006 } from './006_seed_izgara_ve_icecekler'
 import { migration007 } from './007_add_multi_unit_pricing'
+import { migration008 } from './008_add_gramaj_and_satis_birim_to_siparis'
 
 export interface Migration {
   /** Benzersiz sürüm numarası (sıralı artan) */
@@ -32,4 +33,5 @@ export const migrations: Migration[] = [
   migration005,
   migration006,
   migration007,
+  migration008,
 ]

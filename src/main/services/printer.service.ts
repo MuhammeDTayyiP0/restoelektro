@@ -49,6 +49,45 @@ function yaziciBaglan(ayar: YaziciAyar): any {
 }
 
 /**
+ * ESC/POS ve Termal Fiş çıktısı için miktar ve birimi biçimlendirir.
+ * - KG veya gramajlı satış: '0.750 KG' veya '2x 0.750 KG'
+ * - Porsiyon satışı: '1 Por', '1.5 Por', '2 Por' veya '2x 1.5 Por'
+ */
+export function formatMiktarBirim(item: any): string {
+  const satisBirim = (
+    item.secilenSatisTuru ||
+    item.satisBirim ||
+    item.satis_birim ||
+    (item.urun?.birim?.toLowerCase() === 'kg' ? 'kg' : '') ||
+    (item.urun_birim?.toLowerCase() === 'kg' ? 'kg' : '') ||
+    'porsiyon'
+  ).toLowerCase()
+
+  const gramaj = item.gramaj !== undefined && Number(item.gramaj) > 0 ? Number(item.gramaj) : 0
+  const isKg = satisBirim === 'kg' || satisBirim === 'kilo' || gramaj > 0
+  const miktar = Number(item.miktar || 1)
+  const porsiyon = Number(item.porsiyon || 1)
+
+  if (isKg) {
+    const netKg = gramaj > 0 ? gramaj : miktar
+    const netKgStr = `${netKg.toFixed(3)} KG`
+    if (miktar > 1 && gramaj > 0) {
+      return `${miktar}x ${netKgStr}`
+    }
+    return netKgStr
+  } else {
+    if (porsiyon !== 1) {
+      const porStr = porsiyon === 0.5 ? '0.5 Por' : porsiyon === 2 ? '2 Por' : `${porsiyon} Por`
+      if (miktar > 1) {
+        return `${miktar}x ${porStr}`
+      }
+      return porStr
+    }
+    return `${miktar} Por`
+  }
+}
+
+/**
  * Mutfak fişi yazdırır
  */
 export async function mutfakFisiYazdir(siparisler: any[], yaziciAyar: YaziciAyar) {
@@ -57,9 +96,13 @@ export async function mutfakFisiYazdir(siparisler: any[], yaziciAyar: YaziciAyar
     
     if (!yazici) {
       console.log('--- SANAL MUTFAK FİŞİ ---')
-      console.log(`Masa: ${siparisler[0]?.masa_numara}`)
+      console.log(`Masa: ${siparisler[0]?.masa_numara || 'PAKET'}`)
       console.log('Kalemler:')
-      siparisler.forEach(s => console.log(`- ${s.miktar}x ${s.urun_adi} [${s.notlar || ''}]`))
+      siparisler.forEach(s => {
+        const mb = formatMiktarBirim(s).padEnd(10, ' ')
+        const urunAdi = s.urun?.ad || s.urun_adi || 'Ürün'
+        console.log(`- ${mb} ${urunAdi} [${s.notlar || ''}]`)
+      })
       console.log('-------------------------')
       return resolve(true)
     }
@@ -82,17 +125,20 @@ export async function mutfakFisiYazdir(siparisler: any[], yaziciAyar: YaziciAyar
         .text(`MASA: ${siparisler[0]?.masa_numara || 'PAKET'}`)
         .size(1, 1)
         .text(`Tarih: ${new Date().toLocaleTimeString('tr-TR')}`)
-        .text(`Garson: ${siparisler[0]?.garson_adi}`)
+        .text(`Garson: ${siparisler[0]?.garson_adi || 'Sistem'}`)
         .drawLine()
         .align('lt')
         
       siparisler.forEach(siparis => {
+        const mb = formatMiktarBirim(siparis).padEnd(10, ' ')
+        const urunAdi = (siparis.urun?.ad || siparis.urun_adi || '').substring(0, 24)
+        
         yazici.size(1, 2)
-        yazici.text(`${siparis.miktar}x ${siparis.urun_adi}`)
+        yazici.text(`${mb} ${urunAdi}`)
         
         yazici.size(1, 1)
-        if (siparis.varyant_adi) {
-          yazici.text(`   [${siparis.varyant_adi}]`)
+        if (siparis.varyant_adi || siparis.varyant?.ad) {
+          yazici.text(`   [${siparis.varyant_adi || siparis.varyant?.ad}]`)
         }
         if (siparis.notlar) {
           yazici.style('I').text(`   Not: ${siparis.notlar}`).style('NORMAL')
@@ -119,8 +165,16 @@ export async function adisyonYazdir(hesap: any, sepet: any[], yaziciAyar: Yazici
     
     if (!yazici) {
       console.log('--- SANAL ADİSYON ---')
-      console.log(`Hesap: ${hesap.hesap_no}`)
-      console.log(`Toplam: ${hesap.toplam_tutar} TL`)
+      console.log(`Hesap: ${hesap.hesap_no || 'HSP-001'}`)
+      sepet.forEach(kalem => {
+        const mb = formatMiktarBirim(kalem).padEnd(10, ' ')
+        const urunAdi = (kalem.urun?.ad || kalem.urun_adi || '').substring(0, 18).padEnd(18, ' ')
+        const toplam = kalem.toplam_fiyat !== undefined
+          ? Number(kalem.toplam_fiyat)
+          : ((kalem.urun?.fiyat || 0) + (kalem.varyant?.ek_fiyat || kalem.varyant?.fiyat_farki || 0)) * (kalem.miktar || 1)
+        console.log(`${mb} ${urunAdi} ${toplam.toFixed(2).padStart(8, ' ')} TL`)
+      })
+      console.log(`Toplam: ${(hesap.net_tutar ?? hesap.toplam_tutar ?? 0).toFixed(2)} TL`)
       console.log('---------------------')
       return resolve(true)
     }
@@ -135,27 +189,34 @@ export async function adisyonYazdir(hesap: any, sepet: any[], yaziciAyar: Yazici
         .align('ct')
         .style('B')
         .size(2, 2)
-        .text('RESTOELEKTRO')
+        .text('ETİBOL RESTORAN')
         .size(1, 1)
         .text('Lezzetin Doğru Adresi')
         .feed(1)
         .text(`MASA: ${hesap.masa_numara || 'PAKET'}`)
         .text(`Tarih: ${new Date().toLocaleString('tr-TR')}`)
-        .text(`Hesap No: ${hesap.hesap_no}`)
+        .text(`Hesap No: ${hesap.hesap_no || ''}`)
         .drawLine()
         .align('lt')
         
       sepet.forEach(kalem => {
-        const ad = kalem.urun.ad.padEnd(20, ' ').substring(0, 20)
-        const fiyat = ((kalem.urun.fiyat + (kalem.varyant?.ek_fiyat || 0)) * kalem.miktar).toFixed(2).padStart(8, ' ')
-        yazici.text(`${kalem.miktar}x ${ad} ${fiyat}`)
+        const mb = formatMiktarBirim(kalem).padEnd(10, ' ')
+        const urunAdi = (kalem.urun?.ad || kalem.urun_adi || '').substring(0, 18).padEnd(18, ' ')
+        const toplamFiyat = kalem.toplam_fiyat !== undefined
+          ? Number(kalem.toplam_fiyat)
+          : ((kalem.urun?.fiyat || 0) + (kalem.varyant?.ek_fiyat || kalem.varyant?.fiyat_farki || 0)) * (kalem.miktar || 1)
+        const fiyatStr = toplamFiyat.toFixed(2).padStart(8, ' ')
+        yazici.text(`${mb} ${urunAdi} ${fiyatStr}`)
+        if (kalem.varyant?.ad || kalem.varyant_adi) {
+          yazici.text(`   [${kalem.varyant?.ad || kalem.varyant_adi}]`)
+        }
       })
       
       yazici
         .drawLine()
         .align('rt')
         .size(1, 2)
-        .text(`TOPLAM: ${hesap.toplam_tutar.toFixed(2)} TL`)
+        .text(`TOPLAM: ${(hesap.net_tutar ?? hesap.toplam_tutar ?? 0).toFixed(2)} TL`)
         .size(1, 1)
         .feed(1)
         .align('ct')

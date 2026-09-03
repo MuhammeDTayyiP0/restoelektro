@@ -15,7 +15,7 @@ export function mutfakIPCKaydet(ipcMain: IpcMain): void {
     const params = yaziciGrup ? [yaziciGrup] : []
 
     const siparisler = db.prepare(`
-      SELECT s.*, u.ad as urun_adi, h.hesap_no, h.hesap_tipi,
+      SELECT s.*, u.ad as urun_adi, u.birim as urun_birim, h.hesap_no, h.hesap_tipi,
              m.numara as masa_numara, p.ad || ' ' || p.soyad as garson_adi,
              v.ad as varyant_adi
       FROM siparis s

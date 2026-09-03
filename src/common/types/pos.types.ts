@@ -58,9 +58,13 @@ export interface Siparis {
   ikram_onaylayan_id: number | null
   yazici_grup: string
   porsiyon?: number
+  satis_birim?: string
+  satisBirim?: string
+  gramaj?: number
   cost_price?: number
   // İlişkili veriler
   urun_adi?: string
+  urun_birim?: string
   varyant_adi?: string
   kategori_adi?: string
   opsiyonlar?: SiparisOpsiyonu[]
@@ -97,6 +101,8 @@ export interface YeniSiparis {
   porsiyon?: number
   opsiyon_idleri?: number[]
   secilenSatisTuru?: 'porsiyon' | 'kg' | string
+  satisBirim?: string
+  satis_birim?: string
   gramaj?: number
   birim_fiyat?: number
   toplam_fiyat?: number

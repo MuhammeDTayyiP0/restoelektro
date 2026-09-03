@@ -51,6 +51,14 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
   onIptalToggle,
 }: MutfakSiparisItemProps) {
   const isIptal = siparis.durum === 'iptal' || isIptalBekliyor
+  const isKgSiparis = (
+    siparis.satis_birim?.toLowerCase() === 'kg' ||
+    siparis.satis_birim?.toLowerCase() === 'kilo' ||
+    (siparis as any).satisBirim?.toLowerCase() === 'kg' ||
+    (siparis as any).secilenSatisTuru?.toLowerCase() === 'kg' ||
+    (siparis.urun_birim?.toLowerCase() === 'kg') ||
+    (siparis.gramaj !== undefined && Number(siparis.gramaj) > 0)
+  )
 
   return (
     <div 
@@ -68,10 +76,16 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
               isIptal ? "line-through text-slate-400" : "text-white"
             )}>
               <span>{siparis.urun_adi}</span>
-              {siparis.porsiyon && siparis.porsiyon !== 1 && (
-                <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                  ({siparis.porsiyon === 2 ? 'Double' : siparis.porsiyon} Porsiyon)
+              {isKgSiparis ? (
+                <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {siparis.gramaj ? `${siparis.gramaj} KG` : 'KG'}
                 </span>
+              ) : (
+                siparis.porsiyon && siparis.porsiyon !== 1 && (
+                  <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    ({siparis.porsiyon === 2 ? 'Double' : siparis.porsiyon} Porsiyon)
+                  </span>
+                )
               )}
             </span>
 
@@ -129,7 +143,9 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
             {formatPara(siparis.toplam_fiyat)}
           </span>
           <span className={clsx("text-xs font-mono text-slate-400 tabular-nums", isIptal && "line-through")}>
-            {siparis.miktar} {siparis.urun_birim || 'Adet'} × {formatPara(siparis.birim_fiyat)}
+            {isKgSiparis && siparis.gramaj 
+              ? `${siparis.miktar > 1 ? `${siparis.miktar}x ` : ''}${siparis.gramaj} KG`
+              : `${siparis.miktar} ${siparis.urun_birim || 'Adet'}`} × {formatPara(siparis.birim_fiyat)}
           </span>
         </div>
       </div>
@@ -689,6 +705,7 @@ export const PosCart = React.memo(function PosCart() {
             birim_fiyat: birimHesapliFiyat,
             toplam_fiyat: toplamKalemFiyat,
             secilenSatisTuru: isKg ? 'kg' : 'porsiyon',
+            satisBirim: isKg ? 'kg' : 'porsiyon',
             gramaj: isKg ? k.gramaj : undefined
           }
         })

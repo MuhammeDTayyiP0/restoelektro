@@ -49,6 +49,45 @@ const getFontSizePx = (size: 'small' | 'normal' | 'large', type: 'title' | 'base
   return sizes[size][type];
 }
 
+/**
+ * Termal fiş çıktısı için miktar ve birimi biçimlendirir.
+ * - KG veya gramajlı satış: '0.750 KG' veya '2x 0.750 KG'
+ * - Porsiyon satışı: '1 Por', '1.5 Por', '2 Por' veya '2x 1.5 Por'
+ */
+export function formatMiktarBirim(item: any): string {
+  const satisBirim = (
+    item.secilenSatisTuru ||
+    item.satisBirim ||
+    item.satis_birim ||
+    (item.urun?.birim?.toLowerCase() === 'kg' ? 'kg' : '') ||
+    (item.urun_birim?.toLowerCase() === 'kg' ? 'kg' : '') ||
+    'porsiyon'
+  ).toLowerCase()
+
+  const gramaj = item.gramaj !== undefined && Number(item.gramaj) > 0 ? Number(item.gramaj) : 0
+  const isKg = satisBirim === 'kg' || satisBirim === 'kilo' || gramaj > 0
+  const miktar = Number(item.miktar || 1)
+  const porsiyon = Number(item.porsiyon || 1)
+
+  if (isKg) {
+    const netKg = gramaj > 0 ? gramaj : miktar
+    const netKgStr = `${netKg.toFixed(3)} KG`
+    if (miktar > 1 && gramaj > 0) {
+      return `${miktar}x ${netKgStr}`
+    }
+    return netKgStr
+  } else {
+    if (porsiyon !== 1) {
+      const porStr = porsiyon === 0.5 ? '0.5 Por' : porsiyon === 2 ? '2 Por' : `${porsiyon} Por`
+      if (miktar > 1) {
+        return `${miktar}x ${porStr}`
+      }
+      return porStr
+    }
+    return `${miktar} Por`
+  }
+}
+
 export function generateMutfakHtml(
   siparisler: any[], 
   masaNo: string | null, 
@@ -93,12 +132,8 @@ export function generateMutfakHtml(
   if (siparisler && siparisler.length > 0) {
     html += `<div class="section-title">[ YENİ SİPARİŞLER ]</div>`;
     for (const siparis of siparisler) {
-      let urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
-      if (siparis.porsiyon && siparis.porsiyon !== 1) {
-        const porsiyonText = siparis.porsiyon === 0.5 ? 'YARIM (0.5)' : siparis.porsiyon === 2 ? 'DUBLE (2)' : `${siparis.porsiyon}`;
-        urunAdi = `${porsiyonText} PORSİYON ` + urunAdi;
-      }
-      const miktar = siparis.miktar || 1;
+      const urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
+      const miktarStr = formatMiktarBirim(siparis);
       const varyantAd = siparis.varyant?.ad || siparis.varyant_adi || '';
       
       let opsiyonHTML = '';
@@ -110,7 +145,10 @@ export function generateMutfakHtml(
 
       html += `
         <div class="item">
-          <div><span class="qty">${miktar}x</span><span class="item-name">${urunAdi}</span></div>
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span class="qty" style="font-family: monospace; min-width: 80px; display: inline-block;">${miktarStr}</span>
+            <span class="item-name">${urunAdi}</span>
+          </div>
           ${varyantAd ? `<div class="variant">[${varyantAd}]</div>` : ''}
           ${opsiyonHTML}
           ${not ? `<div class="note">NOT: ${not}</div>` : ''}
@@ -122,12 +160,8 @@ export function generateMutfakHtml(
   if (iptaller && iptaller.length > 0) {
     html += `<div class="section-title" style="color: #000; background: #eee;">[ İPTAL EDİLENLER ]</div>`;
     for (const iptal of iptaller) {
-      let urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
-      if (iptal.porsiyon && iptal.porsiyon !== 1) {
-        const porsiyonText = iptal.porsiyon === 0.5 ? 'YARIM (0.5)' : iptal.porsiyon === 2 ? 'DUBLE (2)' : `${iptal.porsiyon}`;
-        urunAdi = `${porsiyonText} PORSİYON ` + urunAdi;
-      }
-      const miktar = iptal.miktar || 1;
+      const urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
+      const miktarStr = formatMiktarBirim(iptal);
       const varyantAd = iptal.varyant?.ad || iptal.varyant_adi || '';
       
       let opsiyonHTML = '';
@@ -138,9 +172,10 @@ export function generateMutfakHtml(
 
       html += `
         <div class="item">
-          <div class="cancelled-item">
-            <span class="qty">${miktar}x</span><span class="item-name">${urunAdi}</span>
-            <strong style="float:right; font-size:${smallSize}; border:1px solid #000; padding:2px;">İPTAL</strong>
+          <div class="cancelled-item" style="display: flex; align-items: baseline; gap: 8px;">
+            <span class="qty" style="font-family: monospace; min-width: 80px; display: inline-block;">${miktarStr}</span>
+            <span class="item-name" style="flex: 1;">${urunAdi}</span>
+            <strong style="font-size:${smallSize}; border:1px solid #000; padding:2px;">İPTAL</strong>
           </div>
           ${varyantAd ? `<div class="variant cancelled-item">[${varyantAd}]</div>` : ''}
           ${opsiyonHTML}
@@ -222,16 +257,13 @@ export function generateAdisyonHtml(
   for (const siparis of gecerliSiparisler) {
     const isIkram = siparis.ikram === 1;
     const fiyatStr = isIkram ? 'IKRAM' : formatPara(siparis.toplam_fiyat);
-    let urunAdi = siparis.urun_adi;
-    if (siparis.porsiyon && siparis.porsiyon !== 1) {
-      const porsiyonText = siparis.porsiyon === 0.5 ? '0.5' : siparis.porsiyon === 2 ? 'Double' : `${siparis.porsiyon}`;
-      urunAdi = `${urunAdi} (${porsiyonText} Porsiyon)`;
-    }
-    
+    const miktarStr = formatMiktarBirim(siparis);
+    const urunAdi = siparis.urun_adi || siparis.urun?.ad || 'Ürün';
+
     html += `
       <div class="item">
         <div class="item-details">
-          <span class="item-name">${siparis.miktar}x ${urunAdi}</span>
+          <span class="item-name"><span class="qty" style="display: inline-block; min-width: 68px; font-family: monospace; font-weight: bold;">${miktarStr}</span> ${urunAdi}</span>
           ${siparis.varyant_adi ? `<span class="item-sub">[${siparis.varyant_adi}]</span>` : ''}
         </div>
         ${config.showPrices ? `

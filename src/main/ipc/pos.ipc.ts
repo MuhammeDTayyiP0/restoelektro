@@ -9,9 +9,14 @@ import { HESAP_KANALLARI } from '../../common/ipc-channels'
 import { v4 as uuidv4 } from 'uuid'
 import type { YeniSiparis, YeniOdeme, IndirimBilgisi, HesapBolme } from '../../common/types/pos.types'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
+import { sutunYoksaEkle } from '../database/migration-runner'
 
 export function hesapIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
+
+  // Sütunların varlığını garanti altına al
+  sutunYoksaEkle(db, 'siparis', 'satis_birim', "TEXT DEFAULT 'porsiyon'")
+  sutunYoksaEkle(db, 'siparis', 'gramaj', 'REAL DEFAULT NULL')
 
   // Hesap numarası oluştur
   function hesapNoOlustur(): string {
@@ -154,7 +159,10 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           if (!urun) continue
 
           // Varyant fiyat farkını hesapla
-          const isKg = sip.secilenSatisTuru === 'kg'
+          const isKg = sip.secilenSatisTuru === 'kg' || (sip as any).satisBirim === 'kg' || (sip as any).satisBirim === 'kilo' || (sip.gramaj !== undefined && Number(sip.gramaj) > 0)
+          const satisBirim = isKg ? 'kg' : 'porsiyon'
+          const gramaj = (sip.gramaj !== undefined && Number(sip.gramaj) > 0) ? Number(sip.gramaj) : null
+
           let birimFiyat = sip.birim_fiyat !== undefined ? Number(sip.birim_fiyat) : urun.fiyat
           if (sip.varyant_id && sip.birim_fiyat === undefined) {
             const varyant = db.prepare('SELECT fiyat_farki FROM urun_varyant WHERE id = ?').get(sip.varyant_id) as any
@@ -165,12 +173,13 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           const toplamFiyat = sip.toplam_fiyat !== undefined ? Number(sip.toplam_fiyat) : (birimFiyat * sip.miktar * porsiyon)
 
           const sonuc = db.prepare(`
-            INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup, porsiyon)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup, porsiyon, satis_birim, gramaj)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).run(
             hesapId, sip.urun_id, sip.varyant_id || null, sip.miktar,
             birimFiyat, toplamFiyat, personelId, sip.notlar || null,
-            sip.ikram ? 1 : 0, urun.yazici_grup, porsiyon
+            sip.ikram ? 1 : 0, urun.yazici_grup, porsiyon,
+            satisBirim, gramaj
           )
 
           const yeniSiparisId = Number(sonuc.lastInsertRowid)
@@ -183,12 +192,14 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
             }
           }
 
-          // Reçete maliyetini hesapla, cost_price'a kaydet ve hammadde stoklarını otomatik düş
+          // Reçete maliyetini hesapla, cost_price'a kaydet ve hammadde stoklarını dinamik düş
           siparisStokDusVeMaliyetHesapla(db, {
             siparisId: yeniSiparisId,
             urunId: sip.urun_id,
             miktar: sip.miktar,
             porsiyon: porsiyon,
+            satisBirim: satisBirim,
+            gramaj: gramaj !== null ? gramaj : undefined,
             personelId: personelId,
             hesapId: hesapId,
             urunAdi: urun.ad,

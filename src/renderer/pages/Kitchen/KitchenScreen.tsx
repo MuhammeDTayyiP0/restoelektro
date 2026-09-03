@@ -9,7 +9,8 @@ import {
   CheckCheck, 
   Utensils, 
   Timer,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Scale
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -299,6 +300,19 @@ export default function KitchenScreen() {
                   <div className="flex-1 overflow-y-auto pos-scrollbar p-3 space-y-2.5 max-h-[calc(100vh-280px)]">
                     {fis.map(kalem => {
                       const hazirlaniyorMu = kalem.durum === 'hazirlaniyor'
+                      const isKg = (
+                        kalem.satis_birim?.toLowerCase() === 'kg' ||
+                        kalem.satis_birim?.toLowerCase() === 'kilo' ||
+                        (kalem as any).satisBirim?.toLowerCase() === 'kg' ||
+                        (kalem as any).satisBirim?.toLowerCase() === 'kilo' ||
+                        (kalem as any).secilenSatisTuru?.toLowerCase() === 'kg' ||
+                        (kalem.urun_birim?.toLowerCase() === 'kg') ||
+                        (kalem.gramaj !== undefined && Number(kalem.gramaj) > 0)
+                      )
+                      const gramaj = kalem.gramaj !== undefined && Number(kalem.gramaj) > 0 
+                        ? Number(kalem.gramaj) 
+                        : (isKg ? Number(kalem.miktar || 1) : 0)
+                      const gramajRozetMetni = gramaj > 0 ? `${gramaj.toFixed(3)} KG` : 'KG'
 
                       return (
                         <div 
@@ -310,23 +324,38 @@ export default function KitchenScreen() {
                               : 'bg-[#090D16] border-[#1A2234] hover:border-slate-600/40'
                           )}
                         >
-                          {/* Kalem Üst Bilgi (Miktar + Ürün Adı + Varyant) */}
+                          {/* Kalem Üst Bilgi (Miktar + Ürün Adı + Gramaj Rozeti + Varyant) */}
                           <div className="flex items-start gap-3">
                             {/* Miktar Rozeti */}
                             <div className={clsx(
-                              "w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 border",
-                              hazirlaniyorMu
-                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                                : "bg-sky-500/15 text-sky-400 border-sky-500/30"
+                              "w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-xs shrink-0 border",
+                              isKg
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.25)]"
+                                : hazirlaniyorMu
+                                  ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                  : "bg-sky-500/15 text-sky-400 border-sky-500/30"
                             )}>
-                              {kalem.miktar}x
+                              {isKg ? (kalem.miktar > 1 ? `${kalem.miktar}x` : 'KG') : `${kalem.miktar}x`}
                             </div>
 
-                            {/* Ürün & Varyant */}
+                            {/* Ürün & Varyant & Gramaj Rozeti */}
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-sm lg:text-base font-black text-white leading-tight tracking-tight">
-                                {kalem.urun_adi}
-                              </h4>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-sm lg:text-base font-black text-white leading-tight tracking-tight">
+                                  {kalem.urun_adi}
+                                </h4>
+                                {isKg && (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-mono font-black tracking-wider bg-emerald-950/90 text-emerald-300 border border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] uppercase">
+                                    <Scale size={13} className="text-emerald-400 shrink-0" />
+                                    <span>{kalem.miktar > 1 && kalem.gramaj ? `${kalem.miktar}x ` : ''}{gramajRozetMetni}</span>
+                                  </span>
+                                )}
+                                {!isKg && kalem.porsiyon && kalem.porsiyon !== 1 && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                    {kalem.porsiyon === 0.5 ? '0.5 Por' : kalem.porsiyon === 2 ? 'Duble Por' : `${kalem.porsiyon} Por`}
+                                  </span>
+                                )}
+                              </div>
                               {kalem.varyant_adi && (
                                 <div className="mt-1">
                                   <span className="inline-block text-[11px] font-mono font-bold text-sky-300 bg-sky-950/60 border border-sky-800/50 px-2 py-0.5 rounded-md">

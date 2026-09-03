@@ -92,6 +92,8 @@ export interface SiparisStokDusumParam {
   urunId: number
   miktar: number
   porsiyon?: number
+  satisBirim?: string
+  gramaj?: number
   personelId?: number
   hesapId?: number
   urunAdi?: string
@@ -100,6 +102,10 @@ export interface SiparisStokDusumParam {
 /**
  * Sipariş onaylandığında ürünün reçetesindeki hammaddeleri otomatik stoktan düşer,
  * stok_hareket kaydı oluşturur ve siparişin cost_price maliyetini hesaplayıp günceller.
+ * 
+ * Mantık:
+ * - satisBirim === 'kg' veya gramaj > 0 ise girilen gramaj miktarınca orantılı stok düşülür (örn: 0.750).
+ * - Porsiyon satışı ise porsiyon çarpanı (1, 1.5 vb.) * miktar üzerinden stok düşülür.
  */
 export function siparisStokDusVeMaliyetHesapla(
   db: Database.Database,
@@ -107,7 +113,17 @@ export function siparisStokDusVeMaliyetHesapla(
 ): { birimMaliyet: number; toplamMaliyet: number } {
   const miktar = Number(param.miktar || 1)
   const porsiyon = Number(param.porsiyon || 1)
-  const toplamCarpani = miktar * porsiyon
+  const satisBirim = (param.satisBirim || '').toLowerCase().trim()
+  const gramaj = param.gramaj !== undefined && Number(param.gramaj) > 0 ? Number(param.gramaj) : 0
+  const isKg = satisBirim === 'kg' || satisBirim === 'kilo' || gramaj > 0
+
+  // Çarpan belirleme:
+  // Eğer satisBirim === 'kg' veya gramaj bilgisi varsa (gramaj > 0),
+  // doğrudan girilen gramaj miktarınca (örn: 0.750 ile çarpılarak) orantılı stok düş.
+  // Porsiyon satışı ise mevcut porsiyon çarpanı (1, 1.5 vb.) * miktar üzerinden stok düş.
+  const toplamCarpani = isKg
+    ? (gramaj > 0 ? Number((gramaj * miktar).toFixed(4)) : miktar)
+    : Number((miktar * porsiyon).toFixed(4))
 
   // Reçetedeki hammaddeleri çek
   const receteKalemleri = db.prepare(`
@@ -127,6 +143,7 @@ export function siparisStokDusVeMaliyetHesapla(
   }>
 
   let birimMaliyet = 0
+  const birimEtiket = isKg ? `${gramaj > 0 ? `${gramaj} KG` : 'KG'}` : `${porsiyon !== 1 ? `${porsiyon}p` : '1p'}`
 
   for (const kalem of receteKalemleri) {
     // 1 porsiyonda reçeteden hammadde birimine dönüştürülmüş miktar
@@ -134,7 +151,7 @@ export function siparisStokDusVeMaliyetHesapla(
     const kalemBirimMaliyet = porsiyonDonusenMiktar * (kalem.maliyet_birim || 0)
     birimMaliyet += kalemBirimMaliyet
 
-    // Toplam sipariş için düşülecek hammadde miktarı
+    // Toplam sipariş için düşülecek hammadde miktarı (gramaj orantılı veya porsiyon bazlı)
     const toplamDusulecekMiktar = Number((porsiyonDonusenMiktar * toplamCarpani).toFixed(4))
 
     if (toplamDusulecekMiktar > 0) {
@@ -147,7 +164,7 @@ export function siparisStokDusVeMaliyetHesapla(
       `).run(toplamDusulecekMiktar, kalem.hammadde_id)
 
       // 2. Stok hareket kaydı ekle
-      const aciklama = `Otomatik Reçete Düşümü: Sipariş #${param.siparisId} (${param.urunAdi || 'Ürün'} x${miktar}${porsiyon !== 1 ? ` x${porsiyon}p` : ''})`
+      const aciklama = `Otomatik Reçete Düşümü: Sipariş #${param.siparisId} (${param.urunAdi || 'Ürün'} [${birimEtiket}] x${miktar})`
       db.prepare(`
         INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
         VALUES (?, 'satis', ?, ?, ?, ?)
@@ -158,6 +175,45 @@ export function siparisStokDusVeMaliyetHesapla(
         aciklama,
         param.personelId || null
       )
+    }
+  }
+
+  // Reçete kaydı bulunamadıysa doğrudan ürün adıyla eşleşen hammaddeyi kontrol et
+  if (receteKalemleri.length === 0 && param.urunAdi) {
+    const directHammadde = db.prepare(`
+      SELECT id, ad, birim, maliyet_birim, mevcut_stok
+      FROM hammadde
+      WHERE aktif = 1 AND (LOWER(ad) = LOWER(?) OR LOWER(ad) LIKE LOWER(?))
+      LIMIT 1
+    `).get(param.urunAdi, `%${param.urunAdi}%`) as any
+
+    if (directHammadde) {
+      const bazBirim = isKg ? 'kg' : 'adet'
+      const donusenMiktar = birimDonustur(toplamCarpani, bazBirim, directHammadde.birim)
+      const dusulecek = Number(donusenMiktar.toFixed(4))
+
+      if (dusulecek > 0) {
+        db.prepare(`
+          UPDATE hammadde
+          SET mevcut_stok = ROUND(MAX(0, mevcut_stok - ?), 4),
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(dusulecek, directHammadde.id)
+
+        const aciklama = `Otomatik Stok Düşümü: Sipariş #${param.siparisId} (${param.urunAdi} [${birimEtiket}] x${miktar})`
+        db.prepare(`
+          INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
+          VALUES (?, 'satis', ?, ?, ?, ?)
+        `).run(
+          directHammadde.id,
+          dusulecek,
+          directHammadde.maliyet_birim || 0,
+          aciklama,
+          param.personelId || null
+        )
+
+        birimMaliyet = directHammadde.maliyet_birim || 0
+      }
     }
   }
 
@@ -183,7 +239,7 @@ export function siparisStokGeriYukle(
   personelId?: number
 ): void {
   const siparis = db.prepare(`
-    SELECT s.id, s.urun_id, s.miktar, s.porsiyon, u.ad as urun_adi
+    SELECT s.id, s.urun_id, s.miktar, s.porsiyon, s.satis_birim, s.gramaj, u.ad as urun_adi
     FROM siparis s
     JOIN urun u ON u.id = s.urun_id
     WHERE s.id = ?
@@ -193,7 +249,15 @@ export function siparisStokGeriYukle(
 
   const miktar = Number(siparis.miktar || 1)
   const porsiyon = Number(siparis.porsiyon || 1)
-  const toplamCarpani = miktar * porsiyon
+  const satisBirim = (siparis.satis_birim || '').toLowerCase().trim()
+  const gramaj = siparis.gramaj !== undefined && Number(siparis.gramaj) > 0 ? Number(siparis.gramaj) : 0
+  const isKg = satisBirim === 'kg' || satisBirim === 'kilo' || gramaj > 0
+
+  const toplamCarpani = isKg
+    ? (gramaj > 0 ? Number((gramaj * miktar).toFixed(4)) : miktar)
+    : Number((miktar * porsiyon).toFixed(4))
+
+  const birimEtiket = isKg ? `${gramaj > 0 ? `${gramaj} KG` : 'KG'}` : `${porsiyon !== 1 ? `${porsiyon}p` : '1p'}`
 
   const receteKalemleri = db.prepare(`
     SELECT r.hammadde_id, r.miktar, r.birim as recete_birim,
@@ -224,7 +288,7 @@ export function siparisStokGeriYukle(
       `).run(iadeMiktari, kalem.hammadde_id)
 
       // Stok hareket kaydı (iade)
-      const aciklama = `Sipariş İptal İadesi: Sipariş #${siparis.id} (${siparis.urun_adi} x${miktar})`
+      const aciklama = `Sipariş İptal İadesi: Sipariş #${siparis.id} (${siparis.urun_adi} [${birimEtiket}] x${miktar})`
       db.prepare(`
         INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
         VALUES (?, 'giris', ?, ?, ?, ?)
@@ -237,4 +301,42 @@ export function siparisStokGeriYukle(
       )
     }
   }
+
+  // Reçete yoksa doğrudan ürün adıyla eşleşen hammaddeyi geri yükle
+  if (receteKalemleri.length === 0 && siparis.urun_adi) {
+    const directHammadde = db.prepare(`
+      SELECT id, ad, birim, maliyet_birim
+      FROM hammadde
+      WHERE aktif = 1 AND (LOWER(ad) = LOWER(?) OR LOWER(ad) LIKE LOWER(?))
+      LIMIT 1
+    `).get(siparis.urun_adi, `%${siparis.urun_adi}%`) as any
+
+    if (directHammadde) {
+      const bazBirim = isKg ? 'kg' : 'adet'
+      const donusenMiktar = birimDonustur(toplamCarpani, bazBirim, directHammadde.birim)
+      const iadeMiktari = Number(donusenMiktar.toFixed(4))
+
+      if (iadeMiktari > 0) {
+        db.prepare(`
+          UPDATE hammadde
+          SET mevcut_stok = ROUND(mevcut_stok + ?, 4),
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(iadeMiktari, directHammadde.id)
+
+        const aciklama = `Sipariş İptal İadesi: Sipariş #${siparis.id} (${siparis.urun_adi} [${birimEtiket}] x${miktar})`
+        db.prepare(`
+          INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
+          VALUES (?, 'giris', ?, ?, ?, ?)
+        `).run(
+          directHammadde.id,
+          iadeMiktari,
+          directHammadde.maliyet_birim || 0,
+          aciklama,
+          personelId || null
+        )
+      }
+    }
+  }
 }
+
