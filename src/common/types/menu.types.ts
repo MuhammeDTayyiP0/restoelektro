@@ -112,7 +112,7 @@ export interface YeniKategori {
 export type YaziciGrubu = 'mutfak' | 'bar' | 'tatli' | 'direkt'
 
 /** Toplu Fiyat Güncelleme Hedef Birim */
-export type HedefFiyatBirimi = 'porsiyon' | 'kg' | 'hepsi'
+export type HedefFiyatBirimi = 'hepsi' | 'porsiyon' | 'kg' | 'adet' | 'gram' | 'litre' | 'paket' | string
 
 /** Toplu Fiyat Güncelleme İşlem Türü */
 export type FiyatIslemTuru = 'yuzde' | 'tutar'
@@ -120,7 +120,7 @@ export type FiyatIslemTuru = 'yuzde' | 'tutar'
 /** Toplu Fiyat Güncelleme İsteği */
 export interface TopluFiyatGuncellemeIstegi {
   urunIds: number[]
-  hedefBirim: HedefFiyatBirimi
+  hedefBirim: HedefFiyatBirimi | string
   islemTuru: FiyatIslemTuru
   deger: number
   yuvarlama?: 5 | 10 | null

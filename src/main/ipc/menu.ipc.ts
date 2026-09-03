@@ -246,6 +246,20 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
         return { basarili: false, hata: 'Güncellenecek ürün seçilmedi' }
       }
 
+      // Dinamik birim eşleştirme fonksiyonu (büyük/küçük harf ve eş anlamlı duyarlı)
+      const birimEslesir = (birimA: string, hedef: string): boolean => {
+        if (!hedef || hedef === 'hepsi') return true
+        const a = (birimA || '').trim().toLowerCase()
+        const b = (hedef || '').trim().toLowerCase()
+        if (a === b) return true
+        if (b === 'kg' || b === 'kilo') return ['kg', 'kilo', 'kilogram'].includes(a)
+        if (b === 'porsiyon') return ['porsiyon', 'pors'].includes(a)
+        if (b === 'adet') return ['adet', 'tane'].includes(a)
+        if (b === 'gram' || b === 'gr') return ['gram', 'gr', 'g'].includes(a)
+        if (b === 'litre' || b === 'lt') return ['litre', 'lt', 'l'].includes(a)
+        return false
+      }
+
       // Fiyat hesaplama fonksiyonu
       const hesaplaYeniFiyat = (eski: number): number => {
         let yeni = Number(eski) || 0
@@ -312,43 +326,36 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
             if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: Number(urun.kilo_fiyati) })
           }
           if (turler.length === 0) {
-            const b = (urun.birim || 'porsiyon').toLowerCase()
-            turler.push({ birim: b === 'kg' ? 'kg' : (b === 'adet' ? 'adet' : 'porsiyon'), fiyat: Number(urun.fiyat) || 0 })
+            const b = urun.birim || 'Porsiyon'
+            turler.push({ birim: b, fiyat: Number(urun.fiyat) || 0 })
           }
 
           // Hedef birime göre güncelle (diğer türlerin fiyat ve yapısını koru)
+          let herhangiBirTurGuncellendi = false
           const guncelTurler = turler.map(t => {
-            const b = (t.birim || '').trim().toLowerCase()
-            const isPorsiyon = ['porsiyon', 'adet', 'tane', 'pors'].includes(b)
-            const isKg = ['kg', 'kilo', 'gramaj'].includes(b)
-
-            if (hedefBirim === 'hepsi') {
-              return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
-            } else if (hedefBirim === 'porsiyon' && isPorsiyon) {
-              return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
-            } else if (hedefBirim === 'kg' && isKg) {
+            if (birimEslesir(t.birim, hedefBirim)) {
+              herhangiBirTurGuncellendi = true
               return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
             }
             return t // Diğer türleri bozma
           })
 
-          // Porsiyon ve KG fiyatlarını güncelle
-          const porsiyonTur = guncelTurler.find(t => ['porsiyon', 'adet', 'tane', 'pors'].includes((t.birim || '').trim().toLowerCase()))
-          const kgTur = guncelTurler.find(t => ['kg', 'kilo', 'gramaj'].includes((t.birim || '').trim().toLowerCase()))
+          // Porsiyon ve KG fiyatlarını senkronize et
+          const porsiyonTur = guncelTurler.find(t => birimEslesir(t.birim, 'porsiyon'))
+          const kgTur = guncelTurler.find(t => birimEslesir(t.birim, 'kg'))
 
-          let yeniPorsiyon = porsiyonTur ? porsiyonTur.fiyat : (urun.porsiyon_fiyati ? (hedefBirim !== 'kg' ? hesaplaYeniFiyat(urun.porsiyon_fiyati) : urun.porsiyon_fiyati) : null)
-          let yeniKg = kgTur ? kgTur.fiyat : (urun.kilo_fiyati ? (hedefBirim !== 'porsiyon' ? hesaplaYeniFiyat(urun.kilo_fiyati) : urun.kilo_fiyati) : null)
+          let yeniPorsiyon = porsiyonTur ? porsiyonTur.fiyat : (urun.porsiyon_fiyati ? (birimEslesir('porsiyon', hedefBirim) ? hesaplaYeniFiyat(urun.porsiyon_fiyati) : urun.porsiyon_fiyati) : null)
+          let yeniKg = kgTur ? kgTur.fiyat : (urun.kilo_fiyati ? (birimEslesir('kg', hedefBirim) ? hesaplaYeniFiyat(urun.kilo_fiyati) : urun.kilo_fiyati) : null)
 
-          // Ana fiyat sütunu (fiyat) belirleme
+          // Ana fiyat sütunu (fiyat) belirleme: Ürünün birimine denk gelen satış türünü al veya hedef birimle eşleşiyorsa güncelle
+          const eslesenAnaTur = guncelTurler.find(t => birimEslesir(t.birim, urun.birim || '')) || guncelTurler[0]
           let yeniAnaFiyat = urun.fiyat
-          const bLower = (urun.birim || '').trim().toLowerCase()
-          if (bLower === 'kg') {
-            if (yeniKg !== null) yeniAnaFiyat = yeniKg
-          } else {
-            if (yeniPorsiyon !== null) yeniAnaFiyat = yeniPorsiyon
-            else if (hedefBirim === 'hepsi' || hedefBirim === 'porsiyon') {
-              yeniAnaFiyat = hesaplaYeniFiyat(urun.fiyat)
-            }
+          if (eslesenAnaTur && birimEslesir(eslesenAnaTur.birim, hedefBirim)) {
+            yeniAnaFiyat = eslesenAnaTur.fiyat
+          } else if (birimEslesir(urun.birim || '', hedefBirim)) {
+            yeniAnaFiyat = hesaplaYeniFiyat(urun.fiyat)
+          } else if (herhangiBirTurGuncellendi && eslesenAnaTur) {
+            yeniAnaFiyat = eslesenAnaTur.fiyat
           }
 
           updateStmt.run(
