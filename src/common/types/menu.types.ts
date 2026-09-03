@@ -110,3 +110,24 @@ export interface YeniKategori {
 
 /** Yazıcı grubu tanımı */
 export type YaziciGrubu = 'mutfak' | 'bar' | 'tatli' | 'direkt'
+
+/** Toplu Fiyat Güncelleme Hedef Birim */
+export type HedefFiyatBirimi = 'porsiyon' | 'kg' | 'hepsi'
+
+/** Toplu Fiyat Güncelleme İşlem Türü */
+export type FiyatIslemTuru = 'yuzde' | 'tutar'
+
+/** Toplu Fiyat Güncelleme İsteği */
+export interface TopluFiyatGuncellemeIstegi {
+  urunIds: number[]
+  hedefBirim: HedefFiyatBirimi
+  islemTuru: FiyatIslemTuru
+  deger: number
+  yuvarlama?: 5 | 10 | null
+  manuelFiyatlar?: Record<number, {
+    fiyat?: number
+    porsiyon_fiyati?: number | null
+    kilo_fiyati?: number | null
+    satis_turleri?: SatisTuru[]
+  }>
+}

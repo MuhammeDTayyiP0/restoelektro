@@ -34,7 +34,7 @@ const izinliKanallar = [
   // Menü
   'menu:kategoriler', 'menu:kategori-ekle', 'menu:kategori-guncelle', 'menu:kategori-sil',
   'menu:urunler', 'menu:urun-detay', 'menu:urun-ekle', 'menu:urun-guncelle', 'menu:urun-sil',
-  'menu:urun-ara', 'menu:resim-yukle',
+  'menu:urun-ara', 'menu:resim-yukle', 'menu:toplu-fiyat-guncelle',
   // Masa
   'masa:bolumler', 'masa:bolum-ekle', 'masa:bolum-guncelle', 'masa:masalar', 'masa:masa-ekle',
   'masa:toplu-ekle', 'masa:masa-guncelle', 'masa:durumu', 'masa:birlestir', 'masa:tasi',

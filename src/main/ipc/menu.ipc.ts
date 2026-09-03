@@ -6,12 +6,17 @@
 import { IpcMain, app as electronApp } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { MENU_KANALLARI } from '../../common/ipc-channels'
-import type { YeniKategori, YeniUrun } from '../../common/types/menu.types'
+import type { YeniKategori, YeniUrun, TopluFiyatGuncellemeIstegi } from '../../common/types/menu.types'
+import { sutunYoksaEkle } from '../database/migration-runner'
 import path from 'path'
 import fs from 'fs'
 
 export function menuIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
+
+  // Sütunların varlığını garanti altına al
+  sutunYoksaEkle(db, 'urun', 'porsiyon_fiyati', 'REAL DEFAULT NULL')
+  sutunYoksaEkle(db, 'urun', 'kilo_fiyati', 'REAL DEFAULT NULL')
 
   // Kategorileri listele
   ipcMain.handle(MENU_KANALLARI.KATEGORILER, async () => {
@@ -124,14 +129,16 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       : (veri.satis_turleri ? JSON.stringify(veri.satis_turleri) : null)
 
     const sonuc = db.prepare(`
-      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, satis_turleri)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, satis_turleri, porsiyon_fiyati, kilo_fiyati)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       veri.kategori_id, veri.barkod || null, veri.ad, veri.kisaltma || null,
       veri.aciklama || veri.kisaltma || null,
       veri.fiyat, veri.kdv_orani || 10, veri.birim || 'Adet',
       veri.resim_yolu || null, veri.yazici_grup || 'mutfak',
-      satisTurleriStr
+      satisTurleriStr,
+      veri.porsiyon_fiyati ?? null,
+      veri.kilo_fiyati ?? null
     )
     return { basarili: true, id: sonuc.lastInsertRowid }
   })
@@ -150,6 +157,8 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     if (veri.birim !== undefined) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
     if (veri.resim_yolu !== undefined) { alanlar.push('resim_yolu = ?'); degerler.push(veri.resim_yolu) }
     if (veri.yazici_grup !== undefined) { alanlar.push('yazici_grup = ?'); degerler.push(veri.yazici_grup) }
+    if (veri.porsiyon_fiyati !== undefined) { alanlar.push('porsiyon_fiyati = ?'); degerler.push(veri.porsiyon_fiyati) }
+    if (veri.kilo_fiyati !== undefined) { alanlar.push('kilo_fiyati = ?'); degerler.push(veri.kilo_fiyati) }
     if (veri.satis_turleri !== undefined) {
       alanlar.push('satis_turleri = ?')
       degerler.push(
@@ -227,4 +236,138 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       return { basarili: false, hata: err.message || 'Görsel kaydedilemedi' }
     }
   })
+
+  // Toplu Fiyat Güncelle (Tek Transaction ile satis_turleri, porsiyon_fiyati, kilo_fiyati ve fiyat güncelleme)
+  ipcMain.handle(MENU_KANALLARI.TOPLU_FIYAT_GUNCELLE, async (_event, veri: TopluFiyatGuncellemeIstegi) => {
+    try {
+      const { urunIds, hedefBirim = 'hepsi', islemTuru = 'yuzde', deger = 0, yuvarlama, manuelFiyatlar } = veri
+
+      if (!urunIds || !Array.isArray(urunIds) || urunIds.length === 0) {
+        return { basarili: false, hata: 'Güncellenecek ürün seçilmedi' }
+      }
+
+      // Fiyat hesaplama fonksiyonu
+      const hesaplaYeniFiyat = (eski: number): number => {
+        let yeni = Number(eski) || 0
+        if (islemTuru === 'yuzde') {
+          yeni = eski * (1 + Number(deger) / 100)
+        } else {
+          yeni = eski + Number(deger)
+        }
+
+        if (yuvarlama === 5) {
+          yeni = Math.max(5, Math.round(yeni / 5) * 5)
+        } else if (yuvarlama === 10) {
+          yeni = Math.max(10, Math.round(yeni / 10) * 10)
+        } else {
+          yeni = Math.max(0, Math.round(yeni * 100) / 100)
+        }
+        return yeni
+      }
+
+      const guncelleTransaction = db.transaction((idListesi: number[]) => {
+        const selectStmt = db.prepare('SELECT id, ad, fiyat, birim, satis_turleri, porsiyon_fiyati, kilo_fiyati FROM urun WHERE id = ?')
+        const updateStmt = db.prepare(`
+          UPDATE urun 
+          SET satis_turleri = ?, 
+              fiyat = ?, 
+              porsiyon_fiyati = ?, 
+              kilo_fiyati = ?, 
+              updated_at = CURRENT_TIMESTAMP 
+          WHERE id = ?
+        `)
+
+        for (const id of idListesi) {
+          const urun = selectStmt.get(id) as any
+          if (!urun) continue
+
+          // Eğer UI'daki simülasyon tablosundan manuel olarak fiyat girilmişse direkt onu uygula
+          const manuel = manuelFiyatlar?.[id]
+          if (manuel) {
+            updateStmt.run(
+              JSON.stringify(manuel.satis_turleri || []),
+              manuel.fiyat ?? urun.fiyat,
+              manuel.porsiyon_fiyati ?? null,
+              manuel.kilo_fiyati ?? null,
+              id
+            )
+            continue
+          }
+
+          // Satış türlerini ayrıştır
+          let turler: Array<{ birim: string; fiyat: number }> = []
+          if (typeof urun.satis_turleri === 'string') {
+            try {
+              turler = JSON.parse(urun.satis_turleri)
+            } catch {
+              turler = []
+            }
+          } else if (Array.isArray(urun.satis_turleri)) {
+            turler = [...urun.satis_turleri]
+          }
+
+          // Eğer boşsa, geriye dönük sütunlardan tohumla
+          if (turler.length === 0) {
+            if (urun.porsiyon_fiyati) turler.push({ birim: 'porsiyon', fiyat: Number(urun.porsiyon_fiyati) })
+            if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: Number(urun.kilo_fiyati) })
+          }
+          if (turler.length === 0) {
+            const b = (urun.birim || 'porsiyon').toLowerCase()
+            turler.push({ birim: b === 'kg' ? 'kg' : (b === 'adet' ? 'adet' : 'porsiyon'), fiyat: Number(urun.fiyat) || 0 })
+          }
+
+          // Hedef birime göre güncelle (diğer türlerin fiyat ve yapısını koru)
+          const guncelTurler = turler.map(t => {
+            const b = (t.birim || '').trim().toLowerCase()
+            const isPorsiyon = ['porsiyon', 'adet', 'tane', 'pors'].includes(b)
+            const isKg = ['kg', 'kilo', 'gramaj'].includes(b)
+
+            if (hedefBirim === 'hepsi') {
+              return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
+            } else if (hedefBirim === 'porsiyon' && isPorsiyon) {
+              return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
+            } else if (hedefBirim === 'kg' && isKg) {
+              return { ...t, fiyat: hesaplaYeniFiyat(Number(t.fiyat) || 0) }
+            }
+            return t // Diğer türleri bozma
+          })
+
+          // Porsiyon ve KG fiyatlarını güncelle
+          const porsiyonTur = guncelTurler.find(t => ['porsiyon', 'adet', 'tane', 'pors'].includes((t.birim || '').trim().toLowerCase()))
+          const kgTur = guncelTurler.find(t => ['kg', 'kilo', 'gramaj'].includes((t.birim || '').trim().toLowerCase()))
+
+          let yeniPorsiyon = porsiyonTur ? porsiyonTur.fiyat : (urun.porsiyon_fiyati ? (hedefBirim !== 'kg' ? hesaplaYeniFiyat(urun.porsiyon_fiyati) : urun.porsiyon_fiyati) : null)
+          let yeniKg = kgTur ? kgTur.fiyat : (urun.kilo_fiyati ? (hedefBirim !== 'porsiyon' ? hesaplaYeniFiyat(urun.kilo_fiyati) : urun.kilo_fiyati) : null)
+
+          // Ana fiyat sütunu (fiyat) belirleme
+          let yeniAnaFiyat = urun.fiyat
+          const bLower = (urun.birim || '').trim().toLowerCase()
+          if (bLower === 'kg') {
+            if (yeniKg !== null) yeniAnaFiyat = yeniKg
+          } else {
+            if (yeniPorsiyon !== null) yeniAnaFiyat = yeniPorsiyon
+            else if (hedefBirim === 'hepsi' || hedefBirim === 'porsiyon') {
+              yeniAnaFiyat = hesaplaYeniFiyat(urun.fiyat)
+            }
+          }
+
+          updateStmt.run(
+            JSON.stringify(guncelTurler),
+            yeniAnaFiyat,
+            yeniPorsiyon,
+            yeniKg,
+            id
+          )
+        }
+      })
+
+      guncelleTransaction(urunIds)
+
+      return { basarili: true, guncellenenSayisi: urunIds.length }
+    } catch (err: any) {
+      console.error('TOPLU_FIYAT_GUNCELLE Hatası:', err)
+      return { basarili: false, hata: err.message || 'Toplu fiyat güncellenemedi' }
+    }
+  })
 }
+

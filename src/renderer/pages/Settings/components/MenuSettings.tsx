@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '../../../components/ui/Button'
 import { Modal } from '../../../components/ui/Modal'
 import { useToast } from '../../../components/ui/Toast'
 import { ipcInvoke } from '../../../hooks/useIPC'
 import { MENU_KANALLARI, STOK_KANALLARI } from '../../../../common/ipc-channels'
+import type { HedefFiyatBirimi, FiyatIslemTuru, TopluFiyatGuncellemeIstegi } from '../../../../common/types/menu.types'
 import { 
   Edit2, 
   Trash2, 
@@ -25,11 +26,17 @@ import {
   FolderPlus,
   UploadCloud,
   Image as ImageIcon,
-  Camera
+  Camera,
+  CheckSquare,
+  Square,
+  CheckCheck,
+  Scale,
+  Eye,
+  AlertCircle
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatPara, formatResimUrl, formatSatisTurleri } from '../../../utils/formatters'
+import { formatPara, formatResimUrl, formatSatisTurleri, getUrunSatisTurleri, getUrunPorsiyonFiyati, getUrunKiloFiyati } from '../../../utils/formatters'
 import { ProductImageCropper } from './ProductImageCropper'
 
 const ISTEK_ZAMAN_ASIMI = 12_000
@@ -117,11 +124,23 @@ export default function MenuSettings() {
   const [receteYukleniyor, setReceteYukleniyor] = useState(false)
 
   // Toplu Fiyat Güncelleme State
+  const [topluSecimModu, setTopluSecimModu] = useState<'kategori' | 'ozel'>('kategori')
   const [topluKategoriId, setTopluKategoriId] = useState<string>('tum')
-  const [artisTipi, setArtisTipi] = useState<'yuzde' | 'tutar'>('yuzde')
+  const [ozelSecilenUrunIds, setOzelSecilenUrunIds] = useState<number[]>([])
+  const [ozelUrunArama, setOzelUrunArama] = useState<string>('')
+  const [ozelKategoriFiltre, setOzelKategoriFiltre] = useState<string>('tum')
+
+  const [hedefBirim, setHedefBirim] = useState<HedefFiyatBirimi>('hepsi')
+  const [artisTipi, setArtisTipi] = useState<FiyatIslemTuru>('yuzde')
   const [artisDegeri, setArtisDegeri] = useState<string>('10')
-  const [fiyatOnizleme, setFiyatOnizleme] = useState<Record<number, number>>({})
+  const [yuvarlamaAktif, setYuvarlamaAktif] = useState<boolean>(false)
+  const [yuvarlamaKati, setYuvarlamaKati] = useState<5 | 10>(5)
+
+  const [manuelFiyatlar, setManuelFiyatlar] = useState<Record<number, Record<string, number>>>({})
+  const [onizlemeModalAcik, setOnizlemeModalAcik] = useState<boolean>(false)
+  const [simulasyonArama, setSimulasyonArama] = useState<string>('')
   const [topluKayitYukleniyor, setTopluKayitYukleniyor] = useState(false)
+
 
   // Renk Paleti Seçenekleri
   const hazirRenkler = [
@@ -554,64 +573,231 @@ export default function MenuSettings() {
     }
   }
 
-  // Toplu Fiyat Hesaplama
-  const topluFiyatHedefUrunler = useMemo(() => {
-    return urunler.filter(u => {
-      if (topluKategoriId === 'tum') return true
-      return String(u.kategori_id) === topluKategoriId
-    })
-  }, [urunler, topluKategoriId])
-
-  const handleTopluFiyatHesapla = (yeniArtisDegeri?: string, yeniArtisTipi?: 'yuzde' | 'tutar') => {
-    const val = Number(yeniArtisDegeri !== undefined ? yeniArtisDegeri : artisDegeri) || 0
-    const tip = yeniArtisTipi || artisTipi
-    const harita: Record<number, number> = {}
-
-    topluFiyatHedefUrunler.forEach(u => {
-      const eski = Number(u.fiyat || 0)
-      let yeni = eski
-      if (tip === 'yuzde') {
-        yeni = Math.round((eski * (1 + val / 100)) * 100) / 100
+  // Mod Değişimi & Ürün Seçimi
+  const handleModDegistir = (yeniMod: 'kategori' | 'ozel') => {
+    setTopluSecimModu(yeniMod)
+    if (yeniMod === 'ozel' && ozelSecilenUrunIds.length === 0) {
+      if (topluKategoriId === 'tum') {
+        setOzelSecilenUrunIds(urunler.map(u => u.id))
       } else {
-        yeni = Math.max(0, eski + val)
+        setOzelSecilenUrunIds(urunler.filter(u => String(u.kategori_id) === topluKategoriId).map(u => u.id))
       }
-      harita[u.id] = yeni
-    })
-    setFiyatOnizleme(harita)
+    }
   }
 
-  // Otomatik hesaplama tetikleyici
-  useEffect(() => {
-    if (subTab === 'fiyat-guncelleme') {
-      handleTopluFiyatHesapla()
+  // Toplu İşleme Dahil Olan Ürünler
+  const hedefUrunler = useMemo(() => {
+    if (topluSecimModu === 'kategori') {
+      if (topluKategoriId === 'tum') return urunler
+      return urunler.filter(u => String(u.kategori_id) === topluKategoriId)
+    } else {
+      return urunler.filter(u => ozelSecilenUrunIds.includes(u.id))
     }
-  }, [subTab, topluKategoriId, artisTipi, artisDegeri, urunler])
+  }, [urunler, topluSecimModu, topluKategoriId, ozelSecilenUrunIds])
 
-  // Toplu Fiyat Değişikliklerini Kaydet
+  // Tek Tek Ürün Seçim Listesi (Arama ve Kategori Filtresi ile)
+  const ozelGosterilenUrunler = useMemo(() => {
+    return urunler.filter(u => {
+      if (ozelKategoriFiltre !== 'tum' && String(u.kategori_id) !== ozelKategoriFiltre) return false
+      if (!ozelUrunArama.trim()) return true
+      const q = ozelUrunArama.toLowerCase()
+      return (
+        (u.ad || '').toLowerCase().includes(q) ||
+        (u.barkod || '').toLowerCase().includes(q) ||
+        (u.kisaltma || '').toLowerCase().includes(q)
+      )
+    })
+  }, [urunler, ozelKategoriFiltre, ozelUrunArama])
+
+  const handleTumunuSec = () => {
+    const ids = ozelGosterilenUrunler.map(u => u.id)
+    setOzelSecilenUrunIds(prev => Array.from(new Set([...prev, ...ids])))
+  }
+
+  const handleSecimiTemizle = () => {
+    if (ozelUrunArama.trim() || ozelKategoriFiltre !== 'tum') {
+      const cikarilacaklar = new Set(ozelGosterilenUrunler.map(u => u.id))
+      setOzelSecilenUrunIds(prev => prev.filter(id => !cikarilacaklar.has(id)))
+    } else {
+      setOzelSecilenUrunIds([])
+    }
+  }
+
+  const handleUrunSecimToggle = (urunId: number) => {
+    setOzelSecilenUrunIds(prev =>
+      prev.includes(urunId) ? prev.filter(id => id !== urunId) : [...prev, urunId]
+    )
+  }
+
+  // Fiyat Hesaplama Formülü
+  const hesaplaYeniFiyat = useCallback((eskiFiyat: number): number => {
+    const val = Number(artisDegeri) || 0
+    let yeni = Number(eskiFiyat) || 0
+    if (artisTipi === 'yuzde') {
+      yeni = eskiFiyat * (1 + val / 100)
+    } else {
+      yeni = eskiFiyat + val
+    }
+
+    if (yuvarlamaAktif) {
+      yeni = Math.max(yuvarlamaKati, Math.round(yeni / yuvarlamaKati) * yuvarlamaKati)
+    } else {
+      yeni = Math.max(0, Math.round(yeni * 100) / 100)
+    }
+    return yeni
+  }, [artisDegeri, artisTipi, yuvarlamaAktif, yuvarlamaKati])
+
+  // Simülasyon Veri Yapısı
+  interface SimulasyonKalemi {
+    id: string
+    urunId: number
+    urunAdi: string
+    kategoriAdi: string
+    birim: string
+    eskiFiyat: number
+    yeniFiyat: number
+    fark: number
+    yuzdeFark: number
+    etkileniyor: boolean
+  }
+
+  const simulasyonListesi = useMemo<SimulasyonKalemi[]>(() => {
+    const list: SimulasyonKalemi[] = []
+    for (const u of hedefUrunler) {
+      const turler = getUrunSatisTurleri(u)
+      for (const t of turler) {
+        const b = (t.birim || '').trim()
+        const bLower = b.toLowerCase()
+        const isPorsiyon = ['porsiyon', 'adet', 'tane', 'pors'].includes(bLower)
+        const isKg = ['kg', 'kilo', 'gramaj'].includes(bLower)
+
+        const etkileniyor = hedefBirim === 'hepsi' ||
+          (hedefBirim === 'porsiyon' && isPorsiyon) ||
+          (hedefBirim === 'kg' && isKg)
+
+        const eski = Number(t.fiyat) || 0
+        const manuel = manuelFiyatlar[u.id]?.[b]
+        const yeni = manuel !== undefined ? manuel : (etkileniyor ? hesaplaYeniFiyat(eski) : eski)
+        const fark = yeni - eski
+        const yuzdeFark = eski > 0 ? Math.round((fark / eski) * 1000) / 10 : 0
+
+        list.push({
+          id: `${u.id}-${b}`,
+          urunId: u.id,
+          urunAdi: u.ad,
+          kategoriAdi: u.kategori_adi || 'Genel',
+          birim: b,
+          eskiFiyat: eski,
+          yeniFiyat: yeni,
+          fark,
+          yuzdeFark,
+          etkileniyor
+        })
+      }
+    }
+    return list
+  }, [hedefUrunler, hedefBirim, hesaplaYeniFiyat, manuelFiyatlar])
+
+  const etkilenenFiyatSayisi = useMemo(() => {
+    return simulasyonListesi.filter(s => s.etkileniyor).length
+  }, [simulasyonListesi])
+
+  const etkilenenUrunSayisi = useMemo(() => {
+    const ids = new Set(simulasyonListesi.filter(s => s.etkileniyor).map(s => s.urunId))
+    return ids.size
+  }, [simulasyonListesi])
+
+  const filtreliSimulasyonListesi = useMemo(() => {
+    if (!simulasyonArama.trim()) return simulasyonListesi
+    const q = simulasyonArama.toLowerCase()
+    return simulasyonListesi.filter(s =>
+      s.urunAdi.toLowerCase().includes(q) ||
+      s.kategoriAdi.toLowerCase().includes(q) ||
+      s.birim.toLowerCase().includes(q)
+    )
+  }, [simulasyonListesi, simulasyonArama])
+
+  const handleManuelFiyatDegistir = (urunId: number, birim: string, deger: number) => {
+    setManuelFiyatlar(prev => ({
+      ...prev,
+      [urunId]: {
+        ...(prev[urunId] || {}),
+        [birim]: deger
+      }
+    }))
+  }
+
+  // Toplu Fiyat Güncellemesini Kaydet (Tek Transaction)
   const handleTopluFiyatKaydet = async () => {
-    const urunIdList = Object.keys(fiyatOnizleme).map(Number)
-    if (urunIdList.length === 0) return
-
-    if (!window.confirm(`${urunIdList.length} adet ürünün satış fiyatı güncellenecektir. Onaylıyor musunuz?`)) {
+    if (hedefUrunler.length === 0) {
+      error('Hata', 'İşlem yapılacak hiçbir ürün seçilmedi.')
       return
     }
 
+    if (etkilenenFiyatSayisi === 0) {
+      error('Uyarı', 'Seçilen hedef satış türüne uygun güncellenecek ürün bulunamadı.')
+      return
+    }
+
+    const onay = window.confirm(
+      `${etkilenenUrunSayisi} adet ürünün (${etkilenenFiyatSayisi} farklı satış fiyatı) güncellenecektir. Onaylıyor musunuz?`
+    )
+    if (!onay) return
+
     setTopluKayitYukleniyor(true)
     try {
-      for (const id of urunIdList) {
-        const yeniFiyat = fiyatOnizleme[id]
-        if (yeniFiyat !== undefined) {
-          await ipcInvoke(MENU_KANALLARI.URUN_GUNCELLE, id, { fiyat: yeniFiyat })
+      const urunIds = hedefUrunler.map(u => u.id)
+
+      let structuredManuel: Record<number, any> | undefined = undefined
+      if (Object.keys(manuelFiyatlar).length > 0) {
+        structuredManuel = {}
+        for (const u of hedefUrunler) {
+          if (manuelFiyatlar[u.id]) {
+            const turler = getUrunSatisTurleri(u)
+            const guncelTurler = turler.map(t => {
+              const b = (t.birim || '').trim()
+              if (manuelFiyatlar[u.id]?.[b] !== undefined) {
+                return { ...t, fiyat: manuelFiyatlar[u.id][b] }
+              }
+              return t
+            })
+            const porsiyon = guncelTurler.find(t => ['porsiyon', 'adet', 'tane'].includes((t.birim || '').toLowerCase()))
+            const kilo = guncelTurler.find(t => ['kg', 'kilo'].includes((t.birim || '').toLowerCase()))
+
+            structuredManuel[u.id] = {
+              satis_turleri: guncelTurler,
+              fiyat: (u.birim || '').toLowerCase() === 'kg' ? (kilo?.fiyat ?? u.fiyat) : (porsiyon?.fiyat ?? u.fiyat),
+              porsiyon_fiyati: porsiyon?.fiyat ?? null,
+              kilo_fiyati: kilo?.fiyat ?? null
+            }
+          }
         }
       }
-      success('Fiyatlar Güncellendi', `${urunIdList.length} ürünün fiyatı başarıyla kaydedildi.`)
-      verileriGetir()
+
+      const res = await ipcInvoke<any>(MENU_KANALLARI.TOPLU_FIYAT_GUNCELLE, {
+        urunIds,
+        hedefBirim,
+        islemTuru: artisTipi,
+        deger: Number(artisDegeri) || 0,
+        yuvarlama: yuvarlamaAktif ? yuvarlamaKati : null,
+        manuelFiyatlar: structuredManuel
+      })
+
+      if (res?.basarili) {
+        success('Fiyatlar Güncellendi', `${etkilenenUrunSayisi} adet ürünün fiyatları başarıyla güncellendi.`)
+        setOnizlemeModalAcik(false)
+        setManuelFiyatlar({})
+        verileriGetir()
+      } else {
+        error('Hata', res?.hata || 'Fiyatlar güncellenirken bir hata oluştu.')
+      }
     } catch (err: any) {
-      error('Hata', err.message || 'Fiyatlar güncellenirken hata oluştu')
+      error('Hata', err.message || 'Fiyatlar güncellenirken bir hata oluştu')
     } finally {
       setTopluKayitYukleniyor(false)
     }
   }
+
 
   return (
     <div className="flex flex-col h-full w-full bg-[#0D101A] text-surface-100 p-2 sm:p-4 overflow-hidden select-none">
@@ -902,182 +1088,521 @@ export default function MenuSettings() {
 
       {/* SUBTAB 2: HIZLI & TOPLU FİYAT GÜNCELLEME */}
       {subTab === 'fiyat-guncelleme' && (
-        <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-4 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-3 sm:p-4 flex flex-col overflow-hidden">
           
-          {/* Kontrol Paneli */}
-          <div className="bg-[#0E121E] border border-[#1E2436] rounded-xl p-4 mb-4 shrink-0">
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 items-end">
-              
-              {/* Kategori Seçici */}
-              <div>
-                <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
-                  Uygulanacak Kategori
-                </label>
-                <select
-                  value={topluKategoriId}
-                  onChange={e => setTopluKategoriId(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs font-semibold focus:outline-none"
-                >
-                  <option value="tum">Tüm Kategoriler ({urunler.length} Ürün)</option>
-                  {kategoriler.map(k => (
-                    <option key={k.id} value={String(k.id)}>
-                      {k.ad} ({k.urun_sayisi || 0} Ürün)
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Üst Ayarlar & Seçici Paneli */}
+          <div className="bg-[#0E121E] border border-[#1E2436] rounded-xl p-3 sm:p-4 mb-3 shrink-0 flex flex-col gap-3">
+            
+            {/* 1. ÜRÜN SEÇİM MODU & FİLTRELER */}
+            <div className="pb-3 border-b border-[#1A1F30]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                  <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                    1. Ürün Seçim Mantığı
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#141826] border border-[#1E2538] text-brand-400">
+                    {hedefUrunler.length} / {urunler.length} Ürün Seçili
+                  </span>
+                </div>
 
-              {/* Artış Türü */}
-              <div>
-                <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
-                  Artış / Değişim Türü
-                </label>
-                <div className="grid grid-cols-2 gap-1 bg-[#090C15] p-1 rounded-lg border border-[#1E2436]">
+                {/* Mod Geçiş Butonları */}
+                <div className="flex items-center gap-1 bg-[#090C15] p-1 rounded-lg border border-[#1E2436]">
                   <button
                     type="button"
-                    onClick={() => { setArtisTipi('yuzde'); handleTopluFiyatHesapla(artisDegeri, 'yuzde') }}
+                    onClick={() => handleModDegistir('kategori')}
                     className={clsx(
-                      "py-1.5 rounded-md text-xs font-bold transition-all",
-                      artisTipi === 'yuzde' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all",
+                      topluSecimModu === 'kategori'
+                        ? "bg-brand-600 text-white shadow-sm"
+                        : "text-surface-400 hover:text-white"
                     )}
                   >
-                    Yüzde (%)
+                    <LayoutGrid size={13} />
+                    <span>Mod A: Kategori Bazlı</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setArtisTipi('tutar'); handleTopluFiyatHesapla(artisDegeri, 'tutar') }}
+                    onClick={() => handleModDegistir('ozel')}
                     className={clsx(
-                      "py-1.5 rounded-md text-xs font-bold transition-all",
-                      artisTipi === 'tutar' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all",
+                      topluSecimModu === 'ozel'
+                        ? "bg-brand-600 text-white shadow-sm"
+                        : "text-surface-400 hover:text-white"
                     )}
                   >
-                    Sabit Tutar (₺)
+                    <CheckSquare size={13} />
+                    <span>Mod B: Tek Tek Ürün Seçimi</span>
                   </button>
                 </div>
               </div>
 
-              {/* Artış Değeri */}
-              <div>
-                <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
-                  {artisTipi === 'yuzde' ? 'Artış Yüzdesi (%)' : 'Eklenecek Tutar (₺)'}
-                </label>
-                <div className="flex gap-1.5">
+              {/* Mod A: Kategori Bazlı Seçim Alanı */}
+              {topluSecimModu === 'kategori' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 items-center">
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
+                      Uygulanacak Kategori
+                    </label>
+                    <select
+                      value={topluKategoriId}
+                      onChange={e => setTopluKategoriId(e.target.value)}
+                      className="w-full h-10 px-3 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none"
+                    >
+                      <option value="tum">Tüm Kategoriler (Tüm Menü — {urunler.length} Ürün)</option>
+                      {kategoriler.map(k => (
+                        <option key={k.id} value={String(k.id)}>
+                          {k.ad} ({k.urun_sayisi || 0} Ürün)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-2 pt-4 sm:pt-0">
+                    <div className="px-3 py-2 rounded-lg bg-[#141826] border border-[#1E2538] text-[11px] font-mono text-surface-300 w-full flex items-center justify-between">
+                      <span>Hedef Kapsam:</span>
+                      <strong className="text-white">
+                        {topluKategoriId === 'tum' ? 'Tüm Menü' : kategoriler.find(k => String(k.id) === topluKategoriId)?.ad || ''} ({hedefUrunler.length} Ürün)
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mod B: Tek Tek Ürün Seçimi Alanı */}
+              {topluSecimModu === 'ozel' && (
+                <div className="flex flex-col gap-2.5">
+                  {/* Arama ve Kontrol Çubuğu */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
+                        <input
+                          type="text"
+                          value={ozelUrunArama}
+                          onChange={e => setOzelUrunArama(e.target.value)}
+                          placeholder="Ürün adı, barkod veya kod ile ara..."
+                          className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#1E2436] bg-[#090C15] text-white placeholder-surface-500 text-xs focus:border-brand-500 focus:outline-none"
+                        />
+                      </div>
+                      <select
+                        value={ozelKategoriFiltre}
+                        onChange={e => setOzelKategoriFiltre(e.target.value)}
+                        className="h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none max-w-[160px]"
+                      >
+                        <option value="tum">Tüm Kategoriler</option>
+                        {kategoriler.map(k => (
+                          <option key={k.id} value={String(k.id)}>{k.ad}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleTumunuSec}
+                        className="h-9 px-2.5 rounded-lg bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-[11px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 transition-all touch-feedback"
+                      >
+                        <CheckCheck size={13} />
+                        <span>Tümünü Seç</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSecimiTemizle}
+                        className="h-9 px-2.5 rounded-lg bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-[11px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1.5 transition-all touch-feedback"
+                      >
+                        <X size={13} />
+                        <span>Seçimi Kaldır</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Ürün Seçim Grid'i (Scrollable) */}
+                  <div className="max-h-40 overflow-y-auto pos-scrollbar p-1.5 bg-[#090C15] rounded-lg border border-[#1A1F30] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
+                    {ozelGosterilenUrunler.map(urun => {
+                      const secili = ozelSecilenUrunIds.includes(urun.id)
+                      const turler = getUrunSatisTurleri(urun)
+                      const hasMulti = turler.length > 1
+
+                      return (
+                        <div
+                          key={urun.id}
+                          onClick={() => handleUrunSecimToggle(urun.id)}
+                          className={clsx(
+                            "flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition-all select-none touch-feedback",
+                            secili
+                              ? "bg-brand-950/40 border-brand-500/60 text-white shadow-xs"
+                              : "bg-[#0E121E] border-[#1E2436] text-surface-400 hover:text-surface-200 hover:border-[#2A334C]"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 pr-1">
+                            <div className={clsx("shrink-0", secili ? "text-brand-400" : "text-surface-600")}>
+                              {secili ? <CheckSquare size={16} /> : <Square size={16} />}
+                            </div>
+                            <div className="truncate">
+                              <p className={clsx("font-bold truncate text-[11px]", secili ? "text-white" : "text-surface-300")}>
+                                {urun.ad}
+                              </p>
+                              <p className="text-[10px] text-surface-500 font-mono truncate">
+                                {urun.kategori_adi}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0 font-mono text-[10px]">
+                            {hasMulti ? (
+                              <div className="flex flex-col items-end">
+                                <span className="text-surface-400">Pors: {formatPara(getUrunPorsiyonFiyati(urun))}</span>
+                                <span className="text-amber-400/90 font-semibold">KG: {formatPara(getUrunKiloFiyati(urun))}</span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-surface-300">{formatPara(urun.fiyat)}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. FİYAT GÜNCELLEME PARAMETRELERİ */}
+            <div>
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                  2. Fiyat Güncelleme Parametreleri
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
+                
+                {/* Hedef Fiyat Birimi */}
+                <div>
+                  <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
+                    Hedef Fiyat Birimi
+                  </label>
+                  <div className="grid grid-cols-3 gap-1 bg-[#090C15] p-1 rounded-lg border border-[#1E2436]">
+                    <button
+                      type="button"
+                      onClick={() => setHedefBirim('hepsi')}
+                      className={clsx(
+                        "py-2 rounded-md text-[11px] font-bold transition-all text-center",
+                        hedefBirim === 'hepsi' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      )}
+                    >
+                      Tüm Türler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHedefBirim('porsiyon')}
+                      className={clsx(
+                        "py-2 rounded-md text-[11px] font-bold transition-all text-center",
+                        hedefBirim === 'porsiyon' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      )}
+                    >
+                      Sadece Porsiyon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHedefBirim('kg')}
+                      className={clsx(
+                        "py-2 rounded-md text-[11px] font-bold transition-all text-center",
+                        hedefBirim === 'kg' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      )}
+                    >
+                      Sadece KG
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-surface-500 mt-1 block">
+                    {hedefBirim === 'hepsi' && 'Hem porsiyon, hem KG hem tekil fiyatlar güncellenir.'}
+                    {hedefBirim === 'porsiyon' && 'Yalnızca porsiyon fiyatları güncellenir, KG korunur.'}
+                    {hedefBirim === 'kg' && 'Yalnızca KG fiyatları güncellenir, porsiyon korunur.'}
+                  </span>
+                </div>
+
+                {/* İşlem Türü */}
+                <div>
+                  <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
+                    İşlem Türü
+                  </label>
+                  <div className="grid grid-cols-2 gap-1 bg-[#090C15] p-1 rounded-lg border border-[#1E2436]">
+                    <button
+                      type="button"
+                      onClick={() => setArtisTipi('yuzde')}
+                      className={clsx(
+                        "py-2 rounded-md text-xs font-bold transition-all",
+                        artisTipi === 'yuzde' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      )}
+                    >
+                      Yüzde (%)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setArtisTipi('tutar')}
+                      className={clsx(
+                        "py-2 rounded-md text-xs font-bold transition-all",
+                        artisTipi === 'tutar' ? "bg-brand-600 text-white" : "text-surface-400 hover:text-white"
+                      )}
+                    >
+                      Sabit Tutar (₺)
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-surface-500 mt-1 block">
+                    {artisTipi === 'yuzde' ? 'Yüzdesel oran kadar artır veya azalt.' : 'Doğrudan sabit tutar ekle veya çıkar.'}
+                  </span>
+                </div>
+
+                {/* Değişim Miktarı */}
+                <div>
+                  <label className="text-[11px] font-mono text-surface-400 uppercase block mb-1">
+                    {artisTipi === 'yuzde' ? 'Oran (%) (+ veya -)' : 'Tutar (₺) (+ veya -)'}
+                  </label>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="number"
+                      step={artisTipi === 'yuzde' ? '1' : '5'}
+                      value={artisDegeri}
+                      onChange={e => setArtisDegeri(e.target.value)}
+                      className="w-full h-10 px-3 rounded-lg border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+                  {/* Hızlı Butonlar */}
+                  <div className="flex items-center gap-1 mt-1.5 overflow-x-auto pos-scrollbar pb-0.5">
+                    {artisTipi === 'yuzde' ? (
+                      [5, 10, 15, 20, 25, -5, -10].map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setArtisDegeri(String(p))}
+                          className={clsx(
+                            "px-2 py-0.5 rounded text-[10px] font-mono touch-feedback border",
+                            artisDegeri === String(p)
+                              ? "bg-brand-600 text-white border-brand-500"
+                              : "bg-[#141826] hover:bg-[#1E2538] border-[#1E2538] text-surface-300"
+                          )}
+                        >
+                          {p > 0 ? `+${p}%` : `${p}%`}
+                        </button>
+                      ))
+                    ) : (
+                      [10, 20, 50, 100, 200, -10, -20].map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setArtisDegeri(String(t))}
+                          className={clsx(
+                            "px-2 py-0.5 rounded text-[10px] font-mono touch-feedback border",
+                            artisDegeri === String(t)
+                              ? "bg-brand-600 text-white border-brand-500"
+                              : "bg-[#141826] hover:bg-[#1E2538] border-[#1E2538] text-surface-300"
+                          )}
+                        >
+                          {t > 0 ? `+${t}₺` : `${t}₺`}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Yuvarlama Kuralı & Kaydet Butonları */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-mono text-surface-400 uppercase block">
+                    Fiyat Yuvarlama Kuralı
+                  </label>
+                  <label className="flex items-center gap-2 p-2 rounded-lg bg-[#090C15] border border-[#1E2436] cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={yuvarlamaAktif}
+                      onChange={e => setYuvarlamaAktif(e.target.checked)}
+                      className="w-4 h-4 rounded border-[#1E2436] bg-[#0E121E] text-brand-600 focus:ring-0 focus:outline-none"
+                    />
+                    <span className="text-[11px] text-surface-300 font-semibold">En Yakın Katına Yuvarla</span>
+                  </label>
+
+                  {yuvarlamaAktif && (
+                    <div className="grid grid-cols-2 gap-1 bg-[#090C15] p-1 rounded-lg border border-[#1E2436]">
+                      <button
+                        type="button"
+                        onClick={() => setYuvarlamaKati(5)}
+                        className={clsx(
+                          "py-1 rounded text-[10px] font-mono font-bold transition-all",
+                          yuvarlamaKati === 5 ? "bg-amber-600 text-white" : "text-surface-400 hover:text-white"
+                        )}
+                      >
+                        5 ₺ Katına
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setYuvarlamaKati(10)}
+                        className={clsx(
+                          "py-1 rounded text-[10px] font-mono font-bold transition-all",
+                          yuvarlamaKati === 10 ? "bg-amber-600 text-white" : "text-surface-400 hover:text-white"
+                        )}
+                      >
+                        10 ₺ Katına
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Aksiyon Butonları */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button
+                      variant="primary"
+                      onClick={() => setOnizlemeModalAcik(true)}
+                      className="h-10 font-bold text-xs shadow-lg shadow-brand-900/40 flex-1 flex items-center justify-center gap-1.5"
+                    >
+                      <Eye size={14} />
+                      <span>Önizle & Onayla ({etkilenenFiyatSayisi})</span>
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* 3. CANLI SİMÜLASYON TABLOSU (SAYFA İÇİ ÖNİZLEME) */}
+          <div className="flex-1 min-h-0 bg-[#0E121E] border border-[#1E2436] rounded-xl flex flex-col overflow-hidden">
+            
+            {/* Tablo Üst Çubuğu */}
+            <div className="p-3 border-b border-[#1A1F30] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0 bg-[#0A0D17]">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                  Canlı Fiyat Simülasyonu
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/70 text-emerald-300 border border-emerald-600/40 font-bold">
+                  {etkilenenFiyatSayisi} Kalem Fiyat Güncellenecek
+                </span>
+                {Object.keys(manuelFiyatlar).length > 0 && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-950/70 text-amber-300 border border-amber-600/40 font-bold">
+                    Özel Değiştirilen Fiyatlar Mevcut
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-surface-500" />
                   <input
-                    type="number"
-                    step="0.1"
-                    value={artisDegeri}
-                    onChange={e => {
-                      setArtisDegeri(e.target.value)
-                      handleTopluFiyatHesapla(e.target.value, artisTipi)
-                    }}
-                    className="w-full h-10 px-3 rounded-lg border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm font-bold focus:outline-none"
+                    type="text"
+                    value={simulasyonArama}
+                    onChange={e => setSimulasyonArama(e.target.value)}
+                    placeholder="Tabloda filtrele..."
+                    className="h-8 pl-8 pr-2.5 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-44"
                   />
                 </div>
-              </div>
-
-              {/* Hızlı Butonlar & Kaydet */}
-              <div className="flex items-center gap-2">
                 <Button
                   variant="primary"
                   onClick={handleTopluFiyatKaydet}
                   isLoading={topluKayitYukleniyor}
-                  fullWidth
-                  className="h-10 font-bold text-xs shadow-lg shadow-brand-900/40"
+                  disabled={etkilenenFiyatSayisi === 0}
+                  className="h-8 font-bold text-xs"
                 >
-                  Fiyatları Güncelle
+                  Fiyatları Kaydet ({etkilenenUrunSayisi} Ürün)
                 </Button>
               </div>
-
             </div>
 
-            {/* Hızlı Önceden Tanımlı Değer Butonları */}
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[#1A1F30] overflow-x-auto pos-scrollbar">
-              <span className="text-[10px] font-mono text-surface-500 uppercase mr-1">Hızlı Seçim:</span>
-              {artisTipi === 'yuzde' ? (
-                [5, 10, 15, 20, 25, 30].map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => { setArtisDegeri(String(p)); handleTopluFiyatHesapla(String(p), 'yuzde') }}
-                    className="px-2.5 py-1 rounded-md bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-[11px] font-mono text-surface-300 touch-feedback"
-                  >
-                    +{p}%
-                  </button>
-                ))
-              ) : (
-                [5, 10, 20, 50, 100].map(t => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => { setArtisDegeri(String(t)); handleTopluFiyatHesapla(String(t), 'tutar') }}
-                    className="px-2.5 py-1 rounded-md bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-[11px] font-mono text-surface-300 touch-feedback"
-                  >
-                    +{t} ₺
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Fiyat Değişiklik Tablosu & Önizleme */}
-          <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar pr-1 pb-4">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#1E2436] bg-[#0E111B] text-[11px] font-mono text-surface-400 uppercase sticky top-0 z-10">
-                  <th className="py-2.5 px-4">Ürün Adı</th>
-                  <th className="py-2.5 px-4">Kategori</th>
-                  <th className="py-2.5 px-4 text-right">Eski Fiyat</th>
-                  <th className="py-2.5 px-4 text-center">Fark</th>
-                  <th className="py-2.5 px-4 text-right">Yeni Satış Fiyatı</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1A1F30] text-xs">
-                {topluFiyatHedefUrunler.map(urun => {
-                  const eski = Number(urun.fiyat || 0)
-                  const yeni = fiyatOnizleme[urun.id] !== undefined ? fiyatOnizleme[urun.id] : eski
-                  const fark = yeni - eski
-
-                  return (
-                    <tr key={urun.id} className="hover:bg-[#121626] transition-colors">
-                      <td className="py-2.5 px-4 font-bold text-white">
-                        {urun.ad}
-                      </td>
-                      <td className="py-2.5 px-4 text-surface-400">
-                        {urun.kategori_adi}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-surface-400">
-                        {formatPara(eski)}
-                      </td>
-                      <td className="py-2.5 px-4 text-center font-mono font-semibold">
-                        <span className={clsx(
-                          "px-2 py-0.5 rounded text-[10px]",
-                          fark > 0 ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/40" :
-                          fark < 0 ? "bg-rose-950/60 text-rose-300 border border-rose-600/40" :
-                          "bg-[#141826] text-surface-400"
-                        )}>
-                          {fark > 0 ? `+${formatPara(fark)}` : fark < 0 ? formatPara(fark) : '0.00 ₺'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4 text-right">
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={yeni}
-                          onChange={e => {
-                            const val = Number(e.target.value) || 0
-                            setFiyatOnizleme(prev => ({ ...prev, [urun.id]: val }))
-                          }}
-                          className="w-28 h-8 px-2 text-right font-mono font-bold text-emerald-400 rounded-lg border border-[#1E2538] bg-[#090C15] focus:border-brand-500 focus:outline-none"
-                        />
+            {/* Tablo Alanı */}
+            <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[#1E2436] bg-[#0A0D17] text-[11px] font-mono text-surface-400 uppercase sticky top-0 z-10">
+                    <th className="py-2.5 px-4">Ürün Adı</th>
+                    <th className="py-2.5 px-4">Kategori</th>
+                    <th className="py-2.5 px-4">Satış Türü</th>
+                    <th className="py-2.5 px-4 text-right">Eski Fiyat</th>
+                    <th className="py-2.5 px-4 text-center">Fark</th>
+                    <th className="py-2.5 px-4 text-right">Yeni Fiyat</th>
+                    <th className="py-2.5 px-4 text-center">Durum</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1A1F30] text-xs">
+                  {filtreliSimulasyonListesi.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-10 text-surface-500 font-mono">
+                        Kriterlere uygun ürün veya fiyat kalemi bulunamadı.
                       </td>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  ) : (
+                    filtreliSimulasyonListesi.map(satir => (
+                      <tr key={satir.id} className="hover:bg-[#121626] transition-colors">
+                        <td className="py-2 px-4 font-bold text-white">
+                          {satir.urunAdi}
+                        </td>
+                        <td className="py-2 px-4 text-surface-400 text-[11px]">
+                          {satir.kategoriAdi}
+                        </td>
+                        <td className="py-2 px-4">
+                          <span className={clsx(
+                            "px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase",
+                            ['kg', 'kilo'].includes(satir.birim.toLowerCase())
+                              ? "bg-amber-950/60 text-amber-300 border border-amber-600/40"
+                              : "bg-blue-950/60 text-blue-300 border border-blue-600/40"
+                          )}>
+                            {satir.birim}
+                          </span>
+                        </td>
+                        <td className="py-2 px-4 text-right font-mono text-surface-400">
+                          {formatPara(satir.eskiFiyat)}
+                        </td>
+                        <td className="py-2 px-4 text-center font-mono font-semibold">
+                          {satir.etkileniyor ? (
+                            <span className={clsx(
+                              "px-2 py-0.5 rounded text-[10px]",
+                              satir.fark > 0 ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/40" :
+                              satir.fark < 0 ? "bg-rose-950/60 text-rose-300 border border-rose-600/40" :
+                              "bg-[#141826] text-surface-400"
+                            )}>
+                              {satir.fark > 0 ? `+${formatPara(satir.fark)} (+%${satir.yuzdeFark})` :
+                               satir.fark < 0 ? `${formatPara(satir.fark)} (%${satir.yuzdeFark})` : 'Değişmedi'}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-surface-500">
+                              Etkilenmez
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-4 text-right">
+                          {satir.etkileniyor ? (
+                            <input
+                              type="number"
+                              step="0.5"
+                              value={satir.yeniFiyat}
+                              onChange={e => handleManuelFiyatDegistir(satir.urunId, satir.birim, Number(e.target.value) || 0)}
+                              className="w-28 h-8 px-2 text-right font-mono font-bold text-emerald-400 rounded-lg border border-[#1E2538] bg-[#090C15] focus:border-brand-500 focus:outline-none"
+                            />
+                          ) : (
+                            <span className="font-mono text-surface-500">
+                              {formatPara(satir.eskiFiyat)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-4 text-center">
+                          {satir.etkileniyor ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-bold">
+                              <Check size={11} /> Güncellenecek
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-surface-500">
+                              Sabit Kalacak
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
           </div>
+
         </div>
       )}
+
 
       {/* SUBTAB 3: KATEGORİ YÖNETİMİ */}
       {subTab === 'kategoriler' && (
@@ -1721,6 +2246,164 @@ export default function MenuSettings() {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* TOPLU FİYAT GÜNCELLEME — CANLI ÖNİZLEME VE ONAY MODALI */}
+      <Modal
+        isOpen={onizlemeModalAcik}
+        onClose={() => setOnizlemeModalAcik(false)}
+        title="Toplu Fiyat Güncelleme — Canlı Önizleme & Onay"
+        size="xl"
+      >
+        <div className="flex flex-col gap-3 max-h-[75vh]">
+          
+          {/* Özet Kartları */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
+            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+              <span className="text-[10px] font-mono text-surface-500 uppercase block">Seçilen Ürün</span>
+              <strong className="text-white font-mono text-base">{hedefUrunler.length} Adet</strong>
+            </div>
+            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+              <span className="text-[10px] font-mono text-surface-500 uppercase block">Hedef Birim</span>
+              <strong className="text-brand-400 font-mono text-xs uppercase">
+                {hedefBirim === 'hepsi' ? 'Tüm Satış Türleri' : hedefBirim === 'porsiyon' ? 'Sadece Porsiyon' : 'Sadece KG'}
+              </strong>
+            </div>
+            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+              <span className="text-[10px] font-mono text-surface-500 uppercase block">Uygulanan Kural</span>
+              <strong className="text-emerald-400 font-mono text-xs">
+                {artisTipi === 'yuzde' ? `+%${artisDegeri}` : `+${artisDegeri} ₺`}
+                {yuvarlamaAktif ? ` (${yuvarlamaKati} ₺ Yuvarlama)` : ''}
+              </strong>
+            </div>
+            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+              <span className="text-[10px] font-mono text-surface-500 uppercase block">Güncellenecek Fiyat</span>
+              <strong className="text-emerald-300 font-mono text-base">{etkilenenFiyatSayisi} Kalem</strong>
+            </div>
+          </div>
+
+          {/* Modal Tablo Filtresi */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 pt-1">
+            <span className="text-[11px] font-mono text-surface-400">
+              Aşağıdaki simülasyon tablosunda yeni fiyatları inceleyebilir, gerektiğinde değerleri doğrudan düzenleyebilirsiniz:
+            </span>
+            <div className="relative w-56 shrink-0">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-surface-500" />
+              <input
+                type="text"
+                value={simulasyonArama}
+                onChange={e => setSimulasyonArama(e.target.value)}
+                placeholder="Önizlemede filtrele..."
+                className="h-8 pl-8 pr-2.5 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-full"
+              />
+            </div>
+          </div>
+
+          {/* Modal Simülasyon Tablosu */}
+          <div className="flex-1 min-h-[260px] max-h-[45vh] overflow-y-auto pos-scrollbar border border-[#1E2436] rounded-lg bg-[#090C15]">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#1E2436] bg-[#0D101C] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
+                  <th className="py-2.5 px-3">Ürün</th>
+                  <th className="py-2.5 px-3">Tür</th>
+                  <th className="py-2.5 px-3 text-right">Eski Fiyat</th>
+                  <th className="py-2.5 px-3 text-center">Fark</th>
+                  <th className="py-2.5 px-3 text-right">Yeni Fiyat</th>
+                  <th className="py-2.5 px-3 text-center">Durum</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1A1F30] text-xs font-mono">
+                {filtreliSimulasyonListesi.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-surface-500 font-mono">
+                      Filtreye uygun ürün bulunamadı.
+                    </td>
+                  </tr>
+                ) : (
+                  filtreliSimulasyonListesi.map(satir => (
+                    <tr key={`modal-${satir.id}`} className="hover:bg-[#121626] transition-colors">
+                      <td className="py-2 px-3 font-bold text-white font-sans text-xs">
+                        {satir.urunAdi}
+                        <span className="block text-[10px] text-surface-500 font-mono font-normal">
+                          {satir.kategoriAdi}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3">
+                        <span className={clsx(
+                          "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase",
+                          ['kg', 'kilo'].includes(satir.birim.toLowerCase())
+                            ? "bg-amber-950/60 text-amber-300 border border-amber-600/40"
+                            : "bg-blue-950/60 text-blue-300 border border-blue-600/40"
+                        )}>
+                          {satir.birim}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-right text-surface-400">
+                        {formatPara(satir.eskiFiyat)}
+                      </td>
+                      <td className="py-2 px-3 text-center font-semibold">
+                        {satir.etkileniyor ? (
+                          <span className={clsx(
+                            "px-2 py-0.5 rounded text-[10px]",
+                            satir.fark > 0 ? "bg-emerald-950/60 text-emerald-300 border border-emerald-600/40" :
+                            satir.fark < 0 ? "bg-rose-950/60 text-rose-300 border border-rose-600/40" :
+                            "bg-[#141826] text-surface-400"
+                          )}>
+                            {satir.fark > 0 ? `+${formatPara(satir.fark)}` : formatPara(satir.fark)}
+                          </span>
+                        ) : (
+                          <span className="text-surface-600 text-[10px]">Etkilenmez</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-right">
+                        {satir.etkileniyor ? (
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={satir.yeniFiyat}
+                            onChange={e => handleManuelFiyatDegistir(satir.urunId, satir.birim, Number(e.target.value) || 0)}
+                            className="w-24 h-7 px-2 text-right font-bold text-emerald-400 rounded border border-[#1E2538] bg-[#0E121E] focus:border-brand-500 focus:outline-none"
+                          />
+                        ) : (
+                          <span className="text-surface-500">{formatPara(satir.eskiFiyat)}</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        {satir.etkileniyor ? (
+                          <span className="text-[10px] text-emerald-400 font-bold">Güncellenecek</span>
+                        ) : (
+                          <span className="text-[10px] text-surface-600">Korumada</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Modal Alt Çubuk */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#1A1F30] shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOnizlemeModalAcik(false)}
+            >
+              Vazgeç
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleTopluFiyatKaydet}
+              isLoading={topluKayitYukleniyor}
+              disabled={etkilenenFiyatSayisi === 0}
+              className="px-6 font-bold flex items-center gap-2"
+            >
+              <Check size={16} />
+              <span>Fiyat Değişikliklerini Uygula ({etkilenenUrunSayisi} Ürün)</span>
+            </Button>
+          </div>
+
+        </div>
       </Modal>
 
       <ProductImageCropper
