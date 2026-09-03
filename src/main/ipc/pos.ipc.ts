@@ -154,14 +154,15 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           if (!urun) continue
 
           // Varyant fiyat farkını hesapla
-          let birimFiyat = urun.fiyat
-          if (sip.varyant_id) {
+          const isKg = sip.secilenSatisTuru === 'kg'
+          let birimFiyat = sip.birim_fiyat !== undefined ? Number(sip.birim_fiyat) : urun.fiyat
+          if (sip.varyant_id && sip.birim_fiyat === undefined) {
             const varyant = db.prepare('SELECT fiyat_farki FROM urun_varyant WHERE id = ?').get(sip.varyant_id) as any
             if (varyant) birimFiyat += varyant.fiyat_farki
           }
 
-          const porsiyon = sip.porsiyon || 1
-          const toplamFiyat = birimFiyat * sip.miktar * porsiyon
+          const porsiyon = isKg ? 1 : (sip.porsiyon || 1)
+          const toplamFiyat = sip.toplam_fiyat !== undefined ? Number(sip.toplam_fiyat) : (birimFiyat * sip.miktar * porsiyon)
 
           const sonuc = db.prepare(`
             INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup, porsiyon)

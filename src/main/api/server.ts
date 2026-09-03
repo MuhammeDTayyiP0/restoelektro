@@ -558,9 +558,14 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
         const urun = db.prepare('SELECT ad, fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
         if (!urun) continue
 
-        const porsiyon = sip.porsiyon || 1;
+        const isKg = sip.secilenSatisTuru === 'kg'
+        const birimFiyat = sip.birim_fiyat !== undefined ? Number(sip.birim_fiyat) : urun.fiyat
+        const porsiyon = isKg ? 1 : (sip.porsiyon || 1)
+        const toplamFiyat = sip.toplam_fiyat !== undefined ? Number(sip.toplam_fiyat) : (birimFiyat * (sip.miktar || 1) * porsiyon)
+        const urunGosterimAdi = isKg && sip.gramaj ? `${sip.gramaj} KG ${urun.ad}` : urun.ad
+
         yazdirSiparisler.push({
-          urun_adi: urun.ad,
+          urun_adi: urunGosterimAdi,
           miktar: sip.miktar || 1,
           notlar: sip.notlar || '',
           ikram: sip.ikram || false,
@@ -570,7 +575,19 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
         const sonuc = db.prepare(`
           INSERT INTO siparis (hesap_id, urun_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, yazici_grup, ikram, ikram_onaylayan_id, porsiyon)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(hesap.id, sip.urun_id, sip.miktar || 1, urun.fiyat, urun.fiyat * (sip.miktar || 1) * porsiyon, personelId, sip.notlar || null, urun.yazici_grup, sip.ikram ? 1 : 0, sip.ikram ? personelId : null, porsiyon)
+        `).run(
+          hesap.id,
+          sip.urun_id,
+          sip.miktar || 1,
+          birimFiyat,
+          toplamFiyat,
+          personelId,
+          sip.notlar || null,
+          urun.yazici_grup,
+          sip.ikram ? 1 : 0,
+          sip.ikram ? personelId : null,
+          porsiyon
+        )
 
         const yeniSiparisId = Number(sonuc.lastInsertRowid)
 
@@ -694,7 +711,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     const db = veritabaniGetir()
     const kategoriler = db.prepare('SELECT id, ad, renk, ikon FROM kategori WHERE aktif = 1 ORDER BY sira').all()
     const urunler = db.prepare(`
-      SELECT id, kategori_id, ad, kisaltma, fiyat, birim, resim_yolu
+      SELECT id, kategori_id, ad, kisaltma, fiyat, birim, resim_yolu, satis_turleri
       FROM urun WHERE aktif = 1 ORDER BY sira
     `).all()
     const ayarlar = db.prepare("SELECT deger FROM ayar WHERE anahtar = 'isletme_adi'").get() as any

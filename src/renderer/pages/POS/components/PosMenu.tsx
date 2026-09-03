@@ -2,7 +2,13 @@ import React, { useMemo, useState, useRef, useCallback } from 'react'
 import { clsx } from 'clsx'
 import { useMenuStore } from '../../../stores/useMenuStore'
 import { usePosStore } from '../../../stores/usePosStore'
-import { formatPara, formatResimUrl } from '../../../utils/formatters'
+import { 
+  formatPara, 
+  formatResimUrl, 
+  hasCokluSatisTuru, 
+  getUrunKiloFiyati, 
+  getUrunPorsiyonFiyati 
+} from '../../../utils/formatters'
 import type { Urun, UrunVaryant, UrunOpsiyonu } from '../../../../common/types/menu.types'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
@@ -17,7 +23,8 @@ import {
   ChevronLeft,
   X,
   Plus,
-  SlidersHorizontal
+  SlidersHorizontal,
+  UtensilsCrossed
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { ProductGrid } from './ProductGrid'
@@ -33,15 +40,22 @@ export default function PosMenu() {
   const { sepeteEkle } = usePosStore()
 
   const [aramaMetni, setAramaMetni] = useState('')
-  const [miktarSoranUrun, setMiktarSoranUrun] = useState<Urun | null>(null)
-  const [girilenMiktar, setGirilenMiktar] = useState('1')
   const [aktifPorsiyon, setAktifPorsiyon] = useState<number>(1)
   const [hizliFiltre, setHizliFiltre] = useState<'hepsi' | 'populer' | 'indirimli'>('hepsi')
+
+  // Satış türü seçim modalı (Porsiyon / KG)
+  const [satisTuruModalUrun, setSatisTuruModalUrun] = useState<Urun | null>(null)
+
+  // Gramajlı / Tartılı ürün modalı
+  const [gramajModalUrun, setGramajModalUrun] = useState<Urun | null>(null)
+  const [girilenGramaj, setGirilenGramaj] = useState('0.500')
 
   // Varyasyon/Opsiyon seçim state'leri
   const [varyantModalUrun, setVaryantModalUrun] = useState<Urun | null>(null)
   const [secilenVaryant, setSecilenVaryant] = useState<UrunVaryant | null>(null)
   const [secilenOpsiyonlar, setSecilenOpsiyonlar] = useState<UrunOpsiyonu[]>([])
+  const [secilenSatisTuru, setSecilenSatisTuru] = useState<'porsiyon' | 'kg'>('porsiyon')
+  const [secilenGramaj, setSecilenGramaj] = useState<number | undefined>(undefined)
 
   const kategoriScrollRef = useRef<HTMLDivElement>(null)
 
@@ -78,23 +92,33 @@ export default function PosMenu() {
     return sonuc
   }, [tumUrunler, seciliKategoriId, aramaMetni, hizliFiltre])
 
-  // Ürüne tıklanınca: tartılı → miktar modalı, varyantlı → varyant modalı, diğer → direkt sepet
+  // Ürüne tıklanınca: Çoklu satış türü → Satış türü modalı, Saf tartılı → Gramaj modalı, Varyantlı → Varyant modalı, Diğer → Doğrudan sepet
   const urunTikla = useCallback((urun: Urun) => {
+    const coklu = hasCokluSatisTuru(urun)
     const birimUpper = (urun.birim || '').toUpperCase()
-    const tartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
+    const pureTartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
     const hasVaryant = urun.varyantlar && urun.varyantlar.length > 0
     const hasOpsiyon = urun.opsiyonlar && urun.opsiyonlar.length > 0
 
-    if (hasVaryant || hasOpsiyon) {
-      // Varyant/opsiyon seçim modalı aç
+    if (coklu) {
+      // 1. Çoklu Satış Türü (Porsiyon / KG): Hızlı Seçim Modalı Aç
+      setSatisTuruModalUrun(urun)
+    } else if (pureTartili) {
+      // 2. Tek Satış Türü & Saf Tartılı: Gramaj Modalı Aç
+      setGirilenGramaj('1')
+      setGramajModalUrun(urun)
+      setSecilenSatisTuru('kg')
+      setSecilenGramaj(1)
+    } else if (hasVaryant || hasOpsiyon) {
+      // 3. Tek Satış Türü & Varyantlı: Varyant Modalı Aç
       setVaryantModalUrun(urun)
       setSecilenVaryant(null)
       setSecilenOpsiyonlar([])
-    } else if (tartili) {
-      setGirilenMiktar('1')
-      setMiktarSoranUrun(urun)
+      setSecilenSatisTuru('porsiyon')
+      setSecilenGramaj(undefined)
     } else {
-      sepeteEkle(urun, 1, aktifPorsiyon)
+      // 4. Tek Satış Türü & Standart: Doğrudan Sepete Ekle
+      sepeteEkle(urun, 1, aktifPorsiyon, undefined, undefined, '', 'porsiyon')
     }
   }, [aktifPorsiyon, sepeteEkle])
 
@@ -102,19 +126,20 @@ export default function PosMenu() {
   const varyantOnayla = useCallback(() => {
     if (!varyantModalUrun) return
 
-    const birimUpper = (varyantModalUrun.birim || '').toUpperCase()
-    const tartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
-
-    if (tartili) {
-      // Tartılı ürünlerde varyant seçildikten sonra miktar modalına yönlendir
-      setVaryantModalUrun(null)
-      setGirilenMiktar('1')
-      setMiktarSoranUrun(varyantModalUrun)
-    } else {
-      sepeteEkle(varyantModalUrun, 1, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
-      setVaryantModalUrun(null)
-    }
-  }, [varyantModalUrun, secilenVaryant, secilenOpsiyonlar, aktifPorsiyon, sepeteEkle])
+    sepeteEkle(
+      varyantModalUrun,
+      1,
+      secilenSatisTuru === 'kg' ? 1 : aktifPorsiyon,
+      secilenVaryant || undefined,
+      secilenOpsiyonlar,
+      '',
+      secilenSatisTuru,
+      secilenGramaj
+    )
+    setVaryantModalUrun(null)
+    setSecilenVaryant(null)
+    setSecilenOpsiyonlar([])
+  }, [varyantModalUrun, secilenVaryant, secilenOpsiyonlar, aktifPorsiyon, secilenSatisTuru, secilenGramaj, sepeteEkle])
 
   const opsiyonToggle = useCallback((opsiyon: UrunOpsiyonu) => {
     setSecilenOpsiyonlar(prev => {
@@ -292,76 +317,230 @@ export default function PosMenu() {
         />
       </div>
 
-      {/* 4. TARTILI ÜRÜN / MİKTAR BELİRLEME MODALI */}
-      {miktarSoranUrun && (
+      {/* 4. SATIŞ TÜRÜ SEÇİM MODALI (Porsiyon / KG) */}
+      {satisTuruModalUrun && (
         <Modal
-          isOpen={!!miktarSoranUrun}
-          onClose={() => setMiktarSoranUrun(null)}
-          title="Tartılı Ürün Miktarı"
+          isOpen={!!satisTuruModalUrun}
+          onClose={() => setSatisTuruModalUrun(null)}
+          title="Satış Türü Seçimi"
+          size="md"
+        >
+          <div 
+            className="flex flex-col gap-3.5 bg-[#0E121B] text-slate-100 select-none"
+            style={{ transform: 'translateZ(0)' }}
+          >
+            {/* Ürün Bilgi Kartı */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141926] border border-[#222C42]">
+              {satisTuruModalUrun.resim_yolu && (
+                <img
+                  src={formatResimUrl(satisTuruModalUrun.resim_yolu)}
+                  alt={satisTuruModalUrun.ad}
+                  className="w-14 h-14 rounded-xl object-cover border border-[#222C42] shrink-0"
+                />
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-base text-white truncate">{satisTuruModalUrun.ad}</span>
+                <span className="text-xs font-mono text-slate-400">
+                  Lütfen servis veya tartılı satış türünü seçin
+                </span>
+              </div>
+            </div>
+
+            {/* Seçenek Kartları: Porsiyon vs Kilogram */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+              {/* Seçenek 1: Porsiyon */}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  const u = satisTuruModalUrun
+                  setSatisTuruModalUrun(null)
+                  const hasExtras = (u.varyantlar && u.varyantlar.length > 0) || (u.opsiyonlar && u.opsiyonlar.length > 0)
+                  if (hasExtras) {
+                    setVaryantModalUrun(u)
+                    setSecilenSatisTuru('porsiyon')
+                    setSecilenGramaj(undefined)
+                    setSecilenVaryant(null)
+                    setSecilenOpsiyonlar([])
+                  } else {
+                    sepeteEkle(u, 1, aktifPorsiyon, undefined, undefined, '', 'porsiyon')
+                  }
+                }}
+                className="flex flex-col justify-between p-4 rounded-xl bg-[#121B2A] border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-[#162338] transition-all text-left group shadow-lg cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center">
+                    <UtensilsCrossed size={20} />
+                  </div>
+                  <span className="text-[11px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded">
+                    {aktifPorsiyon !== 1 ? `${aktifPorsiyon}x Porsiyon` : '1x Porsiyon'}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-base font-black font-mono text-white mb-0.5">Porsiyon</div>
+                  <div className="text-xs text-slate-400 mb-2">Standart tabak servisi</div>
+                  <div className="text-lg font-black font-mono text-emerald-400 group-hover:text-emerald-300 transition-colors">
+                    {formatPara(getUrunPorsiyonFiyati(satisTuruModalUrun) * aktifPorsiyon)}
+                  </div>
+                </div>
+              </motion.button>
+
+              {/* Seçenek 2: Kilogram (Gramajlı) */}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  const u = satisTuruModalUrun
+                  setSatisTuruModalUrun(null)
+                  setGirilenGramaj('0.500')
+                  setGramajModalUrun(u)
+                  setSecilenSatisTuru('kg')
+                }}
+                className="flex flex-col justify-between p-4 rounded-xl bg-[#171D1B] border-2 border-emerald-500/40 hover:border-emerald-400 hover:bg-[#1C2623] transition-all text-left group shadow-lg cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center">
+                    <Scale size={20} />
+                  </div>
+                  <span className="text-[11px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">
+                    Tartılı Satış
+                  </span>
+                </div>
+                <div>
+                  <div className="text-base font-black font-mono text-white mb-0.5">Kilogram (KG)</div>
+                  <div className="text-xs text-slate-400 mb-2">Gramaj belirleyerek ekle</div>
+                  <div className="text-lg font-black font-mono text-emerald-400 group-hover:text-emerald-300 transition-colors">
+                    {formatPara(getUrunKiloFiyati(satisTuruModalUrun))} <span className="text-xs text-slate-400 font-normal">/ KG</span>
+                  </div>
+                </div>
+              </motion.button>
+            </div>
+
+            {/* İptal Butonu */}
+            <div className="flex justify-end pt-2 border-t border-[#1E2436]">
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => setSatisTuruModalUrun(null)}
+                className="font-mono text-xs h-10"
+              >
+                Kapat
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 5. GRAMAJ NUMPAD MODALI (0.750 KG vb.) */}
+      {gramajModalUrun && (
+        <Modal
+          isOpen={!!gramajModalUrun}
+          onClose={() => setGramajModalUrun(null)}
+          title="Gramaj Belirle"
           size="md"
         >
           <div 
             className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
             style={{ transform: 'translateZ(0)' }}
           >
-
-            {/* Ürün Başlığı */}
+            {/* Ürün & Fiyat Bilgisi */}
             <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
               <div className="flex items-center gap-2">
-                <Scale size={18} className="text-cyan-400" />
-                <span className="font-mono text-xs sm:text-sm font-bold text-white">
-                  {miktarSoranUrun.ad}
+                <Scale size={18} className="text-emerald-400" />
+                <span className="font-mono text-xs sm:text-sm font-bold text-white truncate max-w-[200px]">
+                  {gramajModalUrun.ad}
                 </span>
               </div>
-              <span className="font-mono text-[11px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-lg uppercase">
-                Birim: {miktarSoranUrun.birim || 'KG'}
+              <span className="font-mono text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-lg">
+                1 KG = {formatPara(getUrunKiloFiyati(gramajModalUrun))}
               </span>
             </div>
 
-            {/* Büyük Dijital Gösterge */}
-            <div className="relative flex items-center justify-center flex-shrink-0 shrink-0">
-              <input
-                type="text"
-                inputMode="decimal"
-                autoFocus
-                value={girilenMiktar}
-                onChange={e => {
-                  const val = e.target.value.replace(/[^0-9.,]/g, '')
-                  setGirilenMiktar(val.replace(',', '.'))
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    const parsed = parseFloat(girilenMiktar)
-                    if (!isNaN(parsed) && parsed > 0) {
-                      sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
-                      setMiktarSoranUrun(null)
-                      setSecilenVaryant(null)
-                      setSecilenOpsiyonlar([])
+            {/* Büyük Dijital Gramaj Göstergesi & Canlı Hesaplama */}
+            <div className="flex flex-col gap-1.5 flex-shrink-0 shrink-0">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  autoFocus
+                  value={girilenGramaj}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9.,]/g, '')
+                    setGirilenGramaj(val.replace(',', '.'))
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const parsed = parseFloat(girilenGramaj.replace(',', '.'))
+                      if (!isNaN(parsed) && parsed > 0) {
+                        const u = gramajModalUrun
+                        setGramajModalUrun(null)
+                        const hasExtras = (u.varyantlar && u.varyantlar.length > 0) || (u.opsiyonlar && u.opsiyonlar.length > 0)
+                        if (hasExtras) {
+                          setVaryantModalUrun(u)
+                          setSecilenSatisTuru('kg')
+                          setSecilenGramaj(parsed)
+                          setSecilenVaryant(null)
+                          setSecilenOpsiyonlar([])
+                        } else {
+                          sepeteEkle(u, 1, 1, undefined, undefined, '', 'kg', parsed)
+                        }
+                      }
                     }
-                  }
-                }}
-                className="w-full h-12 sm:h-14 px-4 border rounded-xl sm:rounded-2xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-2xl sm:text-3xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner"
-              />
-              <span className="absolute right-4 font-mono font-bold text-slate-400 text-xs sm:text-sm">
-                {miktarSoranUrun.birim || 'KG'}
-              </span>
+                  }}
+                  className="w-full h-12 sm:h-14 px-4 border rounded-xl sm:rounded-2xl bg-[#090D15] border-[#222C42] focus:border-emerald-400 text-2xl sm:text-3xl font-black font-mono text-emerald-400 text-center outline-none shadow-inner"
+                />
+                <span className="absolute right-4 font-mono font-black text-emerald-400 text-sm sm:text-base">
+                  KG
+                </span>
+              </div>
+
+              {/* Canlı Hesaplanan Fiyat Özeti */}
+              {(() => {
+                const parsed = parseFloat(girilenGramaj.replace(',', '.')) || 0
+                const kiloFiyati = getUrunKiloFiyati(gramajModalUrun)
+                const hesaplananTutar = kiloFiyati * parsed
+                return (
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#090D15] border border-[#1E2436] font-mono text-xs">
+                    <span className="text-slate-400">Hesaplanan Tutar:</span>
+                    <span className="text-emerald-400 font-bold tabular-nums">
+                      {parsed > 0 ? (
+                        <>
+                          <span className="text-slate-400 font-normal">{parsed} KG × {formatPara(kiloFiyati)} = </span>
+                          <span className="text-sm font-black text-emerald-300">{formatPara(hesaplananTutar)}</span>
+                        </>
+                      ) : (
+                        '0,00 ₺'
+                      )}
+                    </span>
+                  </div>
+                )
+              })()}
             </div>
 
-            {/* Hızlı Önayar Butonları */}
+            {/* Hızlı Gramaj Önayar Butonları */}
             <div className="grid grid-cols-4 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
-              {['0.25', '0.5', '1', '1.5', '2', '2.5', '3', '5'].map(val => (
+              {[
+                { label: '250g', val: '0.250' },
+                { label: '500g', val: '0.500' },
+                { label: '750g', val: '0.750' },
+                { label: '1 KG', val: '1.000' },
+                { label: '1.5 KG', val: '1.500' },
+                { label: '2 KG', val: '2.000' },
+                { label: '2.5 KG', val: '2.500' },
+                { label: '3 KG', val: '3.000' }
+              ].map(item => (
                 <button
-                  key={val}
+                  key={item.val}
                   type="button"
-                  onClick={() => setGirilenMiktar(val)}
+                  onClick={() => setGirilenGramaj(item.val)}
                   className={clsx(
-                    "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
-                    girilenMiktar === val
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
+                    "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95",
+                    girilenGramaj === item.val
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
                       : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
                   )}
                 >
-                  {val} {miktarSoranUrun.birim || 'KG'}
+                  {item.label}
                 </button>
               ))}
             </div>
@@ -373,21 +552,21 @@ export default function PosMenu() {
                   ['1', '2', '3'],
                   ['4', '5', '6'],
                   ['7', '8', '9'],
-                  ['C', '0', '.'],
+                  ['C', '0', ','],
                   ['⌫']
                 ]}
                 onKeyPress={(key) => {
                   if (key === '⌫') {
-                    setGirilenMiktar(prev => prev.slice(0, -1))
-                  } else if (key === '.') {
-                    if (!girilenMiktar.includes('.')) {
-                      setGirilenMiktar(prev => prev + '.')
+                    setGirilenGramaj(prev => prev.slice(0, -1))
+                  } else if (key === ',' || key === '.') {
+                    if (!girilenGramaj.includes('.')) {
+                      setGirilenGramaj(prev => (prev || '0') + '.')
                     }
                   } else if (key !== 'C') {
-                    setGirilenMiktar(prev => prev === '0' ? key : prev + key)
+                    setGirilenGramaj(prev => prev === '0' ? key : prev + key)
                   }
                 }}
-                onClear={() => setGirilenMiktar('0')}
+                onClear={() => setGirilenGramaj('0')}
               />
             </div>
 
@@ -396,7 +575,7 @@ export default function PosMenu() {
               <Button
                 variant="ghost"
                 size="md"
-                onClick={() => { setMiktarSoranUrun(null); setSecilenVaryant(null); setSecilenOpsiyonlar([]) }}
+                onClick={() => setGramajModalUrun(null)}
                 className="font-mono text-xs h-10"
               >
                 İptal
@@ -406,23 +585,36 @@ export default function PosMenu() {
                 size="md"
                 className="font-mono font-bold text-xs px-6 h-10"
                 onClick={() => {
-                  const parsed = parseFloat(girilenMiktar)
+                  const parsed = parseFloat(girilenGramaj.replace(',', '.'))
                   if (!isNaN(parsed) && parsed > 0) {
-                    sepeteEkle(miktarSoranUrun, parsed, aktifPorsiyon, secilenVaryant || undefined, secilenOpsiyonlar)
-                    setMiktarSoranUrun(null)
-                    setSecilenVaryant(null)
-                    setSecilenOpsiyonlar([])
+                    const u = gramajModalUrun
+                    setGramajModalUrun(null)
+                    const hasExtras = (u.varyantlar && u.varyantlar.length > 0) || (u.opsiyonlar && u.opsiyonlar.length > 0)
+                    if (hasExtras) {
+                      setVaryantModalUrun(u)
+                      setSecilenSatisTuru('kg')
+                      setSecilenGramaj(parsed)
+                      setSecilenVaryant(null)
+                      setSecilenOpsiyonlar([])
+                    } else {
+                      sepeteEkle(u, 1, 1, undefined, undefined, '', 'kg', parsed)
+                    }
                   }
                 }}
               >
-                Sepete Ekle
+                {(() => {
+                  const parsed = parseFloat(girilenGramaj.replace(',', '.')) || 0
+                  const kiloFiyati = getUrunKiloFiyati(gramajModalUrun)
+                  const hesaplananTutar = kiloFiyati * parsed
+                  return parsed > 0 ? `Sepete Ekle (${formatPara(hesaplananTutar)})` : 'Sepete Ekle'
+                })()}
               </Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* 5. VARYASYON / OPSİYON SEÇİM MODALI */}
+      {/* 6. VARYASYON / OPSİYON SEÇİM MODALI */}
       {varyantModalUrun && (
         <Modal
           isOpen={!!varyantModalUrun}
@@ -445,9 +637,18 @@ export default function PosMenu() {
                 />
               )}
               <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm text-white truncate">{varyantModalUrun.ad}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-white truncate">{varyantModalUrun.ad}</span>
+                  {secilenSatisTuru === 'kg' && (
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {secilenGramaj || 1} KG
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs font-mono text-emerald-400 font-bold">
-                  {formatPara(varyantModalUrun.fiyat * aktifPorsiyon)}
+                  {secilenSatisTuru === 'kg'
+                    ? `${formatPara(getUrunKiloFiyati(varyantModalUrun) * (secilenGramaj || 1))}`
+                    : `${formatPara(getUrunPorsiyonFiyati(varyantModalUrun) * aktifPorsiyon)}`}
                 </span>
               </div>
             </div>
@@ -541,16 +742,16 @@ export default function PosMenu() {
             )}
 
             {/* Toplam Fiyat Önizleme */}
-            {(secilenVaryant || secilenOpsiyonlar.length > 0) && (
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#090D15] border border-[#1E2638]">
-                <span className="text-xs font-mono text-slate-400 uppercase">Toplam</span>
-                <span className="text-lg font-black font-mono text-emerald-400 tabular-nums">
-                  {formatPara(
-                    (varyantModalUrun.fiyat + (secilenVaryant?.fiyat_farki || 0) + secilenOpsiyonlar.reduce((t, o) => t + o.fiyat, 0)) * aktifPorsiyon
-                  )}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#090D15] border border-[#1E2638]">
+              <span className="text-xs font-mono text-slate-400 uppercase">Toplam Tutar</span>
+              <span className="text-lg font-black font-mono text-emerald-400 tabular-nums">
+                {formatPara(
+                  secilenSatisTuru === 'kg'
+                    ? (getUrunKiloFiyati(varyantModalUrun) + (secilenVaryant?.fiyat_farki || 0) + secilenOpsiyonlar.reduce((t, o) => t + o.fiyat, 0)) * (secilenGramaj || 1)
+                    : (getUrunPorsiyonFiyati(varyantModalUrun) + (secilenVaryant?.fiyat_farki || 0) + secilenOpsiyonlar.reduce((t, o) => t + o.fiyat, 0)) * aktifPorsiyon
+                )}
+              </span>
+            </div>
 
             {/* Aksiyon Butonları */}
             <div className="flex gap-2.5 justify-end pt-3 border-t border-[#1E2436]">

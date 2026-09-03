@@ -57,6 +57,8 @@ export const migration001: Migration = {
         fiyat REAL NOT NULL,
         kdv_orani REAL DEFAULT 10,
         birim TEXT DEFAULT 'Porsiyon',
+        satis_turleri TEXT,
+        aciklama TEXT,
         resim_yolu TEXT,
         yazici_grup TEXT DEFAULT 'mutfak',
         aktif INTEGER DEFAULT 1,

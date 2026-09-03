@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/Button'
 import { Modal } from '../../../components/ui/Modal'
 import { useToast } from '../../../components/ui/Toast'
 import { ipcInvoke } from '../../../hooks/useIPC'
-import { MENU_KANALLARI } from '../../../../common/ipc-channels'
+import { MENU_KANALLARI, STOK_KANALLARI } from '../../../../common/ipc-channels'
 import { 
   Edit2, 
   Trash2, 
@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatPara, formatResimUrl } from '../../../utils/formatters'
+import { formatPara, formatResimUrl, formatSatisTurleri } from '../../../utils/formatters'
 import { ProductImageCropper } from './ProductImageCropper'
 
 const ISTEK_ZAMAN_ASIMI = 12_000
@@ -98,6 +98,24 @@ export default function MenuSettings() {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
+  // Ürün Modal Sekmeleri ('genel' | 'satis' | 'stok')
+  const [urunModalTab, setUrunModalTab] = useState<'genel' | 'satis' | 'stok'>('genel')
+
+  // Satış Türleri Form State
+  interface SatisTuruRow {
+    id: string
+    birim: string
+    fiyat: string
+  }
+  const [satisTurleri, setSatisTurleri] = useState<SatisTuruRow[]>([
+    { id: '1', birim: 'Porsiyon', fiyat: '' }
+  ])
+
+  // Reçete & Stok State
+  const [hammaddeler, setHammaddeler] = useState<any[]>([])
+  const [receteKalemleri, setReceteKalemleri] = useState<Array<{ hammadde_id: number; miktar: string; birim: string }>>([])
+  const [receteYukleniyor, setReceteYukleniyor] = useState(false)
+
   // Toplu Fiyat Güncelleme State
   const [topluKategoriId, setTopluKategoriId] = useState<string>('tum')
   const [artisTipi, setArtisTipi] = useState<'yuzde' | 'tutar'>('yuzde')
@@ -127,6 +145,9 @@ export default function MenuSettings() {
       
       const urunData = await ipcInvoke<any[]>(MENU_KANALLARI.URUNLER)
       setUrunler(urunData || [])
+
+      const hammaddeData = await ipcInvoke<any[]>(STOK_KANALLARI.HAMMADDELER)
+      setHammaddeler(hammaddeData || [])
     } catch (err: any) {
       error('Hata', err.message || 'Veriler yüklenemedi')
     } finally {
@@ -209,7 +230,8 @@ export default function MenuSettings() {
   }
 
   // Ürün İşlemleri
-  const urunModaliniAc = (urun?: any) => {
+  const urunModaliniAc = async (urun?: any) => {
+    setUrunModalTab('genel')
     if (urun) {
       setDuzenlenenUrun(urun)
       setUrunAd(urun.ad || '')
@@ -221,6 +243,57 @@ export default function MenuSettings() {
       setUrunKdv(urun.kdv_orani ? String(urun.kdv_orani) : '10')
       setUrunYaziciGrup(urun.yazici_grup || 'mutfak')
       setUrunResimYolu(urun.resim_yolu || '')
+
+      // Satış türleri çözümle
+      let parseEdilmisTurler: any[] = []
+      if (typeof urun.satis_turleri === 'string') {
+        try {
+          parseEdilmisTurler = JSON.parse(urun.satis_turleri)
+        } catch {
+          parseEdilmisTurler = []
+        }
+      } else if (Array.isArray(urun.satis_turleri)) {
+        parseEdilmisTurler = urun.satis_turleri
+      }
+
+      if (parseEdilmisTurler && parseEdilmisTurler.length > 0) {
+        setSatisTurleri(
+          parseEdilmisTurler.map((t, idx) => ({
+            id: String(idx + 1),
+            birim: (t.birim || '').toLowerCase() === 'kg' ? 'KG' : (t.birim ? t.birim.charAt(0).toUpperCase() + t.birim.slice(1) : 'Porsiyon'),
+            fiyat: String(t.fiyat || '')
+          }))
+        )
+      } else {
+        const rows: SatisTuruRow[] = [
+          { id: '1', birim: urun.birim || 'Porsiyon', fiyat: urun.fiyat ? String(urun.fiyat) : '' }
+        ]
+        if (urun.kilo_fiyati) {
+          rows.push({ id: '2', birim: 'KG', fiyat: String(urun.kilo_fiyati) })
+        }
+        setSatisTurleri(rows)
+      }
+
+      // Reçeteyi yükle
+      setReceteYukleniyor(true)
+      try {
+        const receteler = await ipcInvoke<any[]>(STOK_KANALLARI.RECETELER, urun.id)
+        if (Array.isArray(receteler)) {
+          setReceteKalemleri(
+            receteler.map(r => ({
+              hammadde_id: r.hammadde_id,
+              miktar: String(r.miktar || ''),
+              birim: r.birim || r.recete_birim || r.hammadde_birim || 'Gram'
+            }))
+          )
+        } else {
+          setReceteKalemleri([])
+        }
+      } catch {
+        setReceteKalemleri([])
+      } finally {
+        setReceteYukleniyor(false)
+      }
     } else {
       setDuzenlenenUrun(null)
       setUrunAd('')
@@ -232,10 +305,76 @@ export default function MenuSettings() {
       setUrunKdv('10')
       setUrunYaziciGrup('mutfak')
       setUrunResimYolu('')
+      setSatisTurleri([
+        { id: '1', birim: 'Porsiyon', fiyat: '' }
+      ])
+      setReceteKalemleri([])
     }
     setResimYukleniyor(false)
     setIsDragging(false)
     setUrunModalAcik(true)
+  }
+
+  // Dinamik Satış Türleri Yönetimi
+  const satisTuruEkle = () => {
+    const varMiPorsiyon = satisTurleri.some(t => t.birim.toLowerCase() === 'porsiyon')
+    const yeniBirim = varMiPorsiyon ? 'KG' : 'Porsiyon'
+    setSatisTurleri(prev => [
+      ...prev,
+      { id: Date.now().toString(), birim: yeniBirim, fiyat: '' }
+    ])
+  }
+
+  const satisTuruGuncelle = (id: string, alan: 'birim' | 'fiyat', deger: string) => {
+    setSatisTurleri(prev =>
+      prev.map(t => (t.id === id ? { ...t, [alan]: deger } : t))
+    )
+    if (alan === 'fiyat' && id === satisTurleri[0]?.id) {
+      setUrunFiyat(deger)
+    }
+  }
+
+  const satisTuruSil = (id: string) => {
+    if (satisTurleri.length <= 1) {
+      info('Bilgi', 'En az bir satış türü tanımlı olmalıdır.')
+      return
+    }
+    setSatisTurleri(prev => prev.filter(t => t.id !== id))
+  }
+
+  // Reçete Kalemleri Yönetimi
+  const receteKalemiEkle = () => {
+    const ilkHammadde = hammaddeler[0]
+    setReceteKalemleri(prev => [
+      ...prev,
+      {
+        hammadde_id: ilkHammadde ? ilkHammadde.id : 0,
+        miktar: '1',
+        birim: ilkHammadde ? (ilkHammadde.birim || 'Gram') : 'Gram'
+      }
+    ])
+  }
+
+  const receteKalemiGuncelle = (index: number, alan: string, deger: any) => {
+    setReceteKalemleri(prev => {
+      const yeni = [...prev]
+      if (alan === 'hammadde_id') {
+        const hid = Number(deger)
+        const hammadde = hammaddeler.find(h => h.id === hid)
+        yeni[index] = {
+          ...yeni[index],
+          hammadde_id: hid,
+          birim: hammadde?.birim || yeni[index].birim
+        }
+      } else {
+        yeni[index] = { ...yeni[index], [alan]: deger }
+      }
+      return yeni
+    })
+  }
+
+  const receteKalemiSil = (index: number) => {
+    setReceteKalemleri(prev => prev.filter((_, i) => i !== index))
   }
 
   const kirpmaModaliniAc = (base64: string) => {
@@ -329,29 +468,74 @@ export default function MenuSettings() {
 
   const urunKaydet = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!urunAd.trim() || !urunFiyat) return
+    if (!urunAd.trim()) {
+      error('Eksik Bilgi', 'Lütfen ürün adını giriniz.')
+      setUrunModalTab('genel')
+      return
+    }
+
+    // Satış türlerini doğrula ve filtrele
+    const gecerliTurler = satisTurleri
+      .filter(t => t.birim.trim() && !isNaN(Number(t.fiyat)) && Number(t.fiyat) > 0)
+      .map(t => ({
+        birim: t.birim.trim().toLowerCase(),
+        fiyat: Number(t.fiyat)
+      }))
+
+    if (gecerliTurler.length === 0 && (!urunFiyat || isNaN(Number(urunFiyat)) || Number(urunFiyat) <= 0)) {
+      error('Eksik Bilgi', 'Lütfen en az bir geçerli satış türü ve fiyatı giriniz.')
+      setUrunModalTab('satis')
+      return
+    }
+
+    const ilkTur = gecerliTurler[0]
+    const anaFiyat = ilkTur ? ilkTur.fiyat : Number(urunFiyat || 0)
+    const anaBirim = ilkTur
+      ? (ilkTur.birim === 'kg' ? 'KG' : ilkTur.birim.charAt(0).toUpperCase() + ilkTur.birim.slice(1))
+      : urunBirim
+
+    const porsiyonFiyat = gecerliTurler.find(t => t.birim === 'porsiyon')?.fiyat || (anaBirim.toLowerCase() === 'porsiyon' ? anaFiyat : null)
+    const kiloFiyat = gecerliTurler.find(t => ['kg', 'kilo'].includes(t.birim))?.fiyat || (['kg', 'kilo'].includes(anaBirim.toLowerCase()) ? anaFiyat : null)
 
     try {
       const payload = {
         ad: urunAd.trim(),
         kisaltma: urunKisaltma.trim() || null,
         aciklama: urunKisaltma.trim() || null,
-        fiyat: Number(urunFiyat),
+        fiyat: anaFiyat,
         kategori_id: Number(urunKategoriId),
         barkod: urunBarkod.trim() || null,
-        birim: urunBirim,
+        birim: anaBirim,
         kdv_orani: Number(urunKdv),
         yazici_grup: urunYaziciGrup,
-        resim_yolu: urunResimYolu.trim() || null
+        resim_yolu: urunResimYolu.trim() || null,
+        satis_turleri: JSON.stringify(gecerliTurler.length > 0 ? gecerliTurler : [{ birim: anaBirim.toLowerCase(), fiyat: anaFiyat }]),
+        porsiyon_fiyati: porsiyonFiyat,
+        kilo_fiyati: kiloFiyat
       }
 
+      let targetUrunId = duzenlenenUrun?.id
       if (duzenlenenUrun) {
         await ipcInvoke(MENU_KANALLARI.URUN_GUNCELLE, duzenlenenUrun.id, payload)
         success('Başarılı', 'Ürün güncellendi.')
       } else {
-        await ipcInvoke(MENU_KANALLARI.URUN_EKLE, payload)
+        const sonuc = await ipcInvoke<any>(MENU_KANALLARI.URUN_EKLE, payload)
+        targetUrunId = sonuc?.id
         success('Başarılı', 'Yeni ürün menüye eklendi.')
       }
+
+      // Reçete kalemleri varsa kaydet
+      if (targetUrunId && receteKalemleri.length > 0) {
+        const gecerliReceteler = receteKalemleri
+          .filter(k => k.hammadde_id && Number(k.miktar) > 0)
+          .map(k => ({
+            hammadde_id: k.hammadde_id,
+            miktar: Number(k.miktar),
+            birim: k.birim
+          }))
+        await ipcInvoke(STOK_KANALLARI.RECETE_EKLE, targetUrunId, gecerliReceteler)
+      }
+
       setUrunModalAcik(false)
       verileriGetir()
     } catch (err: any) {
@@ -642,8 +826,8 @@ export default function MenuSettings() {
                               </span>
                             </div>
 
-                            <span className="text-base font-bold text-white font-mono shrink-0">
-                              {formatPara(urun.fiyat)}
+                            <span className="text-xs font-bold text-emerald-400 font-mono shrink-0 text-right leading-tight max-w-[55%]">
+                              {formatSatisTurleri(urun)}
                             </span>
                           </div>
 
@@ -1020,297 +1204,521 @@ export default function MenuSettings() {
         isOpen={urunModalAcik}
         onClose={() => setUrunModalAcik(false)}
         title={duzenlenenUrun ? `Ürün Düzenle: ${duzenlenenUrun.ad}` : 'Yeni Ürün Ekle'}
-        size="md"
+        size="lg"
       >
         <form onSubmit={urunKaydet} className="flex flex-col gap-4">
           
-          {/* Ad & Kısa Ad */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Ürün Adı</label>
-              <input
-                type="text"
-                required
-                autoFocus
-                placeholder="Örn: Izgara Köfte Porsiyon"
-                value={urunAd}
-                onChange={e => setUrunAd(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kısa / Mutfak Adı</label>
-              <input
-                type="text"
-                placeholder="Örn: Köfte Pors."
-                value={urunKisaltma}
-                onChange={e => setUrunKisaltma(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Fiyat & KDV */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Satış Fiyatı (₺)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                value={urunFiyat}
-                onChange={e => setUrunFiyat(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-lg font-bold focus:border-brand-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">KDV Oranı (%)</label>
-              <select
-                value={urunKdv}
-                onChange={e => setUrunKdv(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              >
-                <option value="1">%1 (Temel Gıda)</option>
-                <option value="10">%10 (Standart Restoran)</option>
-                <option value="20">%20 (Alkollü / Hizmet)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Kategori & Ölçü Birimi */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kategori</label>
-              <select
-                required
-                value={urunKategoriId}
-                onChange={e => setUrunKategoriId(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              >
-                <option value="" disabled>Kategori Seçiniz...</option>
-                {kategoriler.map(k => (
-                  <option key={k.id} value={String(k.id)}>{k.ad}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Ölçü Birimi</label>
-              <select
-                value={urunBirim}
-                onChange={e => setUrunBirim(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              >
-                <option value="Porsiyon">Porsiyon</option>
-                <option value="Kilo / Gramaj">Kilo / Gramaj</option>
-                <option value="Adet">Adet</option>
-                <option value="Tane">Tane</option>
-                <option value="KG">KG</option>
-                <option value="Gram">Gram</option>
-                <option value="Litre">Litre</option>
-                <option value="Dilim">Dilim</option>
-                <option value="Şişe">Şişe</option>
-                <option value="Kutu">Kutu</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Barkod & Yazıcı Grubu */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Barkod (Opsiyonel)</label>
-              <input
-                type="text"
-                placeholder="Barkod okutun veya yazın..."
-                value={urunBarkod}
-                onChange={e => setUrunBarkod(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Mutfak / Yazıcı İstasyonu</label>
-              <select
-                value={urunYaziciGrup}
-                onChange={e => setUrunYaziciGrup(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
-              >
-                <option value="mutfak">Ana Mutfak</option>
-                <option value="bar">Bar / İçecek</option>
-                <option value="firin">Fırın / Pide & Lahmacun</option>
-                <option value="kasa">Sadece Kasa / Fiş</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Ürün Görseli (Upload, Sürükle-Bırak & Önizleme) */}
-          <div className="flex flex-col gap-1.5 pt-1">
-            <label className="text-xs font-mono text-surface-400 uppercase flex items-center justify-between">
-              <span>Ürün Görseli (Fotoğraf)</span>
-              {urunResimYolu && (
-                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Görsel Yüklendi
+          {/* Sekme Butonları (Tabs) */}
+          <div className="flex items-center gap-1.5 p-1 bg-[#090C15] border border-[#1E2436] rounded-xl">
+            <button
+              type="button"
+              onClick={() => setUrunModalTab('genel')}
+              className={clsx(
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                urunModalTab === 'genel'
+                  ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+              )}
+            >
+              <Package size={15} />
+              <span>1. Genel Bilgiler</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUrunModalTab('satis')}
+              className={clsx(
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                urunModalTab === 'satis'
+                  ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+              )}
+            >
+              <DollarSign size={15} />
+              <span>2. Satış & Fiyatlandırma</span>
+              {satisTurleri.length > 1 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono font-bold">
+                  {satisTurleri.length}
                 </span>
               )}
-            </label>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUrunModalTab('stok')}
+              className={clsx(
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                urunModalTab === 'stok'
+                  ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+              )}
+            >
+              <SlidersHorizontal size={15} />
+              <span>3. Stok & Reçete</span>
+              {receteKalemleri.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-300 font-mono font-bold">
+                  {receteKalemleri.length}
+                </span>
+              )}
+            </button>
+          </div>
 
-            {urunResimYolu ? (
-              // Görsel Yüklü İse: Önizleme & Kaldır / Değiştir
-              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#090C15] border border-[#1E2436]">
-                <div className="relative w-20 h-20 rounded-xl bg-[#141A26] border border-[#222C42] overflow-hidden shrink-0 shadow-md group">
-                  <img
-                    src={formatResimUrl(urunResimYolu)}
-                    alt="Ürün Görsel Önizleme"
-                    className="w-full h-full object-cover"
+          {/* ═════════════════════════════════════════════════════════ */}
+          {/* SEKME 1: GENEL BİLGİLER */}
+          {/* ═════════════════════════════════════════════════════════ */}
+          {urunModalTab === 'genel' && (
+            <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
+              {/* Ad & Kısa Ad */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Ürün Adı *</label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="Örn: Izgara Köfte Porsiyon"
+                    value={urunAd}
+                    onChange={e => setUrunAd(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-bold text-white block truncate mb-0.5">
-                    {urunResimYolu.split('/').pop()}
-                  </span>
-                  <span className="text-[10px] font-mono text-surface-400 block mb-2.5">
-                    Menü, POS ve QR Menü ekranlarında gösterilecek
-                  </span>
+                <div>
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kısa / Mutfak Adı</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: Köfte Pors."
+                    value={urunKisaltma}
+                    onChange={e => setUrunKisaltma(e.target.value)}
+                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+              </div>
 
-                  <div className="flex items-center gap-2">
+              {/* Kategori & Barkod & Yazıcı Grubu */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kategori *</label>
+                  <select
+                    required
+                    value={urunKategoriId}
+                    onChange={e => setUrunKategoriId(e.target.value)}
+                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                  >
+                    <option value="" disabled>Kategori Seçiniz...</option>
+                    {kategoriler.map(k => (
+                      <option key={k.id} value={String(k.id)}>{k.ad}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Barkod (Opsiyonel)</label>
+                  <input
+                    type="text"
+                    placeholder="Barkod okutun veya yazın..."
+                    value={urunBarkod}
+                    onChange={e => setUrunBarkod(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Mutfak / Yazıcı Grubu</label>
+                  <select
+                    value={urunYaziciGrup}
+                    onChange={e => setUrunYaziciGrup(e.target.value)}
+                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                  >
+                    <option value="mutfak">Ana Mutfak</option>
+                    <option value="bar">Bar / İçecek</option>
+                    <option value="firin">Fırın / Pide & Lahmacun</option>
+                    <option value="kasa">Sadece Kasa / Fiş</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Ürün Görseli (Upload, Sürükle-Bırak & Önizleme) */}
+              <div className="flex flex-col gap-1.5 pt-1">
+                <label className="text-xs font-mono text-surface-400 uppercase flex items-center justify-between">
+                  <span>Ürün Görseli (Fotoğraf)</span>
+                  {urunResimYolu && (
+                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Görsel Tanımlı
+                    </span>
+                  )}
+                </label>
+
+                {urunResimYolu ? (
+                  <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                    <div className="relative w-16 h-16 rounded-xl bg-[#141A26] border border-[#222C42] overflow-hidden shrink-0 shadow-md group">
+                      <img
+                        src={formatResimUrl(urunResimYolu)}
+                        alt="Ürün Görsel Önizleme"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-white block truncate mb-0.5">
+                        {urunResimYolu.split('/').pop()}
+                      </span>
+                      <span className="text-[10px] font-mono text-surface-400 block mb-2">
+                        POS, Garson ve QR Menü kartlarında görüntülenir
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={resimYukleniyor}
+                          className="px-2.5 py-1 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
+                        >
+                          {resimYukleniyor ? (
+                            <RefreshCw size={13} className="animate-spin text-brand-400" />
+                          ) : (
+                            <UploadCloud size={13} />
+                          )}
+                          <span>Değiştir</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleResimKaldir}
+                          disabled={resimYukleniyor}
+                          className="px-2.5 py-1 rounded-lg bg-[#141826] hover:bg-rose-950/70 hover:text-rose-300 border border-[#1E2538] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
+                        >
+                          <Trash2 size={13} />
+                          <span>Kaldır</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      setIsDragging(true)
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      setIsDragging(false)
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleResimSec(e.dataTransfer.files[0])
+                      }
+                    }}
+                    onClick={() => !resimYukleniyor && fileInputRef.current?.click()}
+                    className={clsx(
+                      "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer touch-feedback group",
+                      isDragging
+                        ? "border-brand-400 bg-brand-950/40"
+                        : "border-[#1E2436] hover:border-brand-500/60 bg-[#090C15] hover:bg-[#0E1322]"
+                    )}
+                  >
+                    {resimYukleniyor ? (
+                      <div className="flex flex-col items-center py-2 text-brand-400">
+                        <RefreshCw size={22} className="animate-spin mb-1.5" />
+                        <span className="text-xs font-mono font-bold">Görsel yükleniyor...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-9 h-9 rounded-xl bg-[#141826] border border-[#222C42] flex items-center justify-center text-surface-400 group-hover:text-brand-400 group-hover:border-brand-500/40 mb-1.5 transition-colors">
+                          <UploadCloud size={18} />
+                        </div>
+                        <p className="text-xs font-semibold text-white mb-0.5">
+                          Görsel yüklemek için tıklayın veya sürükleyin
+                        </p>
+                        <p className="text-[10px] font-mono text-surface-500">
+                          PNG, JPG, WEBP • Kart oranında otomatik kırpılır
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1 rounded-xl border border-[#1E2436] bg-[#090C15] p-2 mt-1">
+                  <label htmlFor="urun-gorsel-url" className="text-[10px] font-mono uppercase text-surface-500">URL ile İndir & Ekle</label>
+                  <div className="flex gap-2">
+                    <input
+                      id="urun-gorsel-url"
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://ornek.com/urun-fotografi.jpg"
+                      value={resimUrl}
+                      onChange={event => setResimUrl(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          urlIleGorselGetir()
+                        }
+                      }}
+                      disabled={resimYukleniyor}
+                      className="min-w-0 flex-1 h-9 px-3 rounded-lg border border-[#1E2436] bg-[#0D101A] text-white text-xs placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 disabled:opacity-50"
+                    />
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={resimYukleniyor}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
+                      onClick={urlIleGorselGetir}
+                      disabled={resimYukleniyor || !resimUrl.trim()}
+                      className="shrink-0 h-9 px-3 rounded-lg border border-brand-500/40 bg-brand-950/40 text-xs font-semibold text-brand-300 hover:bg-brand-900/55 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-1"
                     >
-                      {resimYukleniyor ? (
-                        <RefreshCw size={13} className="animate-spin text-brand-400" />
-                      ) : (
-                        <UploadCloud size={13} />
-                      )}
-                      <span>Görseli Değiştir</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('urun-gorsel-url')?.focus()}
-                      disabled={resimYukleniyor}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
-                    >
-                      <ImageIcon size={13} />
-                      <span>URL ile Değiştir</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleResimKaldir}
-                      disabled={resimYukleniyor}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-rose-950/70 hover:text-rose-300 border border-[#1E2538] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
-                    >
-                      <Trash2 size={13} />
-                      <span>Görseli Kaldır</span>
+                      {resimYukleniyor ? <RefreshCw size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+                      <span>İndir</span>
                     </button>
                   </div>
                 </div>
-              </div>
-            ) : (
-              // Görsel Yok İse: Sürükle-Bırak / Dosya Seçme Alanı
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setIsDragging(true)
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setIsDragging(false)
-                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleResimSec(e.dataTransfer.files[0])
-                  }
-                }}
-                onClick={() => !resimYukleniyor && fileInputRef.current?.click()}
-                className={clsx(
-                  "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer touch-feedback group",
-                  isDragging
-                    ? "border-brand-400 bg-brand-950/40"
-                    : "border-[#1E2436] hover:border-brand-500/60 bg-[#090C15] hover:bg-[#0E1322]"
-                )}
-              >
-                {resimYukleniyor ? (
-                  <div className="flex flex-col items-center py-2 text-brand-400">
-                    <RefreshCw size={24} className="animate-spin mb-1.5" />
-                    <span className="text-xs font-mono font-bold">Görsel yükleniyor...</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-10 h-10 rounded-xl bg-[#141826] border border-[#222C42] flex items-center justify-center text-surface-400 group-hover:text-brand-400 group-hover:border-brand-500/40 mb-2 transition-colors">
-                      <UploadCloud size={20} />
-                    </div>
-                    <p className="text-xs font-semibold text-white mb-0.5">
-                      Görsel yüklemek için tıklayın veya sürükleyip bırakın
-                    </p>
-                    <p className="text-[10px] font-mono text-surface-500">
-                      PNG, JPG, JPEG, WEBP, SVG • Maksimum 10MB
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
-            <div className="flex flex-col gap-1.5 rounded-xl border border-[#1E2436] bg-[#090C15] p-2.5">
-              <label htmlFor="urun-gorsel-url" className="text-[10px] font-mono uppercase text-surface-500">URL ile Ekle</label>
-              <div className="flex gap-2">
                 <input
-                  id="urun-gorsel-url"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://ornek.com/urun-fotografi.jpg"
-                  value={resimUrl}
-                  onChange={event => setResimUrl(event.target.value)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      urlIleGorselGetir()
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleResimSec(e.target.files[0])
                     }
                   }}
-                  disabled={resimYukleniyor}
-                  className="min-w-0 flex-1 h-10 px-3 rounded-lg border border-[#1E2436] bg-[#0D101A] text-white text-xs placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-50"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════ */}
+          {/* SEKME 2: SATIŞ & FİYATLANDIRMA */}
+          {/* ═════════════════════════════════════════════════════════ */}
+          {urunModalTab === 'satis' && (
+            <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-mono uppercase text-surface-300 font-bold">Dinamik Satış Türleri & Fiyatlandırma</h4>
+                  <p className="text-[11px] text-surface-500">Bu ürün için geçerli satış birimlerini (Porsiyon, KG vb.) ve fiyatlarını alt alta tanımlayın.</p>
+                </div>
                 <button
                   type="button"
-                  onClick={urlIleGorselGetir}
-                  disabled={resimYukleniyor || !resimUrl.trim()}
-                  className="shrink-0 h-10 px-3 rounded-lg border border-brand-500/40 bg-brand-950/40 text-xs font-semibold text-brand-300 hover:bg-brand-900/55 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={satisTuruEkle}
+                  className="px-3 py-1.5 rounded-lg bg-brand-950/80 border border-brand-500/50 hover:bg-brand-900/80 text-brand-300 text-xs font-bold flex items-center gap-1.5 transition-all touch-feedback shadow-sm"
                 >
-                  {resimYukleniyor ? <RefreshCw size={15} className="animate-spin" /> : 'İndir'}
+                  <Plus size={14} />
+                  <span>Satış Türü Ekle</span>
                 </button>
               </div>
-              <p className="text-[10px] text-surface-500">Görsel uygulama sunucusundan indirilir; harici bağlantı olarak saklanmaz.</p>
-            </div>
 
-            {/* Gizli Dosya Girişi */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/gif"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleResimSec(e.target.files[0])
-                }
-              }}
-            />
-          </div>
+              {/* Satış Türleri Tablosu */}
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pos-scrollbar pr-1">
+                {satisTurleri.map((tur, index) => (
+                  <div key={tur.id} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                    <div className="w-8 h-8 rounded-lg bg-[#141826] border border-[#1E2538] flex items-center justify-center text-xs font-mono font-bold text-surface-400 shrink-0">
+                      {index + 1}
+                    </div>
+
+                    <div className="w-36 shrink-0">
+                      <label className="text-[10px] font-mono text-surface-500 uppercase block mb-1">Birim</label>
+                      <select
+                        value={tur.birim}
+                        onChange={e => satisTuruGuncelle(tur.id, 'birim', e.target.value)}
+                        className="w-full h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="Porsiyon">Porsiyon</option>
+                        <option value="KG">KG (Kilo)</option>
+                        <option value="Adet">Adet</option>
+                        <option value="Gram">Gram</option>
+                        <option value="Tane">Tane</option>
+                        <option value="Dilim">Dilim</option>
+                        <option value="Şişe">Şişe</option>
+                        <option value="Kutu">Kutu</option>
+                        <option value="Litre">Litre</option>
+                      </select>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] font-mono text-surface-500 uppercase block mb-1">Satış Fiyatı (₺)</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={tur.fiyat}
+                          onChange={e => satisTuruGuncelle(tur.id, 'fiyat', e.target.value)}
+                          className="w-full h-9 px-3 pr-8 rounded-lg border border-[#1E2436] bg-[#0E121E] text-emerald-400 font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 font-mono text-xs font-bold">₺</span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => satisTuruSil(tur.id)}
+                        disabled={satisTurleri.length <= 1}
+                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-feedback"
+                        title="Bu Satış Türünü Kaldır"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* + Satış Türü Ekle Butonu */}
+              <button
+                type="button"
+                onClick={satisTuruEkle}
+                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#222C42] hover:border-brand-500/60 bg-[#090C15] hover:bg-brand-950/20 text-brand-400 hover:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 transition-all touch-feedback"
+              >
+                <Plus size={15} />
+                <span>+ Yeni Satış Türü Ekle (Örn: KG, Adet)</span>
+              </button>
+
+              {/* KDV Oranı & Kart Önizleme */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">KDV Oranı (%)</label>
+                  <select
+                    value={urunKdv}
+                    onChange={e => setUrunKdv(e.target.value)}
+                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                  >
+                    <option value="1">%1 (Temel Gıda)</option>
+                    <option value="10">%10 (Standart Restoran)</option>
+                    <option value="20">%20 (Alkollü / Hizmet)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kart Fiyat Önizleme</label>
+                  <div className="h-11 px-3.5 rounded-xl bg-[#090C15] border border-[#1E2436] flex items-center overflow-x-auto pos-scrollbar">
+                    <span className="text-xs font-mono font-bold text-emerald-400 truncate">
+                      {satisTurleri.filter(t => t.fiyat && Number(t.fiyat) > 0).map(t => `${t.birim}: ${Number(t.fiyat).toLocaleString('tr-TR')} ₺`).join(' | ') || 'Fiyat girilmedi'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════ */}
+          {/* SEKME 3: STOK & REÇETE */}
+          {/* ═════════════════════════════════════════════════════════ */}
+          {urunModalTab === 'stok' && (
+            <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-mono uppercase text-surface-300 font-bold">Reçete Kalemleri (Hammadde Kullanımı)</h4>
+                  <p className="text-[11px] text-surface-500">Sipariş satıldığında hammadde stoklarından düşülecek sarfiyat miktarları.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={receteKalemiEkle}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/50 hover:bg-cyan-900/80 text-cyan-300 text-xs font-bold flex items-center gap-1.5 transition-all touch-feedback shadow-sm"
+                >
+                  <Plus size={14} />
+                  <span>Hammadde Ekle</span>
+                </button>
+              </div>
+
+              {receteYukleniyor ? (
+                <div className="flex items-center justify-center py-12 text-brand-400 font-mono text-xs">
+                  <RefreshCw size={18} className="animate-spin mr-2" />
+                  <span>Reçete bilgileri yükleniyor...</span>
+                </div>
+              ) : receteKalemleri.length === 0 ? (
+                <div className="p-8 rounded-xl border border-dashed border-[#1E2436] bg-[#090C15] text-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#141826] border border-[#1E2538] flex items-center justify-center text-surface-400 mx-auto mb-2.5">
+                    <SlidersHorizontal size={20} />
+                  </div>
+                  <p className="text-xs font-semibold text-surface-300 mb-1">Bu ürün için henüz reçete / hammadde tanımlanmamış.</p>
+                  <p className="text-[11px] text-surface-500 font-mono mb-3">Satış yapıldığında otomatik stok düşümü için yukarıdaki butondan hammadde ekleyin.</p>
+                  <button
+                    type="button"
+                    onClick={receteKalemiEkle}
+                    className="px-3.5 py-1.5 rounded-lg bg-[#141826] hover:bg-[#1E2436] border border-[#1E2538] text-xs font-bold text-surface-200 inline-flex items-center gap-1.5"
+                  >
+                    <Plus size={13} />
+                    <span>İlk Hammaddeyi Ekle</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pos-scrollbar pr-1">
+                  {receteKalemleri.map((kalem, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                      <select
+                        value={kalem.hammadde_id}
+                        onChange={e => receteKalemiGuncelle(idx, 'hammadde_id', e.target.value)}
+                        className="flex-1 h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                      >
+                        {hammaddeler.length === 0 ? (
+                          <option value="0">Tanımlı hammadde bulunamadı</option>
+                        ) : (
+                          hammaddeler.map(h => (
+                            <option key={h.id} value={h.id}>{h.ad} ({h.birim})</option>
+                          ))
+                        )}
+                      </select>
+
+                      <div className="w-28 relative">
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={kalem.miktar}
+                          onChange={e => receteKalemiGuncelle(idx, 'miktar', e.target.value)}
+                          placeholder="Miktar"
+                          className="w-full h-9 px-2.5 pr-10 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white font-mono text-xs font-bold focus:border-brand-500 focus:outline-none"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-surface-500 uppercase">
+                          {kalem.birim}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => receteKalemiSil(idx)}
+                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback"
+                        title="Bu Hammaddeyi Kaldır"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#1A1F30]">
-            <Button type="button" variant="ghost" onClick={() => setUrunModalAcik(false)}>
-              İptal
-            </Button>
-            <Button type="submit" variant="primary" className="px-6 font-bold">
-              {duzenlenenUrun ? 'Değişiklikleri Kaydet' : 'Ürün Ekle'}
-            </Button>
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#1A1F30]">
+            <div className="flex items-center gap-2">
+              {urunModalTab !== 'genel' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUrunModalTab(urunModalTab === 'stok' ? 'satis' : 'genel')}
+                  className="text-xs"
+                >
+                  ← Önceki Sekme
+                </Button>
+              )}
+              {urunModalTab !== 'stok' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUrunModalTab(urunModalTab === 'genel' ? 'satis' : 'stok')}
+                  className="text-xs text-brand-400 hover:text-brand-300"
+                >
+                  Sonraki Sekme →
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="ghost" onClick={() => setUrunModalAcik(false)}>
+                İptal
+              </Button>
+              <Button type="submit" variant="primary" className="px-6 font-bold">
+                {duzenlenenUrun ? 'Değişiklikleri Kaydet' : 'Ürün Ekle'}
+              </Button>
+            </div>
           </div>
         </form>
       </Modal>

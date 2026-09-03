@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { Flame, SlidersHorizontal, Scale } from 'lucide-react'
 import type { Urun } from '../../../../common/types/menu.types'
-import { formatPara, formatResimUrl } from '../../../utils/formatters'
+import { formatPara, formatResimUrl, formatSatisTurleri } from '../../../utils/formatters'
 import { useMenuStore } from '../../../stores/useMenuStore'
 
 export interface ProductCardProps {
@@ -134,8 +134,8 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
         </div>
 
         {/* Çizginin Altında Sağ Taraf: Fiyat */}
-        <span className="text-sm sm:text-[15px] font-black font-mono text-emerald-400 group-hover:text-emerald-300 transition-colors tabular-nums leading-none ml-2 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-          {formatPara(hesaplananFiyat)}
+        <span className="text-xs sm:text-[13px] font-black font-mono text-emerald-400 group-hover:text-emerald-300 transition-colors tabular-nums leading-tight ml-2 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] text-right">
+          {formatSatisTurleri(urun, aktifPorsiyon)}
         </span>
       </div>
     </button>

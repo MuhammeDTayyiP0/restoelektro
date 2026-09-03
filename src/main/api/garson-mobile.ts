@@ -999,16 +999,17 @@ export function garsonMobilHTML(): string {
     }
 
     .urun-pos-price {
-      font-size: 14px;
-      font-weight: 900;
+      font-size: 11px;
+      font-weight: 800;
       color: var(--pos-cyan);
-      letter-spacing: -0.3px;
+      letter-spacing: -0.2px;
+      line-height: 1.25;
+      text-align: right;
+      width: 100%;
     }
 
     .urun-pos-unit {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
+      display: none;
     }
 
     /* Variation indicator badge */
@@ -1040,9 +1041,7 @@ export function garsonMobilHTML(): string {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.82);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.85);
       z-index: 300;
       opacity: 0;
       transition: opacity 0.2s ease;
@@ -1051,6 +1050,186 @@ export function garsonMobilHTML(): string {
     .picker-modal-bg.active {
       display: block;
       opacity: 1;
+    }
+
+    /* ===== SATIS TURU (SALE TYPE) MODAL ===== */
+    .satis-turu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .satis-turu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .satis-turu-btn:active {
+      transform: scale(0.97);
+    }
+
+    .satis-turu-btn.porsiyon {
+      border-color: rgba(14, 165, 233, 0.4);
+      background: rgba(14, 165, 233, 0.06);
+    }
+
+    .satis-turu-btn.porsiyon:active {
+      background: rgba(14, 165, 233, 0.18);
+    }
+
+    .satis-turu-btn.kg {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.06);
+    }
+
+    .satis-turu-btn.kg:active {
+      background: rgba(16, 185, 129, 0.18);
+    }
+
+    .satis-turu-btn-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .satis-turu-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .satis-turu-btn.porsiyon .satis-turu-icon-wrap {
+      background: rgba(14, 165, 233, 0.2);
+      color: var(--pos-cyan);
+    }
+
+    .satis-turu-btn.kg .satis-turu-icon-wrap {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--pos-green);
+    }
+
+    .satis-turu-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .satis-turu-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .satis-turu-price {
+      font-size: 17px;
+      font-weight: 900;
+      color: var(--pos-green);
+      font-family: monospace;
+      text-align: right;
+    }
+
+    /* ===== GRAMAJ MODAL ===== */
+    .gramaj-display-box {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .gramaj-val-text {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--pos-green);
+      font-family: monospace;
+      line-height: 1.1;
+    }
+
+    .gramaj-unit-tag {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      margin-left: 6px;
+    }
+
+    .gramaj-calc-preview {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .gramaj-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .gramaj-preset-btn {
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+    }
+
+    .gramaj-preset-btn:active {
+      background: var(--pos-green-deep);
+      border-color: var(--pos-green);
+      color: var(--pos-green);
+      transform: scale(0.95);
+    }
+
+    .gramaj-numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 280px;
+      margin: 0 auto 12px;
+    }
+
+    .gramaj-numpad button {
+      height: 48px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gramaj-numpad button:active {
+      background: var(--pos-green-deep);
+      border-color: var(--pos-green);
+      color: #fff;
+      transform: scale(0.94);
     }
 
     .picker-sheet {
@@ -1733,7 +1912,95 @@ export function garsonMobilHTML(): string {
     </div>
   </div>
 
-  <!-- 5. VARIATION/OPTION PICKER MODAL -->
+  <!-- 5. SATIS TURU (SALE TYPE) MODAL -->
+  <div id="satisTuruModalBg" class="picker-modal-bg" onclick="satisTuruKapat()"></div>
+  <div id="satisTuruSheet" class="picker-sheet">
+    <div class="picker-header">
+      <div class="picker-title" id="satisTuruTitle">Satış Türü</div>
+      <button class="btn-modal-close" onclick="satisTuruKapat()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="picker-body">
+      <div class="satis-turu-grid">
+        <button class="satis-turu-btn porsiyon" onclick="satisTuruPorsiyonSec()">
+          <div class="satis-turu-btn-left">
+            <div class="satis-turu-icon-wrap">🍽️</div>
+            <div>
+              <div class="satis-turu-name">Porsiyon</div>
+              <div class="satis-turu-desc" id="satisTuruPorsiyonPill">1x Porsiyon</div>
+            </div>
+          </div>
+          <div class="satis-turu-price" id="satisTuruPorsiyonFiyat">₺0</div>
+        </button>
+
+        <button class="satis-turu-btn kg" onclick="satisTuruKgSec()">
+          <div class="satis-turu-btn-left">
+            <div class="satis-turu-icon-wrap">⚖️</div>
+            <div>
+              <div class="satis-turu-name">Kilogram (KG)</div>
+              <div class="satis-turu-desc">Tartılı satış (Gramaj)</div>
+            </div>
+          </div>
+          <div class="satis-turu-price" id="satisTuruKgFiyat">₺0 / KG</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. GRAMAJ MODAL -->
+  <div id="gramajModalBg" class="picker-modal-bg" onclick="gramajKapat()"></div>
+  <div id="gramajSheet" class="picker-sheet">
+    <div class="picker-header">
+      <div>
+        <div class="picker-title" id="gramajTitle">Gramaj Belirle</div>
+        <div style="font-size:12px; color:var(--pos-green); font-weight:700; margin-top:2px;" id="gramajKiloFiyat">1 KG = ₺0</div>
+      </div>
+      <button class="btn-modal-close" onclick="gramajKapat()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="picker-body">
+      <div class="gramaj-display-box">
+        <div>
+          <span class="gramaj-val-text" id="gramajValDisplay">0.500</span>
+          <span class="gramaj-unit-tag">KG</span>
+        </div>
+        <div class="gramaj-calc-preview" id="gramajCalcPreview"></div>
+      </div>
+
+      <div class="gramaj-preset-grid">
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('0.250')">250g</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('0.500')">500g</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('0.750')">750g</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('1.000')">1 KG</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('1.500')">1.5 KG</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('2.000')">2 KG</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('2.500')">2.5 KG</button>
+        <button class="gramaj-preset-btn" onclick="gramajPresetSec('3.000')">3 KG</button>
+      </div>
+
+      <div class="gramaj-numpad">
+        <button onclick="gramajTus('1')">1</button>
+        <button onclick="gramajTus('2')">2</button>
+        <button onclick="gramajTus('3')">3</button>
+        <button onclick="gramajTus('4')">4</button>
+        <button onclick="gramajTus('5')">5</button>
+        <button onclick="gramajTus('6')">6</button>
+        <button onclick="gramajTus('7')">7</button>
+        <button onclick="gramajTus('8')">8</button>
+        <button onclick="gramajTus('9')">9</button>
+        <button onclick="gramajTus('C')" style="color:var(--pos-red);">C</button>
+        <button onclick="gramajTus('0')">0</button>
+        <button onclick="gramajTus(',')">,</button>
+      </div>
+    </div>
+    <div class="picker-footer">
+      <button class="btn-picker-confirm" id="btnGramajConfirm" onclick="gramajOnayla()">Sepete Ekle</button>
+    </div>
+  </div>
+
+  <!-- 7. VARIATION/OPTION PICKER MODAL -->
   <div id="pickerBg" class="picker-modal-bg" onclick="pickerKapat()"></div>
   <div id="pickerSheet" class="picker-sheet">
     <div class="picker-header">
@@ -1772,6 +2039,11 @@ let aktifPorsiyon = 1;
 let urunAramaMetni = '';
 let pickerUrun = null;
 let pickerSecimler = { opsiyonlar: [], varyant: null };
+let pickerSatisTuru = 'porsiyon';
+let pickerGramaj = undefined;
+let aktifSatisTuruUrun = null;
+let aktifGramajUrun = null;
+let girilenGramaj = '0.500';
 const productImageSourceCache = new Map();
 const productImageState = new Map();
 const productCardCache = new Map();
@@ -2231,28 +2503,135 @@ function handleProductImageError(img, source) {
   img.classList.add('failed');
 }
 
+// ===== 7. ÜRÜN VE ÇOKLU SATIŞ TÜRÜ HELPERLARI =====
+function getUrunSatisTurleri(urun) {
+  if (!urun) return [];
+  let turler = [];
+  if (typeof urun.satis_turleri === 'string') {
+    try { turler = JSON.parse(urun.satis_turleri); } catch(e) { turler = []; }
+  } else if (Array.isArray(urun.satis_turleri)) {
+    turler = urun.satis_turleri;
+  }
+  if ((!turler || turler.length === 0) && (urun.porsiyon_fiyati || urun.kilo_fiyati)) {
+    turler = [];
+    if (urun.porsiyon_fiyati) turler.push({ birim: 'porsiyon', fiyat: Number(urun.porsiyon_fiyati) });
+    if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: Number(urun.kilo_fiyati) });
+  }
+  if (!turler || turler.length === 0) {
+    const birim = (urun.birim || 'porsiyon').toLowerCase();
+    turler = [{ birim: birim === 'kg' ? 'kg' : (birim === 'adet' ? 'adet' : 'porsiyon'), fiyat: Number(urun.fiyat) || 0 }];
+  }
+  return turler.filter(t => t && t.fiyat !== undefined && t.fiyat !== null);
+}
+
+function hasCokluSatisTuru(urun) {
+  if (!urun) return false;
+  const turler = getUrunSatisTurleri(urun);
+  if (turler.length > 1) return true;
+  if (urun.kilo_fiyati && urun.fiyat && Number(urun.kilo_fiyati) !== Number(urun.fiyat)) return true;
+  return false;
+}
+
+function getUrunKiloFiyati(urun) {
+  if (!urun) return 0;
+  if (urun.kilo_fiyati) return Number(urun.kilo_fiyati);
+  const turler = getUrunSatisTurleri(urun);
+  const kgTur = turler.find(t => {
+    const b = (t.birim || '').trim().toLowerCase();
+    return b === 'kg' || b === 'kilo';
+  });
+  if (kgTur) return Number(kgTur.fiyat);
+  if ((urun.birim || '').trim().toLowerCase() === 'kg') return Number(urun.fiyat) || 0;
+  return Number(urun.fiyat) || 0;
+}
+
+function getUrunPorsiyonFiyati(urun) {
+  if (!urun) return 0;
+  if (urun.porsiyon_fiyati) return Number(urun.porsiyon_fiyati);
+  const turler = getUrunSatisTurleri(urun);
+  const porsTur = turler.find(t => {
+    const b = (t.birim || '').trim().toLowerCase();
+    return b === 'porsiyon' || b === 'adet';
+  });
+  if (porsTur) return Number(porsTur.fiyat);
+  return Number(urun.fiyat) || 0;
+}
+
+function isTartiliUrun(urun) {
+  const birimUpper = (urun.birim || '').toUpperCase();
+  return ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper);
+}
+
+function formatSatisTurleri(urun, porsiyonCarpan) {
+  if (!urun) return '0 ₺';
+  const p = porsiyonCarpan || 1;
+  const turler = getUrunSatisTurleri(urun);
+  const formatBirim = (b) => {
+    const s = (b || '').trim().toLowerCase();
+    if (s === 'kg' || s === 'kilo') return 'KG';
+    if (s === 'porsiyon') return 'Porsiyon';
+    if (s === 'adet') return 'Adet';
+    if (s === 'gram' || s === 'gr') return 'Gram';
+    return b ? b.charAt(0).toUpperCase() + b.slice(1) : 'Porsiyon';
+  };
+  return turler
+    .map(t => {
+      const isPors = (t.birim || '').toLowerCase() === 'porsiyon';
+      const fiyat = Math.round((Number(t.fiyat) || 0) * (isPors ? p : 1));
+      return formatBirim(t.birim) + ': ' + fiyat + ' ₺';
+    })
+    .join(' | ');
+}
+
+function onProductCardClick(urunId) {
+  triggerHaptic(15);
+  const urun = menu.urunler.find(u => u.id === urunId);
+  if (!urun) return;
+
+  const coklu = hasCokluSatisTuru(urun);
+  const tartili = isTartiliUrun(urun);
+  const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === urunId);
+  const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === urunId);
+  const hasExtras = urunOps.length > 0 || urunVar.length > 0;
+
+  if (coklu) {
+    satisTuruSecimAc(urunId);
+  } else if (tartili) {
+    gramajSecimAc(urunId);
+  } else if (hasExtras) {
+    urunSecimAc(urunId, 'porsiyon');
+  } else {
+    sepeteEkle(urunId, urun.ad, getUrunPorsiyonFiyati(urun), urun.birim || 'Porsiyon', 'porsiyon');
+  }
+}
+
 function createProductCard(urun, source, signature) {
-  const birim = urun.birim || 'Adet';
   const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === urun.id);
   const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === urun.id);
   const hasExtras = urunOps.length > 0 || urunVar.length > 0;
-  const onclickFn = hasExtras
-    ? 'urunSecimAc('+urun.id+')'
-    : 'sepeteEkle('+urun.id+', \\''+urun.ad.replace(/'/g, "\\\\'")+'\\', '+urun.fiyat+', \\''+birim+'\\')';
+  const coklu = hasCokluSatisTuru(urun);
+
   const card = document.createElement('div');
   card.className = 'urun-pos-card ' + (source ? 'has-img' : 'no-img');
   card.dataset.signature = signature;
   card.onclick = null;
-  card.setAttribute('onclick', onclickFn);
+  card.setAttribute('onclick', 'onProductCardClick(' + urun.id + ')');
 
-  let cardHtml = hasExtras ? '<span class="urun-varyant-badge" title="Seçenek mevcut">⚙</span>' : '';
+  let badge = '';
+  if (coklu) {
+    badge = '<span class="urun-varyant-badge" title="Porsiyon / KG Seçenekleri">⚖️</span>';
+  } else if (hasExtras) {
+    badge = '<span class="urun-varyant-badge" title="Opsiyon/Varyant mevcut">⚙</span>';
+  }
+
+  let cardHtml = badge;
   if (source) {
     cardHtml += '<div class="urun-thumb-wrap">';
     cardHtml += '<div class="urun-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
     cardHtml += '<img alt="'+urun.ad+'" loading="lazy" decoding="async">';
     cardHtml += '</div>';
   }
-  cardHtml += '<div class="urun-card-body"><div class="urun-pos-title">'+urun.ad+'</div><div class="urun-pos-bottom"><span class="urun-pos-price"></span><span class="urun-pos-unit">'+birim+'</span></div></div>';
+  cardHtml += '<div class="urun-card-body"><div class="urun-pos-title">'+urun.ad+'</div><div class="urun-pos-bottom"><span class="urun-pos-price"></span></div></div>';
   card.innerHTML = cardHtml;
 
   if (source) {
@@ -2274,31 +2653,167 @@ function renderProductCards(urunler) {
 
   urunler.forEach(urun => {
     const source = getProductImageSrc(urun);
-    const signature = [urun.ad, urun.fiyat, urun.birim || 'Adet', source, (menu.opsiyonlar || []).filter(o => o.urun_id === urun.id).length, (menu.varyantlar || []).filter(v => v.urun_id === urun.id).length].join('|');
+    const signature = [urun.ad, urun.fiyat, urun.birim || 'Adet', urun.satis_turleri || '', source, (menu.opsiyonlar || []).filter(o => o.urun_id === urun.id).length, (menu.varyantlar || []).filter(v => v.urun_id === urun.id).length].join('|');
     let card = productCardCache.get(urun.id);
     if (!card || card.dataset.signature !== signature) {
       card = createProductCard(urun, source, signature);
       productCardCache.set(urun.id, card);
     }
 
-    card.querySelector('.urun-pos-price').textContent = '₺' + Number(urun.fiyat * aktifPorsiyon).toFixed(0);
+    card.querySelector('.urun-pos-price').textContent = formatSatisTurleri(urun, aktifPorsiyon);
     grid.appendChild(card);
   });
 }
 
-// ===== VARIATION/OPTION PICKER =====
-function urunSecimAc(urunId) {
+// ===== 8. SATIS TURU SEÇİMİ (PORSIYON / KG MODALI) =====
+function satisTuruSecimAc(urunId) {
+  triggerHaptic(15);
+  const urun = menu.urunler.find(u => u.id === urunId);
+  if (!urun) return;
+  aktifSatisTuruUrun = urun;
+
+  const porsiyonFiyat = getUrunPorsiyonFiyati(urun) * aktifPorsiyon;
+  const kiloFiyat = getUrunKiloFiyati(urun);
+
+  document.getElementById('satisTuruTitle').textContent = urun.ad;
+  document.getElementById('satisTuruPorsiyonFiyat').textContent = '₺' + porsiyonFiyat.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  document.getElementById('satisTuruPorsiyonPill').textContent = aktifPorsiyon !== 1 ? (aktifPorsiyon + 'x Porsiyon') : '1x Porsiyon';
+  document.getElementById('satisTuruKgFiyat').textContent = '₺' + kiloFiyat.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' / KG';
+
+  document.getElementById('satisTuruModalBg').classList.add('active');
+  setTimeout(() => document.getElementById('satisTuruSheet').classList.add('active'), 10);
+}
+
+function satisTuruKapat() {
+  document.getElementById('satisTuruSheet').classList.remove('active');
+  setTimeout(() => document.getElementById('satisTuruModalBg').classList.remove('active'), 250);
+  aktifSatisTuruUrun = null;
+}
+
+function satisTuruPorsiyonSec() {
+  triggerHaptic(15);
+  if (!aktifSatisTuruUrun) return;
+  const u = aktifSatisTuruUrun;
+  satisTuruKapat();
+
+  const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === u.id);
+  const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === u.id);
+  const hasExtras = urunOps.length > 0 || urunVar.length > 0;
+
+  if (hasExtras) {
+    urunSecimAc(u.id, 'porsiyon');
+  } else {
+    sepeteEkle(u.id, u.ad, getUrunPorsiyonFiyati(u), u.birim || 'Porsiyon', 'porsiyon');
+  }
+}
+
+function satisTuruKgSec() {
+  triggerHaptic(15);
+  if (!aktifSatisTuruUrun) return;
+  const u = aktifSatisTuruUrun;
+  satisTuruKapat();
+  gramajSecimAc(u.id);
+}
+
+// ===== 9. GRAMAJ SEÇİMİ VE NUMPAD MODALI =====
+function gramajSecimAc(urunId) {
+  triggerHaptic(15);
+  const urun = menu.urunler.find(u => u.id === urunId);
+  if (!urun) return;
+  aktifGramajUrun = urun;
+  girilenGramaj = '0.500';
+
+  document.getElementById('gramajTitle').textContent = urun.ad;
+  document.getElementById('gramajKiloFiyat').textContent = '1 KG = ₺' + getUrunKiloFiyati(urun).toLocaleString('tr-TR');
+  
+  gramajGostergeGuncelle();
+
+  document.getElementById('gramajModalBg').classList.add('active');
+  setTimeout(() => document.getElementById('gramajSheet').classList.add('active'), 10);
+}
+
+function gramajKapat() {
+  document.getElementById('gramajSheet').classList.remove('active');
+  setTimeout(() => document.getElementById('gramajModalBg').classList.remove('active'), 250);
+  aktifGramajUrun = null;
+}
+
+function gramajGostergeGuncelle() {
+  const parsed = parseFloat(girilenGramaj.replace(',', '.')) || 0;
+  const kiloFiyati = getUrunKiloFiyati(aktifGramajUrun);
+  const total = kiloFiyati * parsed;
+
+  document.getElementById('gramajValDisplay').textContent = girilenGramaj || '0';
+  document.getElementById('gramajCalcPreview').innerHTML = parsed > 0
+    ? '<span style="color:var(--text-secondary);">' + parsed + ' KG × ₺' + kiloFiyati.toLocaleString('tr-TR') + ' = </span><span style="color:var(--pos-green); font-weight:800; font-size:15px;"> ₺' + total.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '</span>'
+    : '<span style="color:var(--text-muted);">Gramaj giriniz</span>';
+  
+  document.getElementById('btnGramajConfirm').textContent = parsed > 0
+    ? 'Sepete Ekle (₺' + total.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ')'
+    : 'Sepete Ekle';
+}
+
+function gramajTus(t) {
+  triggerHaptic(10);
+  if (t === 'C') {
+    girilenGramaj = '0';
+  } else if (t === '⌫') {
+    girilenGramaj = girilenGramaj.slice(0, -1);
+    if (!girilenGramaj) girilenGramaj = '0';
+  } else if (t === ',' || t === '.') {
+    if (!girilenGramaj.includes('.')) {
+      girilenGramaj = (girilenGramaj || '0') + '.';
+    }
+  } else {
+    girilenGramaj = (girilenGramaj === '0' || girilenGramaj === '0.000') ? t : girilenGramaj + t;
+  }
+  gramajGostergeGuncelle();
+}
+
+function gramajPresetSec(val) {
+  triggerHaptic(10);
+  girilenGramaj = val;
+  gramajGostergeGuncelle();
+}
+
+function gramajOnayla() {
+  triggerHaptic(15);
+  if (!aktifGramajUrun) return;
+  const parsed = parseFloat(girilenGramaj.replace(',', '.'));
+  if (isNaN(parsed) || parsed <= 0) {
+    toast('Lütfen geçerli bir gramaj girin', true);
+    return;
+  }
+  const u = aktifGramajUrun;
+  gramajKapat();
+
+  const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === u.id);
+  const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === u.id);
+  const hasExtras = urunOps.length > 0 || urunVar.length > 0;
+
+  if (hasExtras) {
+    urunSecimAc(u.id, 'kg', parsed);
+  } else {
+    sepeteEkleKg(u.id, u.ad, getUrunKiloFiyati(u), parsed);
+  }
+}
+
+// ===== 10. VARYASYON / OPSİYON MODALI =====
+function urunSecimAc(urunId, satisTuru = 'porsiyon', gramaj = undefined) {
   triggerHaptic(15);
   const urun = menu.urunler.find(u => u.id === urunId);
   if (!urun) return;
 
   pickerUrun = urun;
+  pickerSatisTuru = satisTuru || 'porsiyon';
+  pickerGramaj = gramaj;
   pickerSecimler = { opsiyonlar: [], varyant: null };
 
   const urunOps = (menu.opsiyonlar || []).filter(o => o.urun_id === urunId);
   const urunVar = (menu.varyantlar || []).filter(v => v.urun_id === urunId);
 
-  document.getElementById('pickerTitle').textContent = urun.ad;
+  const baslikEk = satisTuru === 'kg' && gramaj ? ' (' + gramaj + ' KG)' : '';
+  document.getElementById('pickerTitle').textContent = urun.ad + baslikEk;
 
   let html = '';
 
@@ -2339,7 +2854,6 @@ function urunSecimAc(urunId) {
 
 function pickerVaryantSec(btn) {
   triggerHaptic(10);
-  // Deselect all varyant buttons
   document.querySelectorAll('#pickerBody .picker-option-btn[data-type="varyant"]').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   pickerSecimler.varyant = {
@@ -2370,7 +2884,7 @@ function pickerOnayla() {
   if (!pickerUrun) return;
 
   const u = pickerUrun;
-  const birim = u.birim || 'Adet';
+  const isKg = pickerSatisTuru === 'kg';
   let notParts = [];
 
   // Build note from selections
@@ -2384,11 +2898,16 @@ function pickerOnayla() {
   if (pickerSecimler.varyant) ekFiyat += pickerSecimler.varyant.fiyat_farki;
   pickerSecimler.opsiyonlar.forEach(o => { ekFiyat += o.fiyat; });
 
-  const efektifFiyat = u.fiyat + ekFiyat;
   const notStr = notParts.join(', ');
 
-  // Add to cart with note
-  sepeteEkleDetayli(u.id, u.ad + (notStr ? ' ('+notStr+')' : ''), efektifFiyat, birim, notStr);
+  if (isKg) {
+    const kiloFiyati = getUrunKiloFiyati(u) + ekFiyat;
+    sepeteEkleKg(u.id, u.ad + (notStr ? ' ('+notStr+')' : ''), kiloFiyati, pickerGramaj || 1, notStr);
+  } else {
+    const porsiyonFiyati = getUrunPorsiyonFiyati(u) + ekFiyat;
+    sepeteEkleDetayli(u.id, u.ad + (notStr ? ' ('+notStr+')' : ''), porsiyonFiyati, u.birim || 'Porsiyon', notStr);
+  }
+
   pickerKapat();
 }
 
@@ -2396,8 +2915,11 @@ function pickerAtla() {
   triggerHaptic(10);
   if (!pickerUrun) return;
   const u = pickerUrun;
-  const birim = u.birim || 'Adet';
-  sepeteEkle(u.id, u.ad, u.fiyat, birim);
+  if (pickerSatisTuru === 'kg') {
+    sepeteEkleKg(u.id, u.ad, getUrunKiloFiyati(u), pickerGramaj || 1);
+  } else {
+    sepeteEkle(u.id, u.ad, getUrunPorsiyonFiyati(u), u.birim || 'Porsiyon', 'porsiyon');
+  }
   pickerKapat();
 }
 
@@ -2405,31 +2927,56 @@ function pickerKapat() {
   document.getElementById('pickerSheet').classList.remove('active');
   setTimeout(() => document.getElementById('pickerBg').classList.remove('active'), 250);
   pickerUrun = null;
+  pickerSatisTuru = 'porsiyon';
+  pickerGramaj = undefined;
+}
+
+// ===== 11. SEPET STATE & HESAPLAMA =====
+function sepeteEkleKg(urunId, ad, kiloFiyati, gramaj, notlar) {
+  triggerHaptic(15);
+  const mevcut = sepet.find(s => s.urun_id === urunId && s.secilenSatisTuru === 'kg' && s.gramaj === gramaj && !s.notlar && !s.ikram);
+  if (mevcut) {
+    mevcut.miktar += 1;
+  } else {
+    sepet.push({
+      id: Math.random().toString(36).substring(7),
+      urun_id: urunId,
+      ad: ad,
+      fiyat: kiloFiyati,
+      kilo_fiyati: kiloFiyati,
+      birim: 'KG',
+      miktar: 1,
+      notlar: notlar || '',
+      ikram: false,
+      porsiyon: 1,
+      secilenSatisTuru: 'kg',
+      gramaj: gramaj
+    });
+  }
+
+  sepetGuncelle();
+  const bar = document.getElementById('sepetBar');
+  bar.classList.remove('haptic-active');
+  void bar.offsetWidth;
+  bar.classList.add('haptic-active');
+  toast(gramaj + ' KG ' + ad + ' eklendi');
 }
 
 function sepeteEkleDetayli(urunId, ad, fiyat, birim, notlar) {
   triggerHaptic(15);
-  let baslangicMiktari = 1;
-  const birimUpper = birim ? birim.toUpperCase() : '';
-  
-  if (['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)) {
-    const newVal = window.prompt('Miktar giriniz (' + (birim || 'KG') + '):', '1');
-    if (newVal === null) return;
-    const parsed = parseFloat(newVal.replace(',', '.'));
-    if (isNaN(parsed) || parsed <= 0) return;
-    baslangicMiktari = parsed;
-  }
-
   sepet.push({
     id: Math.random().toString(36).substring(7),
     urun_id: urunId,
-    ad,
-    fiyat,
-    birim,
-    miktar: baslangicMiktari,
+    ad: ad,
+    fiyat: fiyat,
+    kilo_fiyati: getUrunKiloFiyati(menu.urunler.find(u => u.id === urunId)),
+    birim: birim || 'Porsiyon',
+    miktar: 1,
     notlar: notlar || '',
     ikram: false,
-    porsiyon: aktifPorsiyon
+    porsiyon: aktifPorsiyon,
+    secilenSatisTuru: 'porsiyon',
+    gramaj: undefined
   });
 
   sepetGuncelle();
@@ -2440,39 +2987,29 @@ function sepeteEkleDetayli(urunId, ad, fiyat, birim, notlar) {
   toast(ad + ' eklendi');
 }
 
-function sepeteEkle(urunId, ad, fiyat, birim) {
+function sepeteEkle(urunId, ad, fiyat, birim, satisTuru = 'porsiyon') {
   triggerHaptic(15);
-  let baslangicMiktari = 1;
-  const birimUpper = birim ? birim.toUpperCase() : '';
-  
-  if (['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)) {
-    const newVal = window.prompt('Miktar giriniz (' + (birim || 'KG') + '):', '1');
-    if (newVal === null) return;
-    const parsed = parseFloat(newVal.replace(',', '.'));
-    if (isNaN(parsed) || parsed <= 0) return;
-    baslangicMiktari = parsed;
-  }
-
-  const mevcut = sepet.find(s => s.urun_id === urunId && !s.notlar && !s.ikram && s.porsiyon === aktifPorsiyon);
+  const mevcut = sepet.find(s => s.urun_id === urunId && s.secilenSatisTuru !== 'kg' && !s.notlar && !s.ikram && s.porsiyon === aktifPorsiyon);
   if (mevcut) {
-    mevcut.miktar += baslangicMiktari;
+    mevcut.miktar += 1;
   } else {
     sepet.push({
       id: Math.random().toString(36).substring(7),
       urun_id: urunId,
-      ad,
-      fiyat,
-      birim,
-      miktar: baslangicMiktari,
+      ad: ad,
+      fiyat: fiyat,
+      kilo_fiyati: getUrunKiloFiyati(menu.urunler.find(u => u.id === urunId)),
+      birim: birim || 'Porsiyon',
+      miktar: 1,
       notlar: '',
       ikram: false,
-      porsiyon: aktifPorsiyon
+      porsiyon: aktifPorsiyon,
+      secilenSatisTuru: satisTuru || 'porsiyon',
+      gramaj: undefined
     });
   }
 
   sepetGuncelle();
-  
-  // Floating bar animation
   const bar = document.getElementById('sepetBar');
   bar.classList.remove('haptic-active');
   void bar.offsetWidth;
@@ -2483,7 +3020,16 @@ function sepeteEkle(urunId, ad, fiyat, birim) {
 
 function sepetGuncelle() {
   const adet = sepet.reduce((a, s) => a + s.miktar, 0);
-  const tutar = sepet.reduce((a, s) => a + (s.ikram ? 0 : s.fiyat * s.miktar * (s.porsiyon || 1)), 0);
+  const tutar = sepet.reduce((a, s) => {
+    if (s.ikram) return a;
+    if (s.secilenSatisTuru === 'kg' || s.birim?.toLowerCase() === 'kg') {
+      const kFiyat = s.kilo_fiyati || s.fiyat;
+      const gr = s.gramaj || 1;
+      return a + ((kFiyat * gr) * s.miktar);
+    } else {
+      return a + (s.fiyat * s.miktar * (s.porsiyon || 1));
+    }
+  }, 0);
   
   document.getElementById('sepetAdet').textContent = adet;
   document.getElementById('sepetTutar').textContent = '₺' + tutar.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -2516,17 +3062,41 @@ function sepetListeCiz() {
   const hazirNotlar = ['Acısız', 'Az Pişmiş', 'Çok Pişmiş', 'Buzsuz', 'Paket', 'Alerji', 'Sossuz', 'Sıcak'];
 
   sepet.forEach((s) => {
+    const isKg = s.secilenSatisTuru === 'kg' || s.birim?.toLowerCase() === 'kg';
     const ikramEtiketi = s.ikram ? '<span style="background:var(--pos-purple); color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:6px; font-weight:800;">İKRAM</span>' : '';
-    const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
-    const toplamFiyat = (s.fiyat * s.miktar * (s.porsiyon || 1)).toFixed(0);
+    
+    let urunBaslik = '';
+    let birimFiyat = 0;
+    let toplamFiyat = 0;
+
+    if (isKg) {
+      const gr = s.gramaj || 1;
+      const kFiyat = s.kilo_fiyati || s.fiyat;
+      birimFiyat = kFiyat * gr;
+      toplamFiyat = birimFiyat * s.miktar;
+      urunBaslik = '<span style="background:rgba(16, 185, 129, 0.2); color:var(--pos-green); border:1px solid rgba(16, 185, 129, 0.4); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; margin-right:6px;">' + gr + ' KG</span>' + s.ad;
+    } else {
+      birimFiyat = s.fiyat * (s.porsiyon || 1);
+      toplamFiyat = birimFiyat * s.miktar;
+      const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
+      urunBaslik = (porsiyonMetin ? '<span style="background:rgba(14, 165, 233, 0.2); color:var(--pos-cyan); border:1px solid rgba(14, 165, 233, 0.4); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; margin-right:6px;">' + porsiyonMetin + '</span>' : '') + s.ad;
+    }
+
     const fiyatMetni = s.ikram 
-      ? '<span style="text-decoration:line-through; color:var(--text-muted);">₺'+toplamFiyat+'</span>' 
-      : '₺'+toplamFiyat;
+      ? '<span style="text-decoration:line-through; color:var(--text-muted);">₺' + toplamFiyat.toFixed(0) + '</span>' 
+      : '₺' + toplamFiyat.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+    const birimAltMetin = isKg 
+      ? (s.miktar + ' Adet × ₺' + birimFiyat.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }))
+      : (s.miktar + ' ' + (s.birim || 'Porsiyon') + ' × ₺' + birimFiyat.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
 
     html += '<div class="sepet-cart-item">';
     html += '  <div class="sepet-item-head">';
-    html += '    <div class="sepet-item-name">'+porsiyonMetin+s.ad+ikramEtiketi+'</div>';
-    html += '    <div class="sepet-item-price">'+fiyatMetni+'</div>';
+    html += '    <div class="sepet-item-name">' + urunBaslik + ikramEtiketi + '</div>';
+    html += '    <div style="text-align:right;">';
+    html += '      <div class="sepet-item-price">' + fiyatMetni + '</div>';
+    html += '      <div style="font-size:11px; color:var(--text-muted); font-weight:600;">' + birimAltMetin + '</div>';
+    html += '    </div>';
     html += '  </div>';
 
     html += '  <div class="sepet-item-controls">';
@@ -2631,7 +3201,7 @@ function sepetMiktarPrompt(id, birim) {
   }
 }
 
-// ===== 8. MUTFAĞA SİPARİŞ GÖNDERME =====
+// ===== 12. MUTFAĞA SİPARİŞ GÖNDERME =====
 async function siparisGonder() {
   if (!sepet.length || !aktifMasa) return;
   triggerHaptic(25);
@@ -2645,13 +3215,22 @@ async function siparisGonder() {
       method: 'POST',
       body: JSON.stringify({
         masa_id: aktifMasa.id,
-        siparisler: sepet.map(s => ({
-          urun_id: s.urun_id,
-          miktar: s.miktar,
-          notlar: s.notlar,
-          ikram: s.ikram,
-          porsiyon: s.porsiyon
-        }))
+        siparisler: sepet.map(s => {
+          const isKg = s.secilenSatisTuru === 'kg' || s.birim?.toLowerCase() === 'kg';
+          const birimFiyat = isKg ? ((s.kilo_fiyati || s.fiyat) * (s.gramaj || 1)) : s.fiyat;
+          const toplamFiyat = isKg ? (birimFiyat * s.miktar) : (s.fiyat * s.miktar * (s.porsiyon || 1));
+          return {
+            urun_id: s.urun_id,
+            miktar: s.miktar,
+            notlar: s.notlar || '',
+            ikram: s.ikram || false,
+            porsiyon: isKg ? 1 : (s.porsiyon || 1),
+            birim_fiyat: birimFiyat,
+            toplam_fiyat: toplamFiyat,
+            secilenSatisTuru: isKg ? 'kg' : 'porsiyon',
+            gramaj: isKg ? s.gramaj : undefined
+          };
+        })
       })
     });
 

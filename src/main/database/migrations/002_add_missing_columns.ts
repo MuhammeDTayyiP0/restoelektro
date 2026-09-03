@@ -21,6 +21,8 @@ export const migration002: Migration = {
     // Ürün sıralama ve birim
     sutunYoksaEkle(db, 'urun', 'sira', 'INTEGER DEFAULT 0')
     sutunYoksaEkle(db, 'urun', 'birim', "TEXT DEFAULT 'Porsiyon'")
+    sutunYoksaEkle(db, 'urun', 'satis_turleri', 'TEXT')
+    sutunYoksaEkle(db, 'urun', 'aciklama', 'TEXT')
 
     // Ürün birim normalizasyonu
     try {

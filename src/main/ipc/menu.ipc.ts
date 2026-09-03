@@ -50,24 +50,49 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     return { basarili: true }
   })
 
+  // Ürün fiyatlarını ve satış türlerini normalize et
+  const urunFiyatlariniAyrintilandir = (urun: any) => {
+    if (!urun) return urun
+    let turler: any[] = []
+    if (typeof urun.satis_turleri === 'string') {
+      try {
+        turler = JSON.parse(urun.satis_turleri)
+      } catch {
+        turler = []
+      }
+    } else if (Array.isArray(urun.satis_turleri)) {
+      turler = urun.satis_turleri
+    }
+
+    const porsiyon = turler.find((t: any) => (t.birim || '').toLowerCase() === 'porsiyon')
+    const kilo = turler.find((t: any) => ['kilo', 'kg'].includes((t.birim || '').toLowerCase()))
+
+    urun.porsiyon_fiyati = porsiyon ? porsiyon.fiyat : ((urun.birim || '').toLowerCase() === 'porsiyon' ? urun.fiyat : null)
+    urun.kilo_fiyati = kilo ? kilo.fiyat : (['kg', 'kilo'].includes((urun.birim || '').toLowerCase()) ? urun.fiyat : null)
+    return urun
+  }
+
   // Ürünleri listele (opsiyonel kategori filtresi)
   ipcMain.handle(MENU_KANALLARI.URUNLER, async (_event, kategoriId?: number) => {
+    let urunler: any[] = []
     if (kategoriId) {
-      return db.prepare(`
+      urunler = db.prepare(`
         SELECT u.*, k.ad as kategori_adi
         FROM urun u
         JOIN kategori k ON k.id = u.kategori_id
         WHERE u.kategori_id = ? AND u.aktif = 1
         ORDER BY u.sira, u.ad
       `).all(kategoriId)
+    } else {
+      urunler = db.prepare(`
+        SELECT u.*, k.ad as kategori_adi
+        FROM urun u
+        JOIN kategori k ON k.id = u.kategori_id
+        WHERE u.aktif = 1
+        ORDER BY k.sira, u.sira, u.ad
+      `).all()
     }
-    return db.prepare(`
-      SELECT u.*, k.ad as kategori_adi
-      FROM urun u
-      JOIN kategori k ON k.id = u.kategori_id
-      WHERE u.aktif = 1
-      ORDER BY k.sira, u.sira, u.ad
-    `).all()
+    return urunler.map(urunFiyatlariniAyrintilandir)
   })
 
   // Ürün detay (varyantlar ve opsiyonlar dahil)
@@ -89,19 +114,24 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       'SELECT * FROM urun_opsiyonu WHERE urun_id = ? AND aktif = 1'
     ).all(id)
 
-    return urun
+    return urunFiyatlariniAyrintilandir(urun)
   })
 
   // Ürün ekle
   ipcMain.handle(MENU_KANALLARI.URUN_EKLE, async (_event, veri: YeniUrun) => {
+    const satisTurleriStr = typeof veri.satis_turleri === 'string'
+      ? veri.satis_turleri
+      : (veri.satis_turleri ? JSON.stringify(veri.satis_turleri) : null)
+
     const sonuc = db.prepare(`
-      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO urun (kategori_id, barkod, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, satis_turleri)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       veri.kategori_id, veri.barkod || null, veri.ad, veri.kisaltma || null,
       veri.aciklama || veri.kisaltma || null,
       veri.fiyat, veri.kdv_orani || 10, veri.birim || 'Adet',
-      veri.resim_yolu || null, veri.yazici_grup || 'mutfak'
+      veri.resim_yolu || null, veri.yazici_grup || 'mutfak',
+      satisTurleriStr
     )
     return { basarili: true, id: sonuc.lastInsertRowid }
   })
@@ -120,6 +150,14 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     if (veri.birim !== undefined) { alanlar.push('birim = ?'); degerler.push(veri.birim) }
     if (veri.resim_yolu !== undefined) { alanlar.push('resim_yolu = ?'); degerler.push(veri.resim_yolu) }
     if (veri.yazici_grup !== undefined) { alanlar.push('yazici_grup = ?'); degerler.push(veri.yazici_grup) }
+    if (veri.satis_turleri !== undefined) {
+      alanlar.push('satis_turleri = ?')
+      degerler.push(
+        typeof veri.satis_turleri === 'string'
+          ? veri.satis_turleri
+          : (veri.satis_turleri ? JSON.stringify(veri.satis_turleri) : null)
+      )
+    }
     alanlar.push('updated_at = CURRENT_TIMESTAMP')
     degerler.push(id)
     if (alanlar.length > 1) {
@@ -136,7 +174,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
 
   // Ürün ara
   ipcMain.handle(MENU_KANALLARI.URUN_ARA, async (_event, arama: string) => {
-    return db.prepare(`
+    const urunler = db.prepare(`
       SELECT u.*, k.ad as kategori_adi
       FROM urun u
       JOIN kategori k ON k.id = u.kategori_id
@@ -144,6 +182,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
       ORDER BY u.ad
       LIMIT 20
     `).all(`%${arama}%`, `%${arama}%`, `%${arama}%`)
+    return urunler.map(urunFiyatlariniAyrintilandir)
   })
 
   // Ürün görseli yükle (IPC üzerinden base64/buffer)

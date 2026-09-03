@@ -1033,6 +1033,38 @@ export function qrMenuHTML(): string {
       });
     }
 
+    // ── Satış Türleri Fiyat Formatlayıcı ──
+    function formatSatisTurleri(urun) {
+      if (!urun) return '0 ₺';
+      let turler = [];
+      if (typeof urun.satis_turleri === 'string') {
+        try { turler = JSON.parse(urun.satis_turleri); } catch(e) { turler = []; }
+      } else if (Array.isArray(urun.satis_turleri)) {
+        turler = urun.satis_turleri;
+      }
+      if ((!turler || turler.length === 0) && (urun.porsiyon_fiyati || urun.kilo_fiyati)) {
+        turler = [];
+        if (urun.porsiyon_fiyati) turler.push({ birim: 'porsiyon', fiyat: urun.porsiyon_fiyati });
+        if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: urun.kilo_fiyati });
+      }
+      const formatBirim = (b) => {
+        const s = (b || '').trim().toLowerCase();
+        if (s === 'kg' || s === 'kilo') return 'KG';
+        if (s === 'porsiyon') return 'Porsiyon';
+        if (s === 'adet') return 'Adet';
+        if (s === 'gram' || s === 'gr') return 'Gram';
+        return b ? b.charAt(0).toUpperCase() + b.slice(1) : 'Porsiyon';
+      };
+      if (!turler || turler.length === 0) {
+        const birim = formatBirim(urun.birim || 'Porsiyon');
+        return birim + ': ' + Number(urun.fiyat || 0).toLocaleString('tr-TR') + ' ₺';
+      }
+      return turler
+        .filter(t => t && t.fiyat !== undefined && t.fiyat !== null)
+        .map(t => formatBirim(t.birim) + ': ' + Number(t.fiyat || 0).toLocaleString('tr-TR') + ' ₺')
+        .join(' | ');
+    }
+
     // ── Toast ──
     function showToast(msg) {
       const t = document.getElementById('toastEl');
@@ -1234,8 +1266,7 @@ export function qrMenuHTML(): string {
                   \${descText ? '<div class="dish-card-desc">' + descText + '</div>' : ''}
                 </div>
                 <div class="dish-card-footer">
-                  <span class="dish-card-price">\${formatFiyat(urun.fiyat)}</span>
-                  <span class="dish-card-unit">\${urun.birim || 'Porsiyon'}</span>
+                  <span class="dish-card-price">\${formatSatisTurleri(urun)}</span>
                 </div>
               </div>
             \`;
@@ -1254,10 +1285,9 @@ export function qrMenuHTML(): string {
               <div class="dish-row-top">
                 <span class="dish-name">\${urun.ad}</span>
                 <span class="dish-dots"></span>
-                <span class="dish-price">\${formatFiyat(urun.fiyat)}</span>
+                <span class="dish-price">\${formatSatisTurleri(urun)}</span>
               </div>
               \${descText ? '<div class="dish-desc">' + descText + '</div>' : ''}
-              <div class="dish-unit-label">\${urun.birim || 'Porsiyon'}</div>
             \`;
 
             listDiv.appendChild(row);
@@ -1303,8 +1333,8 @@ export function qrMenuHTML(): string {
     // ══════════════════════════════════════════════════════════
     function openDetail(urun) {
       document.getElementById('detailName').textContent = urun.ad;
-      document.getElementById('detailPrice').textContent = formatFiyat(urun.fiyat);
-      document.getElementById('detailUnit').textContent = '/ ' + (urun.birim || 'Porsiyon');
+      document.getElementById('detailPrice').textContent = formatSatisTurleri(urun);
+      document.getElementById('detailUnit').textContent = '';
 
       // Açıklama
       const descEl = document.getElementById('detailDesc');

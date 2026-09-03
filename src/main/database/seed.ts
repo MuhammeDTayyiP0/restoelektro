@@ -21,6 +21,7 @@ export interface TohumUrun {
   fiyat: number
   kdv_orani?: number
   birim: string
+  satis_turleri?: Array<{ birim: string; fiyat: number }>
   resim_yolu: string
   dosya_adi: string
   resim_url: string
@@ -156,9 +157,13 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
         ad: 'Adana Kebap',
         aciklama: 'Zırh kıyması Adana Kebap, közlenmiş biber ve domates ile lavaş üstünde',
         kisaltma: 'Adana Kebap',
-        fiyat: 320,
+        fiyat: 350,
         kdv_orani: 10,
         birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 350 },
+          { birim: 'kg', fiyat: 1400 }
+        ],
         dosya_adi: 'adana-kebap.jpg',
         resim_yolu: '/uploads/products/adana-kebap.jpg',
         resim_url: 'https://images.unsplash.com/photo-1644364935906-792b2245a2c0?auto=format&fit=crop&w=800&q=80',
@@ -169,9 +174,13 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
         ad: 'Kuşbaşı',
         aciklama: 'Şişte pişmiş kuzu kuşbaşı kebap, közlenmiş garnitürler',
         kisaltma: 'Kuşbaşı',
-        fiyat: 340,
+        fiyat: 380,
         kdv_orani: 10,
         birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 380 },
+          { birim: 'kg', fiyat: 1500 }
+        ],
         dosya_adi: 'kusbasi.jpg',
         resim_yolu: '/uploads/products/kusbasi.jpg',
         resim_url: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=800&q=80',
@@ -182,9 +191,13 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
         ad: 'Tavuk Şiş',
         aciklama: 'Izgara tavuk göğsünden ızgara şiş kebap',
         kisaltma: 'Tavuk Şiş',
-        fiyat: 240,
+        fiyat: 260,
         kdv_orani: 10,
         birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 260 },
+          { birim: 'kg', fiyat: 950 }
+        ],
         dosya_adi: 'tavuk-sis.jpg',
         resim_yolu: '/uploads/products/tavuk-sis.jpg',
         resim_url: 'https://images.unsplash.com/photo-1779358964755-75464e144187?auto=format&fit=crop&w=800&q=80',
@@ -195,9 +208,13 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
         ad: 'Tavuk Kanat',
         aciklama: 'Izgarada kızarmış tavuk kanatları',
         kisaltma: 'Tavuk Kanat',
-        fiyat: 250,
+        fiyat: 270,
         kdv_orani: 10,
         birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 270 },
+          { birim: 'kg', fiyat: 1000 }
+        ],
         dosya_adi: 'tavuk-kanat.jpg',
         resim_yolu: '/uploads/products/tavuk-kanat.jpg',
         resim_url: 'https://images.unsplash.com/photo-1722490967033-c23909ed5f09?auto=format&fit=crop&w=800&q=80',
@@ -210,7 +227,11 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
         kisaltma: 'Pirzola',
         fiyat: 450,
         kdv_orani: 10,
-        birim: 'KG',
+        birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 450 },
+          { birim: 'kg', fiyat: 1800 }
+        ],
         dosya_adi: 'pirzola.jpg',
         resim_yolu: '/uploads/products/pirzola.jpg',
         resim_url: 'https://images.unsplash.com/photo-1766589152485-9aafd9812a19?auto=format&fit=crop&w=800&q=80',
@@ -354,13 +375,14 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
 
     for (const urun of kat.urunler) {
       let urunRow = db.prepare('SELECT id FROM urun WHERE LOWER(ad) = LOWER(?)').get(urun.ad) as { id: number } | undefined
+      const satisTurleriStr = JSON.stringify(urun.satis_turleri || [{ birim: urun.birim.toLowerCase(), fiyat: urun.fiyat }])
 
       let urunId: number
       if (urunRow) {
         urunId = urunRow.id
         db.prepare(`
           UPDATE urun 
-          SET kategori_id = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, aktif = 1
+          SET kategori_id = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, satis_turleri = ?, aktif = 1
           WHERE id = ?
         `).run(
           kategoriId,
@@ -372,12 +394,13 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
           urun.resim_yolu,
           urun.yazici_grup,
           urun.sira || 0,
+          satisTurleriStr,
           urunId
         )
       } else {
         const urunSonuc = db.prepare(`
-          INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, aktif)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+          INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, satis_turleri, aktif)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
         `).run(
           kategoriId,
           urun.ad,
@@ -388,7 +411,8 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
           urun.birim,
           urun.resim_yolu,
           urun.yazici_grup,
-          urun.sira || 0
+          urun.sira || 0,
+          satisTurleriStr
         )
         urunId = Number(urunSonuc.lastInsertRowid)
         console.log(`  └─ ➕ [Seed] Ürün: ${urun.ad} (ID: ${urunId}, ${urun.fiyat}₺, ${urun.birim}) -> Görsel: ${urun.resim_yolu}`)

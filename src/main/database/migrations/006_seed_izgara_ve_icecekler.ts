@@ -12,8 +12,9 @@ export const migration006: Migration = {
   version: 6,
   name: 'seed_izgara_ve_icecekler_defaults',
   up: (db: Database.Database) => {
-    // Ürün tablosunda 'aciklama' sütunu yoksa ekle (Seed için gerekli)
+    // Ürün tablosunda 'aciklama' ve 'satis_turleri' sütunları yoksa ekle (Seed için gerekli)
     sutunYoksaEkle(db, 'urun', 'aciklama', 'TEXT')
+    sutunYoksaEkle(db, 'urun', 'satis_turleri', 'TEXT')
     
     // Varsayılan verileri tohumla
     varsayilanIzgaraVeIcecekleriEkle(db)

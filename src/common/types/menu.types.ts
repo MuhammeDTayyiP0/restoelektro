@@ -17,6 +17,12 @@ export interface Kategori {
   urun_sayisi?: number
 }
 
+/** Satış Türü (Birim & Fiyat) */
+export interface SatisTuru {
+  birim: 'porsiyon' | 'kilo' | 'kg' | 'adet' | 'gram' | string
+  fiyat: number
+}
+
 /** Ürün veri yapısı */
 export interface Urun {
   id: number
@@ -34,6 +40,10 @@ export interface Urun {
   sira: number
   created_at: string
   updated_at: string
+  // Esnek satış türleri & geriye dönük uyumluluk
+  satis_turleri?: SatisTuru[] | string | null
+  porsiyon_fiyati?: number | null
+  kilo_fiyati?: number | null
   // İlişkili veriler
   kategori_adi?: string
   varyantlar?: UrunVaryant[]
@@ -58,6 +68,21 @@ export interface UrunOpsiyonu {
   aktif: boolean
 }
 
+/** Sepet Kalemi veri yapısı */
+export interface SepetKalemi {
+  id: string
+  urun: Urun
+  varyant?: UrunVaryant
+  opsiyonlar: UrunOpsiyonu[]
+  miktar: number
+  notlar: string
+  ikram: boolean
+  porsiyon: number
+  secilenSatisTuru?: 'porsiyon' | 'kg' | string
+  gramaj?: number
+  satisBirim?: 'porsiyon' | 'kilo' | string
+}
+
 /** Yeni ürün oluşturma */
 export interface YeniUrun {
   kategori_id: number
@@ -70,6 +95,9 @@ export interface YeniUrun {
   birim?: string
   resim_yolu?: string
   yazici_grup?: string
+  satis_turleri?: SatisTuru[] | string | null
+  porsiyon_fiyati?: number | null
+  kilo_fiyati?: number | null
 }
 
 /** Yeni kategori oluşturma */

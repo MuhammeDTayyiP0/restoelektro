@@ -21,6 +21,143 @@ export function formatPara(tutar: number | undefined | null): string {
 }
 
 /**
+ * Ürünün satış türleri dizisini döndürür
+ */
+export function getUrunSatisTurleri(urun: any): Array<{ birim: string; fiyat: number }> {
+  if (!urun) return []
+  let turler: Array<{ birim: string; fiyat: number }> = []
+
+  if (typeof urun.satis_turleri === 'string') {
+    try {
+      turler = JSON.parse(urun.satis_turleri)
+    } catch {
+      turler = []
+    }
+  } else if (Array.isArray(urun.satis_turleri)) {
+    turler = urun.satis_turleri
+  }
+
+  // Geriye dönük uyumluluk
+  if ((!turler || turler.length === 0) && (urun.porsiyon_fiyati || urun.kilo_fiyati)) {
+    turler = []
+    if (urun.porsiyon_fiyati) turler.push({ birim: 'porsiyon', fiyat: Number(urun.porsiyon_fiyati) })
+    if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: Number(urun.kilo_fiyati) })
+  }
+
+  if (!turler || turler.length === 0) {
+    const birim = (urun.birim || 'porsiyon').toLowerCase()
+    turler = [{ birim: birim === 'kg' ? 'kg' : (birim === 'adet' ? 'adet' : 'porsiyon'), fiyat: Number(urun.fiyat) || 0 }]
+  }
+
+  return turler.filter(t => t && t.fiyat !== undefined && t.fiyat !== null)
+}
+
+/**
+ * Ürünün birden fazla satış türü (örn hem porsiyon hem kg) olup olmadığını kontrol eder
+ */
+export function hasCokluSatisTuru(urun: any): boolean {
+  if (!urun) return false
+  const turler = getUrunSatisTurleri(urun)
+  if (turler.length > 1) return true
+  // Eğer satis_turleri 1 elemanlıysa ama ürün porsiyon + kilo_fiyati tanımlıysa
+  if (urun.kilo_fiyati && urun.fiyat && urun.kilo_fiyati !== urun.fiyat) return true
+  return false
+}
+
+/**
+ * Ürünün Kilo / KG birim fiyatını döndürür
+ */
+export function getUrunKiloFiyati(urun: any): number {
+  if (!urun) return 0
+  if (urun.kilo_fiyati) return Number(urun.kilo_fiyati)
+  const turler = getUrunSatisTurleri(urun)
+  const kgTur = turler.find(t => {
+    const b = (t.birim || '').trim().toLowerCase()
+    return b === 'kg' || b === 'kilo'
+  })
+  if (kgTur) return Number(kgTur.fiyat)
+  if ((urun.birim || '').trim().toLowerCase() === 'kg') return Number(urun.fiyat) || 0
+  return Number(urun.fiyat) || 0
+}
+
+/**
+ * Ürünün Porsiyon / Adet birim fiyatını döndürür
+ */
+export function getUrunPorsiyonFiyati(urun: any): number {
+  if (!urun) return 0
+  if (urun.porsiyon_fiyati) return Number(urun.porsiyon_fiyati)
+  const turler = getUrunSatisTurleri(urun)
+  const porsTur = turler.find(t => {
+    const b = (t.birim || '').trim().toLowerCase()
+    return b === 'porsiyon' || b === 'adet' || b === 'pors'
+  })
+  if (porsTur) return Number(porsTur.fiyat)
+  return Number(urun.fiyat) || 0
+}
+
+/**
+ * Sepet Kalemi için birim fiyat ve toplam tutarı kurallara göre hesaplar:
+ * Eğer seçilen tür 'kg' ise birim fiyatı kilo_fiyati baz alınır ve sepet kalem tutarı (kilo_fiyati * gramaj) * adet olarak hesaplanır.
+ */
+export function hesaplaKalemTutari(kalem: any): { birimHesapliFiyat: number; toplamKalemFiyat: number; kiloFiyati: number; isKg: boolean } {
+  if (!kalem || !kalem.urun) {
+    return { birimHesapliFiyat: 0, toplamKalemFiyat: 0, kiloFiyati: 0, isKg: false }
+  }
+
+  const satisTuru = (kalem.secilenSatisTuru || kalem.satisBirim || (kalem.urun.birim?.toLowerCase() === 'kg' ? 'kg' : 'porsiyon')).toLowerCase()
+  const isKg = satisTuru === 'kg' || satisTuru === 'kilo'
+  const varyantFark = (kalem.varyant?.fiyat_farki ?? kalem.varyant?.ek_fiyat ?? 0)
+  const opsiyonlarFark = (kalem.opsiyonlar || []).reduce((t: number, o: any) => t + (o.fiyat ?? o.ek_fiyat ?? 0), 0)
+
+  if (isKg) {
+    const kiloFiyati = getUrunKiloFiyati(kalem.urun) + varyantFark + opsiyonlarFark
+    const gramaj = kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1
+    const birimHesapliFiyat = kiloFiyati * gramaj
+    const toplamKalemFiyat = birimHesapliFiyat * (kalem.miktar || 1)
+    return { birimHesapliFiyat, toplamKalemFiyat, kiloFiyati, isKg: true }
+  } else {
+    const porsiyonFiyati = getUrunPorsiyonFiyati(kalem.urun) + varyantFark + opsiyonlarFark
+    const porsiyon = kalem.porsiyon || 1
+    const birimHesapliFiyat = porsiyonFiyati * porsiyon
+    const toplamKalemFiyat = birimHesapliFiyat * (kalem.miktar || 1)
+    return { birimHesapliFiyat, toplamKalemFiyat, kiloFiyati: getUrunKiloFiyati(kalem.urun), isKg: false }
+  }
+}
+
+/**
+ * Ürünün tanımlı satış türlerini kart üzerinde gösterilecek formatta döndürür.
+ * Örn: "Porsiyon: 350 ₺ | KG: 1400 ₺"
+ */
+export function formatSatisTurleri(urun: any, porsiyonCarpan: number = 1): string {
+  if (!urun) return '0 ₺'
+
+  const turler = getUrunSatisTurleri(urun)
+
+  const formatBirim = (b: string) => {
+    const s = (b || '').trim().toLowerCase()
+    if (s === 'kg' || s === 'kilo') return 'KG'
+    if (s === 'porsiyon') return 'Porsiyon'
+    if (s === 'adet') return 'Adet'
+    if (s === 'gram' || s === 'gr') return 'Gram'
+    return b ? b.charAt(0).toUpperCase() + b.slice(1) : 'Porsiyon'
+  }
+
+  if (!turler || turler.length === 0) {
+    const birim = formatBirim(urun.birim || 'Porsiyon')
+    const fiyat = Math.round((Number(urun.fiyat) || 0) * porsiyonCarpan)
+    return `${birim}: ${fiyat} ₺`
+  }
+
+  return turler
+    .map(t => {
+      const isPors = (t.birim || '').toLowerCase() === 'porsiyon'
+      const fiyat = Math.round((Number(t.fiyat) || 0) * (isPors ? porsiyonCarpan : 1))
+      return `${formatBirim(t.birim)}: ${fiyat} ₺`
+    })
+    .join(' | ')
+}
+
+/**
  * Stok ve hammadde miktarını virgülden sonra gereksiz sıfır ve hassasiyet taşmalarını engelleyerek biçimlendirir
  * Örn: 3.4000004 => '3,4', 5 => '5', 0.150 => '0,15'
  */

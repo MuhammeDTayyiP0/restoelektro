@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePosStore, type SepetKalemi } from '../../../stores/usePosStore'
-import { formatPara } from '../../../utils/formatters'
+import { formatPara, hesaplaKalemTutari } from '../../../utils/formatters'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
 import { Modal } from '../../../components/ui/Modal'
@@ -217,8 +217,7 @@ const SepetItem = React.memo(function SepetItem({
     setLocalNote(kalem.notlar || '')
   }, [kalem.notlar])
 
-  const birimHesapliFiyat = (kalem.urun.fiyat + (kalem.varyant?.fiyat_farki ?? (kalem.varyant as any)?.ek_fiyat ?? 0)) * (kalem.porsiyon || 1)
-  const toplamKalemFiyat = birimHesapliFiyat * kalem.miktar
+  const { birimHesapliFiyat, toplamKalemFiyat, isKg } = hesaplaKalemTutari(kalem)
 
   return (
     <div 
@@ -232,16 +231,22 @@ const SepetItem = React.memo(function SepetItem({
         <div className="flex flex-col flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 flex-wrap">
-              <span>{kalem.urun.ad}</span>
+              <span>{isKg && kalem.gramaj ? `${kalem.gramaj} KG ` : ''}{kalem.urun.ad}</span>
               {kalem.miktar > 1 && (
                 <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                   {kalem.miktar}x
                 </span>
               )}
-              {kalem.porsiyon && kalem.porsiyon !== 1 && (
-                <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                  ({kalem.porsiyon === 2 ? 'Double' : kalem.porsiyon} Porsiyon)
+              {isKg ? (
+                <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {kalem.gramaj ? `${kalem.gramaj} KG` : 'KG'}
                 </span>
+              ) : (
+                kalem.porsiyon && kalem.porsiyon !== 1 && (
+                  <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                    ({kalem.porsiyon === 2 ? 'Double' : `${kalem.porsiyon} Porsiyon`})
+                  </span>
+                )
               )}
             </span>
 
@@ -274,7 +279,11 @@ const SepetItem = React.memo(function SepetItem({
             {formatPara(toplamKalemFiyat)}
           </span>
           <span className="text-xs font-mono text-slate-400 tabular-nums">
-            {kalem.miktar} {kalem.urun.birim || 'Adet'} × {formatPara(birimHesapliFiyat)}
+            {isKg ? (
+              `${kalem.miktar} Adet × ${formatPara(birimHesapliFiyat)}`
+            ) : (
+              `${kalem.miktar} ${kalem.urun.birim || 'Adet'} × ${formatPara(birimHesapliFiyat)}`
+            )}
           </span>
         </div>
       </div>
@@ -413,6 +422,9 @@ const SepetItem = React.memo(function SepetItem({
     prevProps.kalem.miktar === nextProps.kalem.miktar &&
     prevProps.kalem.notlar === nextProps.kalem.notlar &&
     prevProps.kalem.porsiyon === nextProps.kalem.porsiyon &&
+    prevProps.kalem.secilenSatisTuru === nextProps.kalem.secilenSatisTuru &&
+    prevProps.kalem.gramaj === nextProps.kalem.gramaj &&
+    prevProps.kalem.satisBirim === nextProps.kalem.satisBirim &&
     prevProps.kalem.ikram === nextProps.kalem.ikram &&
     prevProps.kalem.urun === nextProps.kalem.urun &&
     prevProps.kalem.varyant === nextProps.kalem.varyant &&
@@ -573,10 +585,8 @@ export const PosCart = React.memo(function PosCart() {
   const toplamTutar = useMemo(() => {
     return sepet.reduce((toplam, kalem) => {
       if (kalem.ikram) return toplam
-      let kalemFiyati = kalem.urun.fiyat
-      if (kalem.varyant) kalemFiyati += (kalem.varyant.fiyat_farki ?? (kalem.varyant as any).ek_fiyat ?? 0)
-      kalem.opsiyonlar.forEach(opt => { kalemFiyati += (opt.fiyat ?? (opt as any).ek_fiyat ?? 0) })
-      return toplam + (kalemFiyati * kalem.miktar * (kalem.porsiyon || 1))
+      const { toplamKalemFiyat } = hesaplaKalemTutari(kalem)
+      return toplam + toplamKalemFiyat
     }, 0)
   }, [sepet])
 
@@ -666,15 +676,22 @@ export const PosCart = React.memo(function PosCart() {
       // 2. Yeni Siparişleri Gönder
       let siparisRes = null
       if (sepet.length > 0) {
-        const yeniSiparisler = sepet.map(k => ({
-          urun_id: k.urun.id,
-          varyant_id: k.varyant?.id,
-          opsiyon_idleri: k.opsiyonlar.map(o => o.id),
-          miktar: k.miktar,
-          notlar: k.notlar,
-          ikram: k.ikram,
-          porsiyon: k.porsiyon
-        }))
+        const yeniSiparisler = sepet.map(k => {
+          const { birimHesapliFiyat, toplamKalemFiyat, isKg } = hesaplaKalemTutari(k)
+          return {
+            urun_id: k.urun.id,
+            varyant_id: k.varyant?.id,
+            opsiyon_idleri: k.opsiyonlar.map(o => o.id),
+            miktar: k.miktar,
+            notlar: k.notlar,
+            ikram: k.ikram,
+            porsiyon: isKg ? 1 : k.porsiyon,
+            birim_fiyat: birimHesapliFiyat,
+            toplam_fiyat: toplamKalemFiyat,
+            secilenSatisTuru: isKg ? 'kg' : 'porsiyon',
+            gramaj: isKg ? k.gramaj : undefined
+          }
+        })
         siparisRes = await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_EKLE, mevcutHesapId, personel?.id || 1, yeniSiparisler)
         if (!siparisRes || !siparisRes.basarili) {
           throw new Error(siparisRes?.hata || 'Sipariş gönderilemedi')

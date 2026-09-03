@@ -16,6 +16,9 @@ export interface SepetKalemi {
   notlar: string
   ikram: boolean
   porsiyon: number
+  secilenSatisTuru?: 'porsiyon' | 'kg' | string
+  gramaj?: number
+  satisBirim?: 'porsiyon' | 'kilo' | string
 }
 
 interface PosState {
@@ -29,7 +32,16 @@ interface PosState {
   kategoriSec: (id: number | null) => void
   
   // Sepet İşlemleri
-  sepeteEkle: (urun: Urun, miktar?: number, porsiyon?: number, varyant?: UrunVaryant, opsiyonlar?: UrunOpsiyonu[], notlar?: string) => void
+  sepeteEkle: (
+    urun: Urun,
+    miktar?: number,
+    porsiyon?: number,
+    varyant?: UrunVaryant,
+    opsiyonlar?: UrunOpsiyonu[],
+    notlar?: string,
+    secilenSatisTuru?: 'porsiyon' | 'kg' | string,
+    gramaj?: number
+  ) => void
   sepettenCikar: (id: string) => void
   sepetMiktarGuncelle: (id: string, miktar: number) => void
   sepetNotGuncelle: (id: string, notlar: string) => void
@@ -46,7 +58,7 @@ interface PosState {
   hesapGuncelle: (hesap: Hesap) => void
 }
 
-export const usePosStore = create<PosState>((set, get) => ({
+export const usePosStore = create<PosState>((set) => ({
   aktifHesap: null,
   aktifMasaId: null,
   sepet: [],
@@ -55,15 +67,27 @@ export const usePosStore = create<PosState>((set, get) => ({
   
   kategoriSec: (id) => set({ seciliKategoriId: id }),
   
-  sepeteEkle: (urun, miktar = 1, porsiyon = 1, varyant, opsiyonlar = [], notlar = '') => set((state) => {
-    // Aynı ürün (ve varyant/opsiyon/porsiyon) var mı kontrol et
-    const varolanIndeks = state.sepet.findIndex(k => 
-      k.urun.id === urun.id && 
-      k.varyant?.id === varyant?.id && 
-      k.porsiyon === porsiyon &&
-      JSON.stringify(k.opsiyonlar) === JSON.stringify(opsiyonlar) &&
-      k.notlar === notlar
-    )
+  sepeteEkle: (urun, miktar = 1, porsiyon = 1, varyant, opsiyonlar = [], notlar = '', secilenSatisTuru, gramaj) => set((state) => {
+    const normSatisTuru = (secilenSatisTuru || (urun.birim?.toLowerCase() === 'kg' ? 'kg' : 'porsiyon')).toLowerCase()
+    const isKg = normSatisTuru === 'kg' || normSatisTuru === 'kilo'
+    const normGramaj = isKg ? (gramaj || 1) : undefined
+
+    // Aynı ürün, varyant, opsiyon, porsiyon, satis turu ve gramaj var mı kontrol et (Porsiyon ve KG ayrı satırlar)
+    const varolanIndeks = state.sepet.findIndex(k => {
+      const kSatisTuru = (k.secilenSatisTuru || k.satisBirim || (k.urun.birim?.toLowerCase() === 'kg' ? 'kg' : 'porsiyon')).toLowerCase()
+      const kIsKg = kSatisTuru === 'kg' || kSatisTuru === 'kilo'
+      const kGramaj = kIsKg ? (k.gramaj || 1) : undefined
+
+      return (
+        k.urun.id === urun.id && 
+        k.varyant?.id === varyant?.id && 
+        k.porsiyon === porsiyon &&
+        kIsKg === isKg &&
+        kGramaj === normGramaj &&
+        JSON.stringify(k.opsiyonlar) === JSON.stringify(opsiyonlar) &&
+        k.notlar === notlar
+      )
+    })
 
     if (varolanIndeks >= 0) {
       const varOlanItem = state.sepet[varolanIndeks]
@@ -88,7 +112,10 @@ export const usePosStore = create<PosState>((set, get) => ({
           miktar,
           notlar,
           ikram: false,
-          porsiyon
+          porsiyon,
+          secilenSatisTuru: isKg ? 'kg' : 'porsiyon',
+          gramaj: normGramaj,
+          satisBirim: isKg ? 'kilo' : 'porsiyon'
         }
       ]
     }

@@ -96,6 +96,10 @@ export interface YeniSiparis {
   ikram?: boolean
   porsiyon?: number
   opsiyon_idleri?: number[]
+  secilenSatisTuru?: 'porsiyon' | 'kg' | string
+  gramaj?: number
+  birim_fiyat?: number
+  toplam_fiyat?: number
 }
 
 /** Ödeme alma veri yapısı */
