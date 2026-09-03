@@ -233,6 +233,11 @@ const SepetItem = React.memo(function SepetItem({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 flex-wrap">
               <span>{kalem.urun.ad}</span>
+              {kalem.miktar > 1 && (
+                <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  {kalem.miktar}x
+                </span>
+              )}
               {kalem.porsiyon && kalem.porsiyon !== 1 && (
                 <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
                   ({kalem.porsiyon === 2 ? 'Double' : kalem.porsiyon} Porsiyon)
@@ -400,6 +405,26 @@ const SepetItem = React.memo(function SepetItem({
       </AnimatePresence>
     </div>
   )
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isEditingNote === nextProps.isEditingNote &&
+    prevProps.kalem.id === nextProps.kalem.id &&
+    prevProps.kalem.miktar === nextProps.kalem.miktar &&
+    prevProps.kalem.notlar === nextProps.kalem.notlar &&
+    prevProps.kalem.porsiyon === nextProps.kalem.porsiyon &&
+    prevProps.kalem.ikram === nextProps.kalem.ikram &&
+    prevProps.kalem.urun === nextProps.kalem.urun &&
+    prevProps.kalem.varyant === nextProps.kalem.varyant &&
+    prevProps.kalem.opsiyonlar === nextProps.kalem.opsiyonlar &&
+    prevProps.onSelect === nextProps.onSelect &&
+    prevProps.onMiktarDegistir === nextProps.onMiktarDegistir &&
+    prevProps.onOpenMiktarModal === nextProps.onOpenMiktarModal &&
+    prevProps.onToggleNoteEdit === nextProps.onToggleNoteEdit &&
+    prevProps.onSaveNote === nextProps.onSaveNote &&
+    prevProps.onIkramToggle === nextProps.onIkramToggle &&
+    prevProps.onDelete === nextProps.onDelete
+  )
 })
 
 // =====================================================
@@ -411,7 +436,7 @@ interface QuantityModalProps {
   onApply: (kalemId: string, miktar: number) => void
 }
 
-function QuantityModal({ kalem, onClose, onApply }: QuantityModalProps) {
+const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onApply }: QuantityModalProps) {
   const [girilenMiktar, setGirilenMiktar] = useState('')
 
   useEffect(() => {
@@ -438,7 +463,10 @@ function QuantityModal({ kalem, onClose, onApply }: QuantityModalProps) {
       onClose={onClose} 
       title="Miktar Belirle"
     >
-      <div className="flex flex-col gap-3 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
+      <div 
+        className="relative z-50 isolate flex flex-col gap-3 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+        style={{ transform: 'translateZ(0)' }}
+      >
         <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
           <span className="font-mono text-xs sm:text-sm font-bold text-slate-300">
             {kalem.urun.ad}
@@ -511,27 +539,25 @@ function QuantityModal({ kalem, onClose, onApply }: QuantityModalProps) {
       </div>
     </Modal>
   )
-}
+})
 
 // =====================================================
 // 4. ANA POS CART BİLEŞENİ
 // =====================================================
-export default function PosCart() {
-  const { 
-    sepet, 
-    sepettenCikar, 
-    sepetMiktarGuncelle, 
-    sepetNotGuncelle, 
-    sepetIkramTogle, 
-    sepetiTemizle, 
-    aktifMasaId, 
-    aktifHesap, 
-    hesapAyarla, 
-    iptalEdilecekSiparisler, 
-    siparisIptalEkle, 
-    siparisIptalGeriAl, 
-    iptalleriTemizle 
-  } = usePosStore()
+export const PosCart = React.memo(function PosCart() {
+  const sepet = usePosStore(state => state.sepet)
+  const sepettenCikar = usePosStore(state => state.sepettenCikar)
+  const sepetMiktarGuncelle = usePosStore(state => state.sepetMiktarGuncelle)
+  const sepetNotGuncelle = usePosStore(state => state.sepetNotGuncelle)
+  const sepetIkramTogle = usePosStore(state => state.sepetIkramTogle)
+  const sepetiTemizle = usePosStore(state => state.sepetiTemizle)
+  const aktifMasaId = usePosStore(state => state.aktifMasaId)
+  const aktifHesap = usePosStore(state => state.aktifHesap)
+  const hesapAyarla = usePosStore(state => state.hesapAyarla)
+  const iptalEdilecekSiparisler = usePosStore(state => state.iptalEdilecekSiparisler)
+  const siparisIptalEkle = usePosStore(state => state.siparisIptalEkle)
+  const siparisIptalGeriAl = usePosStore(state => state.siparisIptalGeriAl)
+  const iptalleriTemizle = usePosStore(state => state.iptalleriTemizle)
 
   const { personel } = useAuthStore()
   const { success, error } = useToast()
@@ -926,36 +952,36 @@ export default function PosCart() {
         {/* Büyük Endüstriyel Dokunmatik Butonlar */}
         <div className="grid grid-cols-2 gap-2 2xl:gap-2.5 flex-shrink-0 shrink-0">
           {/* Sipariş Gönder (Mutfak) */}
-          <motion.button 
-            whileTap={{ scale: 0.97 }}
+          <button 
+            type="button"
             disabled={(sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor}
             onClick={handleSiparisGonder}
             className={clsx(
-              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md flex-shrink-0 shrink-0",
+              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
               ((sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor)
                 ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-[0_0_16px_rgba(16,185,129,0.3)] active:bg-emerald-700"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 active:bg-emerald-700"
             )}
           >
             <Send size={18} className={clsx(siparisGonderiliyor && "animate-spin")} />
             {siparisGonderiliyor ? 'Gönderiliyor...' : 'Siparişi İlet'}
-          </motion.button>
+          </button>
 
           {/* Ödeme Al (Kasa) */}
-          <motion.button 
-            whileTap={{ scale: 0.97 }}
+          <button 
+            type="button"
             disabled={(!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0}
             onClick={() => setOdemeModalAcik(true)}
             className={clsx(
-              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all shadow-md flex-shrink-0 shrink-0",
+              "pos-action-deck-btn h-12 sm:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
               ((!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0)
                 ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
-                : "bg-amber-500 hover:bg-amber-400 text-black border-amber-300/40 shadow-[0_0_16px_rgba(245,158,11,0.3)] active:bg-amber-600"
+                : "bg-amber-500 hover:bg-amber-400 text-black border-amber-300/40 active:bg-amber-600"
             )}
           >
             <CreditCard size={18} />
             Ödeme Al
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -976,4 +1002,6 @@ export default function PosCart() {
       />
     </div>
   )
-}
+})
+
+export default PosCart

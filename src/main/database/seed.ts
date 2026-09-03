@@ -47,6 +47,20 @@ export function urunGorselDizinleriniGetir(): string[] {
     path.join(process.cwd(), 'uploads', 'products')
   ]
 
+  // Paketlenmiş Electron extraResources ve unpacked yolları
+  if (process.resourcesPath) {
+    dizinler.push(path.join(process.resourcesPath, 'uploads', 'products'))
+    dizinler.push(path.join(process.resourcesPath, 'public', 'uploads', 'products'))
+    dizinler.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'public', 'uploads', 'products'))
+    dizinler.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'uploads', 'products'))
+  }
+
+  // Modül ve derleme yolları
+  dizinler.push(path.join(__dirname, '..', 'renderer', 'uploads', 'products'))
+  dizinler.push(path.join(__dirname, 'uploads', 'products'))
+  dizinler.push(path.join(process.cwd(), 'dist', 'uploads', 'products'))
+  dizinler.push(path.join(process.cwd(), 'out', 'uploads', 'products'))
+
   try {
     const { app } = require('electron')
     if (app && app.getPath) {
@@ -75,24 +89,38 @@ export function urunGorselDizinleriniGetir(): string[] {
 }
 
 /**
- * Görseli internetten indirip yerel uploads/products klasörlerine yazar
+ * Görseli internetten indirip yerel uploads/products klasörlerine yazar.
+ * Eğer dosya yerel bundle veya herhangi bir dizinde zaten varsa indirme yapmadan diğer dizinleri senkronize eder.
  */
 export async function gorseliIndirVeKaydet(url: string, dosyaAdi: string): Promise<string> {
   const hedefDizinler = urunGorselDizinleriniGetir()
-  const anaHedef = path.join(hedefDizinler[0], dosyaAdi)
 
-  // Eğer dosya zaten varsa diğer dizinleri eşitleyip dön
-  if (fs.existsSync(anaHedef) && fs.statSync(anaHedef).size > 1000) {
-    for (let i = 1; i < hedefDizinler.length; i++) {
-      const digerHedef = path.join(hedefDizinler[i], dosyaAdi)
-      if (!fs.existsSync(digerHedef)) {
-        try { fs.copyFileSync(anaHedef, digerHedef) } catch {}
+  // 1. Önce tüm aday yerel dizinleri kontrol et (Paket/build içi hazır görseller)
+  let bulunanKaynakYol: string | null = null
+  for (const d of hedefDizinler) {
+    const adayDosya = path.join(d, dosyaAdi)
+    if (fs.existsSync(adayDosya)) {
+      try {
+        if (fs.statSync(adayDosya).size > 1000) {
+          bulunanKaynakYol = adayDosya
+          break
+        }
+      } catch {}
+    }
+  }
+
+  // Eğer yerelde bulunduysa, diğer tüm dizinlere kopyalayıp hemen dön (Çevrimdışı/production garantisi)
+  if (bulunanKaynakYol) {
+    for (const d of hedefDizinler) {
+      const digerHedef = path.join(d, dosyaAdi)
+      if (digerHedef !== bulunanKaynakYol && !fs.existsSync(digerHedef)) {
+        try { fs.copyFileSync(bulunanKaynakYol, digerHedef) } catch {}
       }
     }
     return `/uploads/products/${dosyaAdi}`
   }
 
-  // İnternetten doğrudan indir
+  // 2. Yerelde bulunamazsa internetten indir
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
     if (res.ok) {

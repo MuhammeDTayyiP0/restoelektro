@@ -66,10 +66,14 @@ export const usePosStore = create<PosState>((set, get) => ({
     )
 
     if (varolanIndeks >= 0) {
-      // Varsa miktarını artır
-      const yeniSepet = [...state.sepet]
-      yeniSepet[varolanIndeks].miktar += miktar
-      return { sepet: yeniSepet }
+      const varOlanItem = state.sepet[varolanIndeks]
+      return {
+        sepet: state.sepet.map(item =>
+          item.id === varOlanItem.id
+            ? { ...item, miktar: item.miktar + miktar }
+            : item
+        )
+      }
     }
 
     // Yoksa yeni kalem ekle

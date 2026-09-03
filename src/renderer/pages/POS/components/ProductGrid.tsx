@@ -1,5 +1,4 @@
 import React from 'react'
-import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import type { Urun } from '../../../../common/types/menu.types'
 import { ProductCard } from './ProductCard'
@@ -10,7 +9,7 @@ export interface ProductGridProps {
   onUrunTikla: (urun: Urun) => void
 }
 
-export function ProductGrid({ urunler, aktifPorsiyon, onUrunTikla }: ProductGridProps) {
+export const ProductGrid = React.memo(function ProductGrid({ urunler, aktifPorsiyon, onUrunTikla }: ProductGridProps) {
   if (urunler.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-72 text-slate-400 text-center">
@@ -28,19 +27,20 @@ export function ProductGrid({ urunler, aktifPorsiyon, onUrunTikla }: ProductGrid
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 pb-16">
-      <AnimatePresence mode="popLayout">
-        {urunler.map(urun => (
-          <ProductCard
-            key={urun.id}
-            urun={urun}
-            aktifPorsiyon={aktifPorsiyon}
-            onClick={() => onUrunTikla(urun)}
-          />
-        ))}
-      </AnimatePresence>
+    <div 
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3 pb-16"
+      style={{ transform: 'translateZ(0)' }}
+    >
+      {urunler.map(urun => (
+        <ProductCard
+          key={urun.id}
+          urun={urun}
+          aktifPorsiyon={aktifPorsiyon}
+          onTikla={onUrunTikla}
+        />
+      ))}
     </div>
   )
-}
+})
 
 export default ProductGrid

@@ -13,8 +13,13 @@ extraResources:
     to: icon.ico
   - from: resources/icon.png
     to: icon.png
+  - from: public/uploads
+    to: uploads
 
 files:
+  - 'out/**/*'
+  - 'public/**/*'
+  - 'uploads/**/*'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.*'
@@ -26,6 +31,8 @@ asarUnpack:
   - '**/*.{node,dll}'
   - node_modules/better-sqlite3/**
   - node_modules/serialport/**
+  - public/uploads/**
+  - uploads/**
 
 # Windows yapılandırması
 win:

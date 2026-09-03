@@ -3,8 +3,7 @@ import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
 import { clsx } from 'clsx'
-import { Hash, AlertCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Hash } from 'lucide-react'
 
 interface MiktarModalProps {
   isOpen: boolean
@@ -15,7 +14,7 @@ interface MiktarModalProps {
   mevcutMiktar?: number
 }
 
-export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, urunAdi, mevcutMiktar = 0 }: MiktarModalProps) {
+export const MiktarModal = React.memo(function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, urunAdi, mevcutMiktar = 0 }: MiktarModalProps) {
   const [girilenDeger, setGirilenDeger] = useState<string>(mevcutMiktar > 0 ? mevcutMiktar.toString() : '')
   const [hataAnimasyonu, setHataAnimasyonu] = useState(false)
 
@@ -59,7 +58,10 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
       title="Miktar Belirle"
       size="md"
     >
-      <div className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
+      <div 
+        className="relative z-50 isolate flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+        style={{ transform: 'translateZ(0)' }}
+      >
         
         {/* Ürün & Limit Bilgisi */}
         <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
@@ -82,35 +84,33 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
         {/* Hızlı Miktar Önayarları */}
         <div className="grid grid-cols-6 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
           {['1', '2', '3', '4', '5'].map(val => (
-            <motion.button
+            <button
               key={val}
-              whileTap={{ scale: 0.95 }}
               type="button"
               disabled={parseInt(val, 10) > maxMiktar}
               onClick={() => setGirilenDeger(val)}
               className={clsx(
-                "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
+                "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
                 girilenDeger === val 
                   ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50" 
                   : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336] disabled:opacity-30"
               )}
             >
               {val}
-            </motion.button>
+            </button>
           ))}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <button
             type="button"
             onClick={() => setGirilenDeger(maxMiktar.toString())}
             className={clsx(
-              "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
+              "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
               girilenDeger === maxMiktar.toString()
                 ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
                 : "bg-[#141926] text-amber-400 border-[#222C42] hover:bg-[#1C2336]"
             )}
           >
             Tümü
-          </motion.button>
+          </button>
         </div>
 
         {/* Dijital Gösterge ve Numpad */}
@@ -145,4 +145,6 @@ export default function MiktarModal({ isOpen, onClose, onConfirm, maxMiktar, uru
       </div>
     </Modal>
   )
-}
+})
+
+export default MiktarModal

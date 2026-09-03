@@ -1,5 +1,4 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React, { useCallback } from 'react'
 import { Flame, SlidersHorizontal, Scale } from 'lucide-react'
 import type { Urun } from '../../../../common/types/menu.types'
 import { formatPara, formatResimUrl } from '../../../utils/formatters'
@@ -8,10 +7,11 @@ import { useMenuStore } from '../../../stores/useMenuStore'
 export interface ProductCardProps {
   urun: Urun
   aktifPorsiyon: number
-  onClick: () => void
+  onTikla?: (urun: Urun) => void
+  onClick?: () => void
 }
 
-export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon, onTikla, onClick }: ProductCardProps) {
   const birimUpper = (urun.birim || '').toUpperCase()
   const isAgirlik = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
   const hasImage = !!urun.resim_yolu
@@ -25,17 +25,20 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
   )
   const altEtiket = urun.kategori_adi || kategori?.ad || urun.kisaltma || 'POS'
 
+  const handleClick = useCallback(() => {
+    if (onTikla) {
+      onTikla(urun)
+    } else if (onClick) {
+      onClick()
+    }
+  }, [onTikla, onClick, urun])
+
   return (
-    <motion.button
-      layout
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ duration: 0.12 }}
-      onClick={onClick}
-      className="relative w-full aspect-[4/3] rounded-xl border border-[#222634] hover:border-cyan-400/60 active:border-cyan-500/80 text-left transition-all touch-feedback group overflow-hidden shadow-md bg-[#141414] select-none flex flex-col justify-between"
+    <button
+      type="button"
+      onClick={handleClick}
+      style={{ transform: 'translateZ(0)' }}
+      className="relative z-0 w-full aspect-[4/3] rounded-xl border border-[#222634] hover:border-cyan-400/60 active:border-cyan-500/80 active:scale-[0.97] hover:-translate-y-0.5 text-left transition-all duration-100 ease-out touch-feedback group overflow-hidden shadow-sm bg-[#141414] select-none flex flex-col justify-between cursor-pointer"
     >
       {/* ── RESİMLİ KART İÇİN GÖRSEL (Üstten başlayıp kart zeminini kaplar, blur sadece alt şeritte) ── */}
       {hasImage && (
@@ -48,12 +51,12 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
       )}
 
       {/* ── ÜST ALAN (Çizginin Üstü: Badge'ler + Sol Tarafta Ürün İsmi) ── */}
-      <div className="relative z-10 flex-1 flex flex-col justify-between p-3 min-h-0">
+      <div className="relative z-0 flex-1 flex flex-col justify-between p-3 min-h-0">
         {/* Üst Badges: Seçim / Porsiyon / Hızlı Satış */}
         <div className="flex items-center justify-between w-full pointer-events-none min-h-[18px]">
           <div>
             {(hasVaryant || hasOpsiyon) && (
-              <div className="flex items-center gap-1 bg-violet-950/80 backdrop-blur-md text-violet-300 border border-violet-500/40 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shadow-sm">
+              <div className="flex items-center gap-1 bg-violet-950/90 text-violet-300 border border-violet-500/40 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shadow-sm">
                 <SlidersHorizontal size={10} />
                 <span>SEÇİM</span>
               </div>
@@ -62,12 +65,12 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
 
           <div className="flex items-center gap-1">
             {aktifPorsiyon !== 1 && (
-              <span className="bg-cyan-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+              <span className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md shadow-sm">
                 {aktifPorsiyon === 0.5 ? '0.5x' : aktifPorsiyon === 2 ? '2x' : `${aktifPorsiyon}x`}
               </span>
             )}
             {(urun as any).hizli_satis && (
-              <div className="flex items-center gap-1 bg-amber-500/30 backdrop-blur-md text-amber-300 border border-amber-500/50 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shadow-sm">
+              <div className="flex items-center gap-1 bg-amber-500/25 text-amber-300 border border-amber-500/50 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md shadow-sm">
                 <Flame size={10} className="fill-amber-400" />
                 <span>HIZLI</span>
               </div>
@@ -103,13 +106,11 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
 
       {/* ── ALT BİLGİ ALANI (FOOTER): TAM 45PX YÜKSEKLİK + AYIRICI ÇİZGİ + SOL KATEGORİ & SAĞ FİYAT ── */}
       <div
-        className="h-[45px] min-h-[45px] max-h-[45px] px-3 flex items-center justify-between relative z-10 w-full shrink-0"
+        className="h-[45px] min-h-[45px] max-h-[45px] px-3 flex items-center justify-between relative z-0 w-full shrink-0"
         style={
           hasImage
             ? {
-                background: 'rgba(10, 10, 10, 0.75)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
+                background: 'rgba(10, 10, 10, 0.90)',
                 borderTop: '1px solid rgba(255, 255, 255, 0.1)'
               }
             : {
@@ -137,8 +138,8 @@ export function ProductCard({ urun, aktifPorsiyon, onClick }: ProductCardProps) 
           {formatPara(hesaplananFiyat)}
         </span>
       </div>
-    </motion.button>
+    </button>
   )
-}
+})
 
 export default ProductCard

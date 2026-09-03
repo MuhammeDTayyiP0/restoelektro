@@ -191,7 +191,7 @@ export default function ReportsPage() {
   const CustomGraphTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0C1018]/95 border border-[#1E273A] rounded-xl p-3.5 shadow-2xl backdrop-blur-md font-mono text-xs z-50">
+        <div className="bg-[#0C1018] border border-[#1E273A] rounded-xl p-3.5 shadow-xl font-mono text-xs z-50">
           <p className="text-slate-400 font-bold mb-2 pb-1 border-b border-[#1A2234]">
             {label} Akışı
           </p>

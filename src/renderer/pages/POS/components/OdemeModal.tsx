@@ -56,7 +56,7 @@ const SiparisItemRow = React.memo(({
         isIkram 
           ? "opacity-50 bg-[#0E131E] border-[#1C2538] grayscale cursor-default" 
           : isSelected 
-            ? "bg-[#142136] border-cyan-500/60 shadow-[0_0_12px_rgba(6,182,212,0.15)] ring-1 ring-cyan-400/40 cursor-pointer" 
+            ? "bg-[#142136] border-cyan-500 ring-1 ring-cyan-400/50 cursor-pointer" 
             : "bg-[#0C1018] border-[#1A2234] hover:bg-[#111722] hover:border-[#26324A] cursor-pointer"
       )}
     >
@@ -173,23 +173,23 @@ const HizliTutarButonlari = React.memo(({
   onHizliTutar: (miktar: number) => void 
 }) => (
   <div className="grid grid-cols-4 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
-    <motion.button 
-      whileTap={{ scale: 0.95 }}
+    <button 
+      type="button"
       onClick={() => onHizliTutar(odenecekHedefTutar)} 
-      className="col-span-2 font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm text-xs hover:bg-cyan-500/30 flex items-center justify-center gap-1.5 sm:gap-2 transition-colors uppercase tracking-wider flex-shrink-0 shrink-0"
+      className="col-span-2 font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm text-xs hover:bg-cyan-500/30 active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 transition-all uppercase tracking-wider flex-shrink-0 shrink-0"
     >
       <Coins size={15} />
       {almanUsuluAktif ? 'Seçili Ürün Tutarı' : 'Kalanın Tamamı'}
-    </motion.button>
+    </button>
     {[50, 100, 200, 500, 1000, 2000].map(val => (
-      <motion.button 
+      <button 
         key={val}
-        whileTap={{ scale: 0.95 }}
+        type="button"
         onClick={() => onHizliTutar(val)} 
-        className="font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-[#121724] border border-[#222C42] text-slate-200 shadow-sm text-xs sm:text-sm hover:bg-[#1A2236] hover:text-white flex items-center justify-center transition-colors flex-shrink-0 shrink-0"
+        className="font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-[#121724] border border-[#222C42] text-slate-200 shadow-sm text-xs sm:text-sm hover:bg-[#1A2236] hover:text-white active:scale-95 flex items-center justify-center transition-all flex-shrink-0 shrink-0"
       >
         {val}₺
-      </motion.button>
+      </button>
     ))}
   </div>
 ));
@@ -204,7 +204,7 @@ interface OdemeModalProps {
   toplamTutar: number
 }
 
-export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalProps) {
+export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalProps) {
   const aktifHesap = usePosStore(s => s.aktifHesap)
   const hesapAyarla = usePosStore(s => s.hesapAyarla)
   const personel = useAuthStore(s => s.personel)
@@ -451,7 +451,10 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       title="Kasa & Ödeme Konsolu"
       size="full"
     >
-      <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none">
+      <div 
+        className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none"
+        style={{ transform: 'translateZ(0)' }}
+      >
         
         {/* SOL KOLON: ADİSYON ÖZETİ VE ALMAN USULÜ BÖLÜMÜ */}
         <div className="flex flex-col w-full lg:w-5/12 xl:w-4/12 bg-[#0C1017] border-r border-[#1E2436] h-full flex-shrink-0 shrink-0 overflow-hidden">
@@ -472,11 +475,11 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
               </div>
             </div>
 
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
+            <button 
+              type="button"
               onClick={tumunuSecToggle} 
               className={clsx(
-                "h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg font-mono text-xs font-bold border transition-colors flex items-center gap-1.5",
+                "h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg font-mono text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5",
                 seciliIdSayisi > 0 
                   ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
                   : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
@@ -484,7 +487,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             >
               <SplitSquareHorizontal size={14} />
               {seciliIdSayisi > 0 ? 'Seçimi Temizle' : 'Tümünü Seç'}
-            </motion.button>
+            </button>
           </div>
 
           {/* Sipariş Listesi */}
@@ -546,22 +549,22 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             </div>
             
             <div className="flex gap-2 mt-1">
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
+              <button 
+                type="button"
                 onClick={handleIndirim} 
-                className="flex-1 h-9 sm:h-10 rounded-xl font-mono text-xs font-bold bg-[#141926] hover:bg-[#1C2436] border border-[#222C42] text-amber-300 flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 h-9 sm:h-10 rounded-xl font-mono text-xs font-bold bg-[#141926] hover:bg-[#1C2436] border border-[#222C42] text-amber-300 active:scale-95 flex items-center justify-center gap-1.5 transition-all"
               >
                 <Tag size={14} />
                 {hesaplamalar.indirimTutar > 0 ? 'İndirimi Değiştir' : 'İndirim Uygula'}
-              </motion.button>
+              </button>
               {hesaplamalar.indirimTutar > 0 && (
-                <motion.button 
-                  whileTap={{ scale: 0.95 }}
+                <button 
+                  type="button"
                   onClick={indirimIptal}
-                  className="h-9 sm:h-10 px-3 rounded-xl font-mono text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 transition-colors"
+                  className="h-9 sm:h-10 px-3 rounded-xl font-mono text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 active:scale-95 transition-all"
                 >
                   İptal
-                </motion.button>
+                </button>
               )}
             </div>
           </div>
@@ -589,9 +592,9 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
 
             {/* Tahsil Edilecek Tutar (Canlı Seçim/Giriş) */}
             <div className={clsx(
-              "rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border shadow-md flex flex-col justify-between transition-all",
+              "rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 border shadow-sm flex flex-col justify-between transition-all",
               (almanUsuluAktif || girilenTutar)
-                ? "bg-[#0E1726] border-cyan-400 ring-1 ring-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+                ? "bg-[#0E1726] border-cyan-400 ring-1 ring-cyan-400/50"
                 : "bg-[#0C1017] border-[#1E2436]"
             )}>
               <span className="text-[10px] font-mono font-black text-cyan-300 uppercase tracking-wider mb-0.5 flex items-center justify-between">
@@ -640,18 +643,14 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
               
               {/* Para Üstü Göstergesi */}
               {gecerliTutar > kalanGenelNet && (
-                 <motion.div 
-                   initial={{ opacity: 0, y: 5 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="p-2.5 sm:p-3 bg-amber-950/40 text-amber-300 rounded-xl border border-amber-500/40 flex items-center justify-between shadow-sm font-mono flex-shrink-0 shrink-0"
-                 >
+                 <div className="p-2.5 sm:p-3 bg-amber-950/40 text-amber-300 rounded-xl border border-amber-500/40 flex items-center justify-between shadow-sm font-mono flex-shrink-0 shrink-0">
                    <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                      <Coins size={15} /> Para Üstü Verilecek:
                    </span>
                    <span className="text-lg sm:text-xl font-black text-amber-300 tabular-nums">
                      {formatPara(gecerliTutar - kalanGenelNet)}
                    </span>
-                 </motion.div>
+                 </div>
               )}
             </div>
 
@@ -659,15 +658,15 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
             <div className="w-full xl:w-56 2xl:w-64 flex flex-row xl:flex-col gap-2 sm:gap-2.5 justify-end flex-shrink-0 shrink-0">
               
               {/* NAKİT ÖDEME BUTONU */}
-              <motion.button 
-                whileTap={{ scale: 0.96 }}
+              <button 
+                type="button"
                 onClick={() => odemeAl('nakit')}
                 disabled={odemeIslemi}
                 className={clsx(
-                  "pos-action-deck-btn flex-1 xl:flex-1 h-14 sm:h-16 xl:h-auto min-h-[52px] xl:min-h-[110px] 2xl:min-h-[130px] rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-base xl:text-lg uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-2 sm:gap-2.5 border transition-all shadow-lg flex-shrink-0 shrink-0",
+                  "pos-action-deck-btn flex-1 xl:flex-1 h-14 sm:h-16 xl:h-auto min-h-[52px] xl:min-h-[110px] 2xl:min-h-[130px] rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-base xl:text-lg uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-2 sm:gap-2.5 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
                   odemeIslemi
                     ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
-                    : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.3)] active:bg-emerald-700"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 active:bg-emerald-700"
                 )}
               >
                 <Banknote size={26} className="xl:w-8 xl:h-8 stroke-[2.2]" />
@@ -677,18 +676,18 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
                     {girilenTutar ? formatPara(parseFloat(girilenTutar)) : formatPara(odenecekHedefTutar)}
                   </span>
                 </div>
-              </motion.button>
+              </button>
 
               {/* KREDİ KARTI ÖDEME BUTONU */}
-              <motion.button 
-                whileTap={{ scale: 0.96 }}
+              <button 
+                type="button"
                 onClick={() => odemeAl('kredi_karti')}
                 disabled={odemeIslemi}
                 className={clsx(
-                  "pos-action-deck-btn flex-1 xl:flex-1 h-14 sm:h-16 xl:h-auto min-h-[52px] xl:min-h-[110px] 2xl:min-h-[130px] rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-base xl:text-lg uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-2 sm:gap-2.5 border transition-all shadow-lg flex-shrink-0 shrink-0",
+                  "pos-action-deck-btn flex-1 xl:flex-1 h-14 sm:h-16 xl:h-auto min-h-[52px] xl:min-h-[110px] 2xl:min-h-[130px] rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-base xl:text-lg uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-2 sm:gap-2.5 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
                   odemeIslemi
                     ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
-                    : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.3)] active:bg-cyan-700"
+                    : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40 active:bg-cyan-700"
                 )}
               >
                 <CreditCard size={26} className="xl:w-8 xl:h-8 stroke-[2.2]" />
@@ -698,7 +697,7 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
                     POS / Temassız
                   </span>
                 </div>
-              </motion.button>
+              </button>
 
             </div>
           </div>
@@ -728,4 +727,6 @@ export default function OdemeModal({ isOpen, onClose, toplamTutar }: OdemeModalP
       )}
     </Modal>
   )
-}
+})
+
+export default OdemeModal

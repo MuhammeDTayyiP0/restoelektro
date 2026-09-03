@@ -37,6 +37,95 @@ export function uploadsDizininiGetir(): string {
   return productsDir
 }
 
+/**
+ * Geliştirme (dev), derleme (build/out/dist) ve paketli (production/resources) ortamlardaki
+ * tüm olası uploads dizinlerini tespit edip var olanları döndürür.
+ */
+export function statikUploadsDizinleriniGetir(): string[] {
+  const adaylar: string[] = []
+
+  // 1. Kullanıcı Veri Dizini (userData) — Hem yüklenenler hem senkronize edilen görseller
+  try {
+    const userData = electronApp.getPath('userData')
+    adaylar.push(path.join(userData, 'public', 'uploads'))
+    adaylar.push(path.join(userData, 'uploads'))
+  } catch {}
+
+  // 2. Paketlenmiş Electron Uygulama Kaynakları (process.resourcesPath / extraResources)
+  if (process.resourcesPath) {
+    adaylar.push(path.join(process.resourcesPath, 'uploads'))
+    adaylar.push(path.join(process.resourcesPath, 'public', 'uploads'))
+    adaylar.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'public', 'uploads'))
+    adaylar.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'uploads'))
+  }
+
+  // 3. Modül Derleme Dizini (__dirname tabanlı / out/main & out/renderer)
+  adaylar.push(path.join(__dirname, '..', 'renderer', 'uploads'))
+  adaylar.push(path.join(__dirname, '..', 'renderer', 'public', 'uploads'))
+  adaylar.push(path.join(__dirname, 'uploads'))
+  adaylar.push(path.join(__dirname, '..', '..', 'public', 'uploads'))
+  adaylar.push(path.join(__dirname, '..', '..', 'uploads'))
+
+  // 4. Çalışma Dizini (process.cwd() — dev, dist veya portable)
+  const cwd = process.cwd()
+  adaylar.push(path.join(cwd, 'public', 'uploads'))
+  adaylar.push(path.join(cwd, 'uploads'))
+  adaylar.push(path.join(cwd, 'dist', 'uploads'))
+  adaylar.push(path.join(cwd, 'out', 'uploads'))
+  adaylar.push(path.join(cwd, 'out', 'renderer', 'uploads'))
+
+  // 5. Electron getAppPath
+  try {
+    const appPath = electronApp.getAppPath()
+    adaylar.push(path.join(appPath, 'public', 'uploads'))
+    adaylar.push(path.join(appPath, 'uploads'))
+    adaylar.push(path.join(appPath, 'out', 'renderer', 'uploads'))
+  } catch {}
+
+  // Sadece fiziksel olarak mevcut olan benzersiz dizinleri döndür
+  const mevcutDizinler: string[] = []
+  for (const d of adaylar) {
+    try {
+      if (fs.existsSync(d) && !mevcutDizinler.includes(d)) {
+        mevcutDizinler.push(d)
+      }
+    } catch {}
+  }
+
+  return mevcutDizinler
+}
+
+/**
+ * Paket içi / build / resources klasörlerinde yer alan varsayılan ürün görsellerini
+ * userData içindeki hedef upload dizinine kopyalayarak senkronize eder.
+ */
+export function varsayilanGorselleriSenkronizeEt(): void {
+  try {
+    const hedefProducts = uploadsDizininiGetir()
+    const tumUploads = statikUploadsDizinleriniGetir()
+    const kaynakDizinler = tumUploads
+      .map(d => path.join(d, 'products'))
+      .filter(d => d !== hedefProducts && fs.existsSync(d))
+
+    for (const kaynak of kaynakDizinler) {
+      try {
+        const dosyalar = fs.readdirSync(kaynak)
+        for (const dosya of dosyalar) {
+          const kaynakDosya = path.join(kaynak, dosya)
+          const hedefDosya = path.join(hedefProducts, dosya)
+          if (!fs.existsSync(hedefDosya) && fs.existsSync(kaynakDosya)) {
+            try {
+              fs.copyFileSync(kaynakDosya, hedefDosya)
+            } catch {}
+          }
+        }
+      } catch {}
+    }
+  } catch (err) {
+    console.warn('[Server] Varsayılan görsel senkronizasyon uyarısı:', err)
+  }
+}
+
 // Multer Disk Depolama Yapılandırması
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -86,27 +175,55 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   app.use(express.json({ limit: '20mb' }))
   app.use(express.urlencoded({ extended: true, limit: '20mb' }))
 
-  // ===== STATİK DOSYA SUNUCUSU (PUBLIC & UPLOADS) =====
-  const isDev = !electronApp.isPackaged
-  const devPublicDir = path.join(process.cwd(), 'public')
-  const prodPublicDir = path.join(electronApp.getPath('userData'), 'public')
+  // ===== STATİK DOSYA SUNUCUSU & GÖRSEL RESOLVER =====
+  // 1. Varsayılan görselleri userData dizinine senkronize et
+  varsayilanGorselleriSenkronizeEt()
+
   const uploadsProductDir = uploadsDizininiGetir()
+  const uploadRoot = path.dirname(uploadsProductDir) // .../public/uploads veya .../uploads
+  const tumUploadsDizinleri = statikUploadsDizinleriniGetir()
 
-  // Dizinleri garantiye al
-  if (!fs.existsSync(devPublicDir)) {
-    try { fs.mkdirSync(devPublicDir, { recursive: true }) } catch {}
-  }
-  if (!fs.existsSync(prodPublicDir)) {
-    try { fs.mkdirSync(prodPublicDir, { recursive: true }) } catch {}
+  // 2. express.static ile tüm tespit edilen aday dizinleri sırayla sun
+  app.use('/uploads', express.static(uploadRoot))
+  app.use('/public/uploads', express.static(uploadRoot))
+
+  for (const d of tumUploadsDizinleri) {
+    app.use('/uploads', express.static(d))
+    app.use('/public/uploads', express.static(d))
+    // Eğer dizin public klasörüyse kökten de sun
+    if (path.basename(d) === 'uploads') {
+      const publicUstDizin = path.dirname(d)
+      app.use(express.static(publicUstDizin))
+    }
   }
 
-  // Statik dosyaları sun
-  app.use('/uploads', express.static(path.join(devPublicDir, 'uploads')))
-  app.use('/uploads', express.static(path.join(prodPublicDir, 'uploads')))
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
-  app.use('/uploads', express.static(path.join(electronApp.getPath('userData'), 'uploads')))
-  app.use(express.static(devPublicDir))
-  app.use(express.static(prodPublicDir))
+  // 3. Fallback Resolver (404 önleyici): express.static bulamazsa tüm dizinlerde derin arama yap
+  app.get(['/uploads/*', '/public/uploads/*'], (req, res, next) => {
+    const safUrl = decodeURIComponent(req.path.replace(/^\/(public\/)?uploads\//, ''))
+    if (!safUrl) return next()
+
+    const dosyaAdi = path.basename(safUrl)
+
+    // A) Aktif products dizininde kontrol et
+    const hedefAktif = path.join(uploadsProductDir, dosyaAdi)
+    if (fs.existsSync(hedefAktif)) {
+      return res.sendFile(hedefAktif)
+    }
+
+    // B) Bilinen tüm uploads dizinlerinde ara
+    for (const d of tumUploadsDizinleri) {
+      const tamYol = path.join(d, safUrl)
+      if (fs.existsSync(tamYol)) {
+        return res.sendFile(tamYol)
+      }
+      const productsYolu = path.join(d, 'products', dosyaAdi)
+      if (fs.existsSync(productsYolu)) {
+        return res.sendFile(productsYolu)
+      }
+    }
+
+    next()
+  })
 
 
   // ===== DOSYA YÜKLEME ENDPOINT'İ =====

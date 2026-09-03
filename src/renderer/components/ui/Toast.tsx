@@ -110,13 +110,12 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: -12, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 20, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       className={clsx(
-        'pointer-events-auto bg-[#0C0F17] shadow-2xl rounded-xl border border-l-4 p-3.5 flex items-start gap-3 select-none backdrop-blur-md',
+        'pointer-events-auto bg-[#0C0F17] shadow-lg rounded-xl border border-l-4 p-3.5 flex items-start gap-3 select-none',
         config.border
       )}
       role="alert"

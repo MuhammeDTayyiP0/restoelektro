@@ -83,7 +83,7 @@
 
   /* Cam & Panel Efektleri (Glassmorphism & Industrial Card) */
   .glass-panel {
-    @apply bg-[#0e121e]/85 backdrop-blur-xl border border-[#1e2436] shadow-2xl;
+    @apply bg-[#0e121e] border border-[#1e2436] shadow-lg;
   }
 
   .industrial-card {

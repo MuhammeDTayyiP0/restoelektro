@@ -8,9 +8,8 @@ import { useAuthStore } from '../../../stores/useAuthStore'
 import { ipcInvoke } from '../../../hooks/useIPC'
 import { HESAP_KANALLARI } from '../../../../common/ipc-channels'
 import { useToast } from '../../../components/ui/Toast'
-import { Percent, Banknote, Tag, Check, Sparkles } from 'lucide-react'
+import { Percent, Banknote, Tag } from 'lucide-react'
 import { clsx } from 'clsx'
-import { motion } from 'framer-motion'
 
 interface IndirimModalProps {
   isOpen: boolean
@@ -18,7 +17,7 @@ interface IndirimModalProps {
   toplamTutar: number
 }
 
-export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimModalProps) {
+export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimModalProps) {
   const { aktifHesap, hesapAyarla } = usePosStore()
   const { personel } = useAuthStore()
   const { success, error } = useToast()
@@ -98,7 +97,10 @@ export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimMo
       title="Adisyon İndirimi"
       size="lg"
     >
-      <div className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
+      <div 
+        className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+        style={{ transform: 'translateZ(0)' }}
+      >
         
         {/* İndirim Tipi Seçici (Segmented Switcher) */}
         <div className="flex bg-[#090D15] p-1 rounded-xl sm:rounded-2xl border border-[#1E2638] flex-shrink-0 shrink-0">
@@ -107,7 +109,7 @@ export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimMo
             className={clsx(
               "flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl font-mono font-bold text-xs transition-all",
               indirimTipi === 'yuzde' 
-                ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)] border border-amber-300" 
+                ? "bg-amber-500 text-black border border-amber-300" 
                 : "text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
             )}
             onClick={() => { setIndirimTipi('yuzde'); setGirilenDeger('') }}
@@ -119,7 +121,7 @@ export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimMo
             className={clsx(
               "flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl font-mono font-bold text-xs transition-all",
               indirimTipi === 'tutar' 
-                ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)] border border-amber-300" 
+                ? "bg-amber-500 text-black border border-amber-300" 
                 : "text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
             )}
             onClick={() => { setIndirimTipi('tutar'); setGirilenDeger('') }}
@@ -132,37 +134,35 @@ export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimMo
         <div className="grid grid-cols-6 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
           {indirimTipi === 'yuzde' ? (
             ['5', '10', '15', '20', '25', '50'].map(val => (
-              <motion.button
+              <button
                 key={val}
-                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => setGirilenDeger(val)}
                 className={clsx(
-                  "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
+                  "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
                   girilenDeger === val 
                     ? "bg-amber-500/20 text-amber-300 border-amber-500/50" 
                     : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
                 )}
               >
                 %{val}
-              </motion.button>
+              </button>
             ))
           ) : (
             ['10', '25', '50', '100', '250', '500'].map(val => (
-              <motion.button
+              <button
                 key={val}
-                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => setGirilenDeger(val)}
                 className={clsx(
-                  "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors",
+                  "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
                   girilenDeger === val 
                     ? "bg-amber-500/20 text-amber-300 border-amber-500/50" 
                     : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
                 )}
               >
                 {val}₺
-              </motion.button>
+              </button>
             ))
           )}
         </div>
@@ -243,4 +243,6 @@ export default function IndirimModal({ isOpen, onClose, toplamTutar }: IndirimMo
       </div>
     </Modal>
   )
-}
+})
+
+export default IndirimModal

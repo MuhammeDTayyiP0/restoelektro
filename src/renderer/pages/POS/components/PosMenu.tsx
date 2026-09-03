@@ -300,7 +300,10 @@ export default function PosMenu() {
           title="Tartılı Ürün Miktarı"
           size="md"
         >
-          <div className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden">
+          <div 
+            className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+            style={{ transform: 'translateZ(0)' }}
+          >
 
             {/* Ürün Başlığı */}
             <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
@@ -427,7 +430,10 @@ export default function PosMenu() {
           title={varyantModalUrun.ad}
           size="md"
         >
-          <div className="flex flex-col gap-4 bg-[#0E121B] text-slate-100 select-none">
+          <div 
+            className="flex flex-col gap-4 bg-[#0E121B] text-slate-100 select-none"
+            style={{ transform: 'translateZ(0)' }}
+          >
 
             {/* Ürün Özet Başlığı */}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141926] border border-[#222C42]">
@@ -459,14 +465,14 @@ export default function PosMenu() {
                   {varyantModalUrun.varyantlar.filter(v => v.aktif).map(varyant => {
                     const isSelected = secilenVaryant?.id === varyant.id
                     return (
-                      <motion.button
+                      <button
                         key={varyant.id}
-                        whileTap={{ scale: 0.96 }}
+                        type="button"
                         onClick={() => setSecilenVaryant(isSelected ? null : varyant)}
                         className={clsx(
-                          'relative flex items-center justify-between h-14 px-3.5 rounded-xl border font-mono text-sm font-bold transition-all',
+                          'relative flex items-center justify-between h-14 px-3.5 rounded-xl border font-mono text-sm font-bold transition-all active:scale-95 duration-100',
                           isSelected
-                            ? 'bg-violet-500/15 border-violet-400 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.25)]'
+                            ? 'bg-violet-500/15 border-violet-400 text-violet-200'
                             : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
                         )}
                       >
@@ -484,7 +490,7 @@ export default function PosMenu() {
                             <Check size={16} className="text-violet-400" />
                           )}
                         </div>
-                      </motion.button>
+                      </button>
                     )
                   })}
                 </div>
@@ -505,14 +511,14 @@ export default function PosMenu() {
                   {varyantModalUrun.opsiyonlar.filter(o => o.aktif).map(opsiyon => {
                     const isSelected = secilenOpsiyonlar.some(o => o.id === opsiyon.id)
                     return (
-                      <motion.button
+                      <button
                         key={opsiyon.id}
-                        whileTap={{ scale: 0.96 }}
+                        type="button"
                         onClick={() => opsiyonToggle(opsiyon)}
                         className={clsx(
-                          'relative flex items-center justify-between h-12 px-3 rounded-xl border font-mono text-sm font-bold transition-all',
+                          'relative flex items-center justify-between h-12 px-3 rounded-xl border font-mono text-sm font-bold transition-all active:scale-95 duration-100',
                           isSelected
-                            ? 'bg-cyan-500/15 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                            ? 'bg-cyan-500/15 border-cyan-400 text-cyan-200'
                             : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
                         )}
                       >
@@ -527,7 +533,7 @@ export default function PosMenu() {
                             <Check size={16} className="text-cyan-400" />
                           )}
                         </div>
-                      </motion.button>
+                      </button>
                     )
                   })}
                 </div>

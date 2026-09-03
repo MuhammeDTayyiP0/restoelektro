@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { clsx } from 'clsx'
 import { X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -36,6 +37,21 @@ export function Modal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
+  // Modal açıkken arka planın pointer event'lerini kes
+  useEffect(() => {
+    if (isOpen) {
+      const root = document.getElementById('root')
+      if (root) {
+        root.style.pointerEvents = 'none'
+      }
+      return () => {
+        if (root) {
+          root.style.pointerEvents = 'auto'
+        }
+      }
+    }
+  }, [isOpen])
+
   const sizes = {
     sm: 'max-w-md',
     md: 'max-w-xl',
@@ -44,29 +60,30 @@ export function Modal({
     full: 'w-[98vw] max-w-[1560px] h-[95vh] max-h-[95vh]',
   }
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none">
-          {/* Overlay */}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none isolate pointer-events-auto">
+          {/* Overlay - Blur kaldırıldı, GPU dostu mat yarı saydam zemin */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="fixed inset-0 bg-[#0A0A0A]/90 z-0 pointer-events-auto"
             onClick={() => closeOnOverlayClick && onClose()}
           />
           
-          {/* Modal Container */}
+          {/* Modal Container - Basit opacity geçişi ve GPU layer izolasyonu */}
           <motion.div 
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            style={{ transform: 'translateZ(0)', willChange: 'opacity, transform' }}
             className={clsx(
-              'relative w-full bg-[#0D101A] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-[#1E2436] my-auto z-10',
+              'relative z-50 isolate w-full bg-[#0D101A] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-[#1E2436] my-auto pointer-events-auto',
               sizes[size]
             )}
           >
@@ -107,5 +124,11 @@ export function Modal({
       )}
     </AnimatePresence>
   )
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body)
+  }
+
+  return modalContent
 }
 

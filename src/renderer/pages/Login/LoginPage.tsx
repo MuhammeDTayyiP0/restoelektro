@@ -144,7 +144,7 @@ export default function LoginPage() {
       >
         
         {/* Sol Panel: Terminal Kimliği & Personel Seçimi */}
-        <div className="flex-1 flex flex-col justify-between bg-[#0E121E]/95 backdrop-blur-xl rounded-2xl border border-[#1E2436] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div className="flex-1 flex flex-col justify-between bg-[#0E121E] rounded-2xl border border-[#1E2436] p-6 sm:p-8 shadow-xl relative overflow-hidden">
           
           {/* Üst İnce Vurgu Çizgisi */}
           <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
@@ -242,7 +242,7 @@ export default function LoginPage() {
         </div>
 
         {/* Sağ Panel: PIN / Şifre Giriş Kartı */}
-        <div className="w-full lg:w-[420px] bg-[#0E121E]/95 backdrop-blur-xl rounded-2xl border border-[#1E2436] p-6 sm:p-8 flex flex-col justify-center shadow-2xl relative overflow-hidden">
+        <div className="w-full lg:w-[420px] bg-[#0E121E] rounded-2xl border border-[#1E2436] p-6 sm:p-8 flex flex-col justify-center shadow-xl relative overflow-hidden">
           
           {/* Üst İnce Vurgu Çizgisi */}
           <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />

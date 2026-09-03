@@ -83,7 +83,7 @@ module.exports = {
       boxShadow: {
         'pos': '0 2px 8px -2px rgba(0, 0, 0, 0.3)',
         'pos-lg': '0 4px 16px -4px rgba(0, 0, 0, 0.4)',
-        'pos-glow': '0 0 20px rgba(59, 130, 246, 0.3)',
+        'pos-glow': '0 0 8px rgba(59, 130, 246, 0.25)',
         'pos-inset': 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
       },
       // Özel border radius değerleri

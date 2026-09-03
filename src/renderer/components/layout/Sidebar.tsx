@@ -42,7 +42,7 @@ export function Sidebar() {
       {/* Mobil Overlay */}
       {sidebarAcik && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-black/80 z-40 lg:hidden"
           onClick={() => sidebarTetikle(false)}
         />
       )}
