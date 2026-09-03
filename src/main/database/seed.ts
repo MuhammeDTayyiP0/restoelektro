@@ -5,7 +5,6 @@
 // =====================================================
 
 import type Database from 'better-sqlite3'
-import { sutunYoksaEkle } from './migration-runner'
 import fs from 'fs'
 import path from 'path'
 
@@ -277,10 +276,18 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
  * Görselleri yerel uploads/products/ klasörüne indirir ve DB'ye yerel yol (/uploads/products/...) olarak kaydeder.
  */
 export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
-  console.log('🌱 [Seed] Menü kategorileri ve varsayılan ürünler senkronize ediliyor...')
+  // İlk Kurulum Kontrolü (First-Time Initialization Only)
+  // Eğer veritabanında zaten kayıtlı kategori veya ürün varsa,
+  // mevcut verileri (kullanıcının eklediği/düzenlediği) korumak için işlemi atla.
+  const kategoriSayisi = db.prepare('SELECT COUNT(*) as count FROM kategori').get() as { count: number }
+  const urunSayisi = db.prepare('SELECT COUNT(*) as count FROM urun').get() as { count: number }
 
-  // 1. urun tablosunda aciklama sütunu yoksa güvenle ekle
-  sutunYoksaEkle(db, 'urun', 'aciklama', 'TEXT')
+  if (kategoriSayisi.count > 0 || urunSayisi.count > 0) {
+    console.log('🌱 [Seed] Veritabanında mevcut veri bulundu. Varsayılan menü yüklemesi atlanıyor. (Mevcut veriler korundu)')
+    return
+  }
+
+  console.log('🌱 [Seed] Veritabanı boş, varsayılan menü kategorileri ve ürünleri yükleniyor (İlk Kurulum)...')
 
   // 2. Görsellerin yerel klasörlerde mevcut olduğundan emin ol (arka planda kontrol / indirme)
   for (const kat of VARSAYILAN_MENU_VERILERI) {
