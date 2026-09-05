@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
@@ -26,6 +26,14 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
   const [girilenDeger, setGirilenDeger] = useState<string>('')
   const [islemYapiliyor, setIslemYapiliyor] = useState(false)
 
+  // Reset value when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setGirilenDeger('')
+      setIndirimTipi('yuzde')
+    }
+  }, [isOpen])
+
   const deger = parseFloat(girilenDeger) || 0
 
   const handleTutarGirisi = (tus: string) => {
@@ -34,19 +42,26 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
     } else if (tus === '⌫' || tus === 'backspace') {
       setGirilenDeger(prev => prev.slice(0, -1))
     } else if (tus === '.') {
-      if (!girilenDeger.includes('.')) setGirilenDeger(prev => prev + '.')
+      if (!girilenDeger.includes('.')) setGirilenDeger(prev => (prev || '0') + '.')
     } else {
+      const base = (!girilenDeger || girilenDeger === '0') ? '' : girilenDeger
+      const yeniDegerStr = base + tus
+      const yeniNum = parseFloat(yeniDegerStr)
       // Yüzde indirimiyse 100'ü geçemez
       if (indirimTipi === 'yuzde') {
-        const yeniDeger = parseFloat(girilenDeger + tus)
-        if (yeniDeger > 100) return
+        if (!isNaN(yeniNum) && yeniNum > 100) {
+          setGirilenDeger('100')
+          return
+        }
       }
       // Tutar indirimiyse toplam tutarı geçemez
       if (indirimTipi === 'tutar') {
-        const yeniDeger = parseFloat(girilenDeger + tus)
-        if (yeniDeger > toplamTutar) return
+        if (!isNaN(yeniNum) && yeniNum > toplamTutar) {
+          setGirilenDeger(String(toplamTutar))
+          return
+        }
       }
-      setGirilenDeger(prev => prev === '0' ? tus : prev + tus)
+      setGirilenDeger(yeniDegerStr)
     }
   }
 
@@ -207,9 +222,45 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
                <span className="text-slate-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-1">
                  {indirimTipi === 'yuzde' ? 'Yüzde Oranı' : 'İndirim Tutarı'}
                </span>
-               <div className="h-11 sm:h-12 bg-[#0E131E] rounded-xl border border-[#222C42] flex items-center justify-center font-mono font-black text-2xl sm:text-3xl text-amber-400 shadow-inner px-3">
-                 {girilenDeger || '0'}
-                 <span className="text-lg text-slate-400 ml-1">
+               <div className="relative w-full">
+                 <input
+                   key={indirimTipi}
+                   type="text"
+                   inputMode="decimal"
+                   autoComplete="off"
+                   autoFocus
+                   placeholder="0"
+                   value={girilenDeger}
+                   onChange={(e) => {
+                     let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                     const parts = val.split('.')
+                     if (parts.length > 2) {
+                       val = parts[0] + '.' + parts.slice(1).join('')
+                     }
+                     if (val === '') {
+                       setGirilenDeger('')
+                       return
+                     }
+                     const num = parseFloat(val)
+                     if (indirimTipi === 'yuzde' && !isNaN(num) && num > 100) {
+                       setGirilenDeger('100')
+                       return
+                     }
+                     if (indirimTipi === 'tutar' && !isNaN(num) && num > toplamTutar) {
+                       setGirilenDeger(String(toplamTutar))
+                       return
+                     }
+                     setGirilenDeger(val)
+                   }}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter') {
+                       e.preventDefault()
+                       indirimUygula()
+                     }
+                   }}
+                   className="w-full h-11 sm:h-12 bg-[#0E131E] rounded-xl border border-[#222C42] text-center font-mono font-black text-2xl sm:text-3xl text-amber-400 shadow-inner px-8 focus:outline-none focus:border-amber-500 transition-colors"
+                 />
+                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-slate-400 font-mono font-bold pointer-events-none">
                    {indirimTipi === 'yuzde' ? '%' : '₺'}
                  </span>
                </div>

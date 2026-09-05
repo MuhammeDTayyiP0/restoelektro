@@ -506,13 +506,20 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
 
         {/* Digital Quantity Display */}
         <input 
+          key={kalem?.id || 'quantity-input'}
           type="text" 
           inputMode="decimal"
+          autoComplete="off"
           autoFocus
+          placeholder="0"
           value={girilenMiktar} 
           onChange={e => {
-            const val = e.target.value.replace(/[^0-9.,]/g, '')
-            setGirilenMiktar(val.replace(',', '.'))
+            let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+            const parts = val.split('.')
+            if (parts.length > 2) {
+              val = parts[0] + '.' + parts.slice(1).join('')
+            }
+            setGirilenMiktar(val)
           }}
           onKeyDown={e => {
             if (e.key === 'Enter') {
@@ -534,15 +541,15 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
             onKeyPress={(key) => {
               if (key === '⌫') {
                 setGirilenMiktar(prev => prev.slice(0, -1))
-              } else if (key === ',') {
+              } else if (key === ',' || key === '.') {
                 if (isKesirli && !girilenMiktar.includes('.')) {
-                  setGirilenMiktar(prev => prev + '.')
+                  setGirilenMiktar(prev => (prev || '0') + '.')
                 }
               } else if (key !== 'C' && key !== '') {
-                setGirilenMiktar(prev => prev === '0' ? key : prev + key)
+                setGirilenMiktar(prev => (!prev || prev === '0') ? key : prev + key)
               }
             }}
-            onClear={() => setGirilenMiktar('0')}
+            onClear={() => setGirilenMiktar('')}
           />
         </div>
 

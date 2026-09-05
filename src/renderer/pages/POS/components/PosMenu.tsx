@@ -460,13 +460,20 @@ export default function PosMenu() {
             <div className="flex flex-col gap-1.5 flex-shrink-0 shrink-0">
               <div className="relative flex items-center justify-center">
                 <input
+                  key={gramajModalUrun?.id || 'gramaj-input'}
                   type="text"
                   inputMode="decimal"
+                  autoComplete="off"
                   autoFocus
+                  placeholder="0.000"
                   value={girilenGramaj}
                   onChange={e => {
-                    const val = e.target.value.replace(/[^0-9.,]/g, '')
-                    setGirilenGramaj(val.replace(',', '.'))
+                    let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                    const parts = val.split('.')
+                    if (parts.length > 2) {
+                      val = parts[0] + '.' + parts.slice(1).join('')
+                    }
+                    setGirilenGramaj(val)
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
@@ -563,10 +570,10 @@ export default function PosMenu() {
                       setGirilenGramaj(prev => (prev || '0') + '.')
                     }
                   } else if (key !== 'C') {
-                    setGirilenGramaj(prev => prev === '0' ? key : prev + key)
+                    setGirilenGramaj(prev => (!prev || prev === '0') ? key : prev + key)
                   }
                 }}
-                onClear={() => setGirilenGramaj('0')}
+                onClear={() => setGirilenGramaj('')}
               />
             </div>
 

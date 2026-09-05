@@ -141,7 +141,7 @@ export default function MenuSettings() {
   const [yuvarlamaAktif, setYuvarlamaAktif] = useState<boolean>(false)
   const [yuvarlamaKati, setYuvarlamaKati] = useState<5 | 10>(5)
 
-  const [manuelFiyatlar, setManuelFiyatlar] = useState<Record<number, Record<string, number>>>({})
+  const [manuelFiyatlar, setManuelFiyatlar] = useState<Record<number, Record<string, string>>>({})
   const [onizlemeModalAcik, setOnizlemeModalAcik] = useState<boolean>(false)
   const [simulasyonArama, setSimulasyonArama] = useState<string>('')
   const [topluKayitYukleniyor, setTopluKayitYukleniyor] = useState(false)
@@ -693,6 +693,7 @@ export default function MenuSettings() {
     birim: string
     eskiFiyat: number
     yeniFiyat: number
+    yeniFiyatStr: string
     fark: number
     yuzdeFark: number
     etkileniyor: boolean
@@ -707,8 +708,10 @@ export default function MenuSettings() {
         const etkileniyor = birimEslesir(b, aktifHedefBirim)
 
         const eski = Number(t.fiyat) || 0
-        const manuel = manuelFiyatlar[u.id]?.[b]
-        const yeni = manuel !== undefined ? manuel : (etkileniyor ? hesaplaYeniFiyat(eski) : eski)
+        const manuelStr = manuelFiyatlar[u.id]?.[b]
+        const autoYeni = etkileniyor ? hesaplaYeniFiyat(eski) : eski
+        const yeniStr = manuelStr !== undefined ? manuelStr : String(autoYeni)
+        const yeni = manuelStr !== undefined ? (Number(manuelStr) || 0) : autoYeni
         const fark = yeni - eski
         const yuzdeFark = eski > 0 ? Math.round((fark / eski) * 1000) / 10 : 0
 
@@ -720,6 +723,7 @@ export default function MenuSettings() {
           birim: b,
           eskiFiyat: eski,
           yeniFiyat: yeni,
+          yeniFiyatStr: yeniStr,
           fark,
           yuzdeFark,
           etkileniyor
@@ -748,7 +752,7 @@ export default function MenuSettings() {
     )
   }, [simulasyonListesi, simulasyonArama])
 
-  const handleManuelFiyatDegistir = (urunId: number, birim: string, deger: number) => {
+  const handleManuelFiyatDegistir = (urunId: number, birim: string, deger: string) => {
     setManuelFiyatlar(prev => ({
       ...prev,
       [urunId]: {
@@ -788,7 +792,7 @@ export default function MenuSettings() {
             const guncelTurler = turler.map(t => {
               const b = (t.birim || '').trim()
               if (manuelFiyatlar[u.id]?.[b] !== undefined) {
-                return { ...t, fiyat: manuelFiyatlar[u.id][b] }
+                return { ...t, fiyat: Number(manuelFiyatlar[u.id][b]) || 0 }
               }
               return t
             })
@@ -1429,10 +1433,14 @@ export default function MenuSettings() {
                       {artisTipi === 'yuzde' ? 'Değişim Oranı (%) (+ veya -)' : 'Değişim Tutarı (₺) (+ veya -)'}
                     </label>
                     <input
-                      type="number"
-                      step={artisTipi === 'yuzde' ? '1' : '5'}
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
                       value={artisDegeri}
-                      onChange={e => setArtisDegeri(e.target.value)}
+                      onChange={e => {
+                        let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.-]/g, '')
+                        setArtisDegeri(val)
+                      }}
                       className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
                     />
                   </div>
@@ -1674,10 +1682,18 @@ export default function MenuSettings() {
                             {satir.etkileniyor ? (
                               <div className="inline-flex items-center justify-end gap-1">
                                 <input
-                                  type="number"
-                                  step="0.5"
-                                  value={satir.yeniFiyat}
-                                  onChange={e => handleManuelFiyatDegistir(satir.urunId, satir.birim, Number(e.target.value) || 0)}
+                                  type="text"
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  value={satir.yeniFiyatStr}
+                                  onChange={e => {
+                                    let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                                    const parts = val.split('.')
+                                    if (parts.length > 2) {
+                                      val = parts[0] + '.' + parts.slice(1).join('')
+                                    }
+                                    handleManuelFiyatDegistir(satir.urunId, satir.birim, val)
+                                  }}
                                   className="w-24 h-7 px-2 text-right font-mono font-bold text-emerald-400 rounded-md border border-[#1E2230] bg-[#090A0F] focus:border-brand-500 focus:outline-none text-xs"
                                 />
                               </div>
@@ -1794,13 +1810,14 @@ export default function MenuSettings() {
         title={duzenlenenKat ? 'Kategori Düzenle' : 'Yeni Kategori Ekle'}
         size="sm"
       >
-        <form onSubmit={katKaydet} className="flex flex-col gap-4">
+        <form key={duzenlenenKat ? `kat-${duzenlenenKat.id}` : 'kat-yeni'} onSubmit={katKaydet} className="flex flex-col gap-4">
           <div>
             <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kategori Adı</label>
             <input
               type="text"
               required
               autoFocus
+              autoComplete="off"
               placeholder="Örn: Ana Yemekler, İçecekler vb."
               value={katAd}
               onChange={e => setKatAd(e.target.value)}
@@ -1856,7 +1873,7 @@ export default function MenuSettings() {
         title={duzenlenenUrun ? `Ürün Düzenle: ${duzenlenenUrun.ad}` : 'Yeni Ürün Ekle'}
         size="lg"
       >
-        <form onSubmit={urunKaydet} className="flex flex-col gap-4">
+        <form key={duzenlenenUrun ? `urun-${duzenlenenUrun.id}` : 'urun-yeni'} onSubmit={urunKaydet} className="flex flex-col gap-4">
           
           {/* Sekme Butonları (Tabs) */}
           <div className="flex items-center gap-1.5 p-1 bg-[#090C15] border border-[#1E2436] rounded-xl">
@@ -1924,6 +1941,7 @@ export default function MenuSettings() {
                     type="text"
                     required
                     autoFocus
+                    autoComplete="off"
                     placeholder="Örn: Izgara Köfte Porsiyon"
                     value={urunAd}
                     onChange={e => setUrunAd(e.target.value)}
@@ -1935,6 +1953,7 @@ export default function MenuSettings() {
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kısa / Mutfak Adı</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder="Örn: Köfte Pors."
                     value={urunKisaltma}
                     onChange={e => setUrunKisaltma(e.target.value)}
@@ -1964,6 +1983,7 @@ export default function MenuSettings() {
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Barkod (Opsiyonel)</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder="Barkod okutun veya yazın..."
                     value={urunBarkod}
                     onChange={e => setUrunBarkod(e.target.value)}
@@ -2183,11 +2203,19 @@ export default function MenuSettings() {
                       <label className="text-[10px] font-mono text-surface-500 uppercase block mb-1">Satış Fiyatı (₺)</label>
                       <div className="relative">
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
                           placeholder="0.00"
                           value={tur.fiyat}
-                          onChange={e => satisTuruGuncelle(tur.id, 'fiyat', e.target.value)}
+                          onChange={e => {
+                            let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                            const parts = val.split('.')
+                            if (parts.length > 2) {
+                              val = parts[0] + '.' + parts.slice(1).join('')
+                            }
+                            satisTuruGuncelle(tur.id, 'fiyat', val)
+                          }}
                           className="w-full h-9 px-3 pr-8 rounded-lg border border-[#1E2436] bg-[#0E121E] text-emerald-400 font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 font-mono text-xs font-bold">₺</span>
@@ -2307,10 +2335,18 @@ export default function MenuSettings() {
 
                       <div className="w-28 relative">
                         <input
-                          type="number"
-                          step="0.001"
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
                           value={kalem.miktar}
-                          onChange={e => receteKalemiGuncelle(idx, 'miktar', e.target.value)}
+                          onChange={e => {
+                            let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                            const parts = val.split('.')
+                            if (parts.length > 2) {
+                              val = parts[0] + '.' + parts.slice(1).join('')
+                            }
+                            receteKalemiGuncelle(idx, 'miktar', val)
+                          }}
                           placeholder="Miktar"
                           className="w-full h-9 px-2.5 pr-10 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white font-mono text-xs font-bold focus:border-brand-500 focus:outline-none"
                         />
@@ -2501,11 +2537,19 @@ export default function MenuSettings() {
                       <td className="py-2 px-3 text-right">
                         {satir.etkileniyor ? (
                           <input
-                            type="number"
-                            step="0.5"
-                            value={satir.yeniFiyat}
-                            onChange={e => handleManuelFiyatDegistir(satir.urunId, satir.birim, Number(e.target.value) || 0)}
-                            className="w-24 h-7 px-2 text-right font-bold text-emerald-400 rounded border border-[#1E2538] bg-[#0E121E] focus:border-brand-500 focus:outline-none"
+                            type="text"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            value={satir.yeniFiyatStr}
+                            onChange={e => {
+                              let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                              const parts = val.split('.')
+                              if (parts.length > 2) {
+                                val = parts[0] + '.' + parts.slice(1).join('')
+                              }
+                              handleManuelFiyatDegistir(satir.urunId, satir.birim, val)
+                            }}
+                            className="w-24 h-7 px-2 text-right font-bold text-emerald-400 rounded border border-[#1E2538] bg-[#0E121E] focus:border-brand-500 focus:outline-none text-xs"
                           />
                         ) : (
                           <span className="text-surface-500">{formatPara(satir.eskiFiyat)}</span>

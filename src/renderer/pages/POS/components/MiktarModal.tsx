@@ -35,7 +35,7 @@ export const MiktarModal = React.memo(function MiktarModal({ isOpen, onClose, on
     } else if (tus === '.') {
       // Tam sayı miktar
     } else {
-      const yeniDeger = girilenDeger === '0' ? tus : girilenDeger + tus
+      const yeniDeger = (!girilenDeger || girilenDeger === '0') ? tus : girilenDeger + tus
       if (parseInt(yeniDeger, 10) > maxMiktar) {
         setHataAnimasyonu(true);
         setTimeout(() => setHataAnimasyonu(false), 400);
@@ -116,11 +116,39 @@ export const MiktarModal = React.memo(function MiktarModal({ isOpen, onClose, on
         {/* Dijital Gösterge ve Numpad */}
         <div className="bg-[#090D15] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-[#1E2436] flex flex-col items-center justify-center mx-auto w-full max-w-xs shadow-inner flex-shrink-0 shrink-0">
           <div className="mb-2 text-center w-full">
-             <div className="h-12 sm:h-14 flex items-center justify-center bg-[#0E131E] rounded-xl border border-[#222C42] font-mono font-black text-2xl sm:text-3xl text-cyan-400 shadow-inner">
-               {girilenDeger || '0'}
-             </div>
+            <input
+              key={urunAdi || 'miktar-input'}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              autoFocus
+              placeholder="0"
+              value={girilenDeger}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '')
+                if (val === '') {
+                  setGirilenDeger('')
+                  return
+                }
+                const num = parseInt(val, 10)
+                if (!isNaN(num) && num > maxMiktar) {
+                  setHataAnimasyonu(true)
+                  setTimeout(() => setHataAnimasyonu(false), 400)
+                  setGirilenDeger(String(maxMiktar))
+                  return
+                }
+                setGirilenDeger(val)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleConfirm()
+                }
+              }}
+              className="w-full h-12 sm:h-14 text-center bg-[#0E131E] rounded-xl border border-[#222C42] font-mono font-black text-2xl sm:text-3xl text-cyan-400 shadow-inner focus:outline-none focus:border-cyan-500 transition-colors"
+            />
           </div>
-          <Numpad onKeyPress={handleTutarGirisi} onClear={() => setGirilenDeger('0')} />
+          <Numpad onKeyPress={handleTutarGirisi} onClear={() => setGirilenDeger('')} />
         </div>
 
         {/* Aksiyon Butonları */}

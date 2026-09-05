@@ -220,11 +220,9 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
 
   // Modal açıldığında alanları sıfırla
   useEffect(() => {
-    if (!isOpen) {
-      setGirilenTutar('')
-      setSeciliMiktarlar({})
-    }
-  }, [isOpen])
+    setGirilenTutar('')
+    setSeciliMiktarlar({})
+  }, [isOpen, aktifHesap?.id])
 
   // Hesaplamalar
   const gecerliTutar = parseFloat(girilenTutar) || 0
@@ -284,9 +282,9 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
     } else if (deger === '⌫' || deger === 'backspace') {
       setGirilenTutar(prev => prev.slice(0, -1))
     } else if (deger === '.') {
-      setGirilenTutar(prev => prev.includes('.') ? prev : prev + '.')
+      setGirilenTutar(prev => prev.includes('.') ? prev : (prev || '0') + '.')
     } else {
-      setGirilenTutar(prev => prev + deger)
+      setGirilenTutar(prev => (prev === '0' ? deger : prev + deger))
     }
   }, [])
 
@@ -605,9 +603,40 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
                   </span>
                 )}
               </span>
-              <span className="text-2xl sm:text-3xl lg:text-4xl font-black font-mono text-cyan-400 tabular-nums tracking-tight">
-                {girilenTutar ? formatPara(parseFloat(girilenTutar)) : formatPara(odenecekHedefTutar)}
-              </span>
+              <div className="relative flex items-center my-0.5">
+                <input
+                  key={aktifHesap?.id || 'odeme-tutar-input'}
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder={formatPara(odenecekHedefTutar)}
+                  value={girilenTutar}
+                  onChange={(e) => {
+                    let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+                    const parts = val.split('.')
+                    if (parts.length > 2) {
+                      val = parts[0] + '.' + parts.slice(1).join('')
+                    }
+                    setGirilenTutar(val)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      odemeAl('nakit')
+                    }
+                  }}
+                  className="w-full bg-[#090D15]/80 px-2.5 py-1 rounded-xl border border-[#222C42] focus:border-cyan-400 text-2xl sm:text-3xl lg:text-4xl font-black font-mono text-cyan-400 tabular-nums tracking-tight outline-none shadow-inner transition-colors placeholder:text-cyan-700/50"
+                />
+                {girilenTutar ? (
+                  <button
+                    type="button"
+                    onClick={() => setGirilenTutar('')}
+                    className="absolute right-2 px-2 py-0.5 text-[11px] font-mono font-bold bg-[#141A26] hover:bg-[#1E2538] text-slate-300 rounded border border-[#222C42] transition-colors"
+                  >
+                    Temizle
+                  </button>
+                ) : null}
+              </div>
               <span className="text-[10px] font-mono text-slate-400 mt-0.5">
                 {girilenTutar ? 'Manuel Tutar Girişi' : almanUsuluAktif ? 'Seçili Kalemler Toplamı' : 'Hesabın Tamamı'}
               </span>
