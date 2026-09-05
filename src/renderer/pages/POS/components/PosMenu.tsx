@@ -59,6 +59,16 @@ export default function PosMenu() {
 
   const kategoriScrollRef = useRef<HTMLDivElement>(null)
 
+  // Kategorileri öncelik kuralına göre sırala: sira_no ASC (küçük numara önce), eşitler alfabetik (A-Z)
+  const siraliKategoriler = useMemo(() => {
+    return [...tumKategoriler].sort((a, b) => {
+      const orderA = a.sira_no !== undefined && a.sira_no !== null ? a.sira_no : 999
+      const orderB = b.sira_no !== undefined && b.sira_no !== null ? b.sira_no : 999
+      if (orderA !== orderB) return orderA - orderB
+      return (a.ad || '').localeCompare(b.ad || '', 'tr')
+    })
+  }, [tumKategoriler])
+
   // Kategori bazlı ürün sayıları
   const kategoriUrunSayilari = useMemo(() => {
     const map: Record<number, number> = {}
@@ -263,8 +273,8 @@ export default function PosMenu() {
               </span>
             </motion.button>
 
-            {/* Dinamik Kategoriler */}
-            {tumKategoriler.map(kat => {
+            {/* Dinamik Kategoriler (Sıra Numarası ve Alfabetik) */}
+            {siraliKategoriler.map(kat => {
               const isActive = seciliKategoriId === kat.id
               const count = kategoriUrunSayilari[kat.id] || 0
               const katColor = kat.renk || '#3b82f6'

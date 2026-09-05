@@ -17,12 +17,13 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
   // Sütunların varlığını garanti altına al
   sutunYoksaEkle(db, 'urun', 'porsiyon_fiyati', 'REAL DEFAULT NULL')
   sutunYoksaEkle(db, 'urun', 'kilo_fiyati', 'REAL DEFAULT NULL')
+  sutunYoksaEkle(db, 'kategori', 'sira_no', 'INTEGER DEFAULT 999')
 
   // Kategorileri listele
   ipcMain.handle(MENU_KANALLARI.KATEGORILER, async () => {
     const kategoriler = db.prepare(`
       SELECT k.*, (SELECT COUNT(*) FROM urun u WHERE u.kategori_id = k.id AND u.aktif = 1) as urun_sayisi
-      FROM kategori k WHERE k.aktif = 1 ORDER BY k.sira, k.ad
+      FROM kategori k WHERE k.aktif = 1 ORDER BY k.sira_no ASC, k.ad ASC
     `).all()
     return kategoriler
   })
@@ -30,8 +31,8 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
   // Kategori ekle
   ipcMain.handle(MENU_KANALLARI.KATEGORI_EKLE, async (_event, veri: YeniKategori) => {
     const sonuc = db.prepare(`
-      INSERT INTO kategori (ad, ust_kategori_id, renk, ikon) VALUES (?, ?, ?, ?)
-    `).run(veri.ad, veri.ust_kategori_id || null, veri.renk || '#3B82F6', veri.ikon || null)
+      INSERT INTO kategori (ad, ust_kategori_id, renk, ikon, sira_no) VALUES (?, ?, ?, ?, ?)
+    `).run(veri.ad, veri.ust_kategori_id || null, veri.renk || '#3B82F6', veri.ikon || null, veri.sira_no ?? 999)
     return { basarili: true, id: sonuc.lastInsertRowid }
   })
 
@@ -42,6 +43,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
     if (veri.ad) { alanlar.push('ad = ?'); degerler.push(veri.ad) }
     if (veri.renk) { alanlar.push('renk = ?'); degerler.push(veri.renk) }
     if (veri.ikon !== undefined) { alanlar.push('ikon = ?'); degerler.push(veri.ikon) }
+    if (veri.sira_no !== undefined) { alanlar.push('sira_no = ?'); degerler.push(veri.sira_no) }
     degerler.push(id)
     if (alanlar.length > 0) {
       db.prepare(`UPDATE kategori SET ${alanlar.join(', ')} WHERE id = ?`).run(...degerler)
@@ -94,7 +96,7 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
         FROM urun u
         JOIN kategori k ON k.id = u.kategori_id
         WHERE u.aktif = 1
-        ORDER BY k.sira, u.sira, u.ad
+        ORDER BY k.sira_no ASC, k.ad ASC, u.sira, u.ad
       `).all()
     }
     return urunler.map(urunFiyatlariniAyrintilandir)

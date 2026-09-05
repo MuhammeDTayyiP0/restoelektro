@@ -35,7 +35,10 @@ import {
   Scale,
   Eye,
   AlertCircle,
-  Layers
+  Layers,
+  ChevronUp,
+  ChevronDown,
+  GripVertical
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -91,6 +94,8 @@ export default function MenuSettings() {
   // Form State (Kategori)
   const [katAd, setKatAd] = useState('')
   const [katRenk, setKatRenk] = useState('#3B82F6')
+  const [katSiraNo, setKatSiraNo] = useState<number | string>(999)
+  const [suruklenenKatId, setSuruklenenKatId] = useState<number | null>(null)
 
   // Form State (Ürün)
   const [urunAd, setUrunAd] = useState('')
@@ -234,16 +239,32 @@ export default function MenuSettings() {
     })
   }, [urunler, seciliKategoriId, aramaMetni])
 
+  // Sıralı Kategoriler: sira_no ASC (küçük numaralar önce), eşitler alfabetik (A-Z)
+  const siraliKategoriler = useMemo(() => {
+    return [...kategoriler].sort((a, b) => {
+      const orderA = a.sira_no !== undefined && a.sira_no !== null ? a.sira_no : 999
+      const orderB = b.sira_no !== undefined && b.sira_no !== null ? b.sira_no : 999
+      if (orderA !== orderB) return orderA - orderB
+      return (a.ad || '').localeCompare(b.ad || '', 'tr')
+    })
+  }, [kategoriler])
+
   // Kategori İşlemleri
   const katModaliniAc = (kat?: any) => {
     if (kat) {
       setDuzenlenenKat(kat)
       setKatAd(kat.ad || '')
       setKatRenk(kat.renk || '#3B82F6')
+      setKatSiraNo(kat.sira_no ?? 999)
     } else {
       setDuzenlenenKat(null)
       setKatAd('')
       setKatRenk('#3B82F6')
+      const mevcutSiraNolari = kategoriler
+        .map(k => k.sira_no)
+        .filter((s): s is number => typeof s === 'number' && s < 999)
+      const sonrakiSira = mevcutSiraNolari.length > 0 ? Math.max(...mevcutSiraNolari) + 1 : 1
+      setKatSiraNo(sonrakiSira)
     }
     setKatModalAcik(true)
   }
@@ -252,17 +273,21 @@ export default function MenuSettings() {
     e.preventDefault()
     if (!katAd.trim()) return
 
+    const siraDegeri = katSiraNo === '' ? 999 : (parseInt(String(katSiraNo), 10) || 999)
+
     try {
       if (duzenlenenKat) {
         await ipcInvoke(MENU_KANALLARI.KATEGORI_GUNCELLE, duzenlenenKat.id, { 
           ad: katAd.trim(), 
-          renk: katRenk 
+          renk: katRenk,
+          sira_no: siraDegeri
         })
         success('Başarılı', 'Kategori güncellendi.')
       } else {
         await ipcInvoke(MENU_KANALLARI.KATEGORI_EKLE, { 
           ad: katAd.trim(), 
-          renk: katRenk 
+          renk: katRenk,
+          sira_no: siraDegeri
         })
         success('Başarılı', 'Yeni kategori eklendi.')
       }
@@ -270,6 +295,83 @@ export default function MenuSettings() {
       verileriGetir()
     } catch (err: any) {
       error('Hata', err.message)
+    }
+  }
+
+  // Kategori yukarı / aşağı butonları ile sıralama (sira_no güncelleme)
+  const kategoriSirala = async (katId: number, yon: 'yukari' | 'asagi') => {
+    const currentIndex = siraliKategoriler.findIndex(k => k.id === katId)
+    if (currentIndex === -1) return
+    const targetIndex = yon === 'yukari' ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= siraliKategoriler.length) return
+
+    const yeniListe = [...siraliKategoriler]
+    const temp = yeniListe[currentIndex]
+    yeniListe[currentIndex] = yeniListe[targetIndex]
+    yeniListe[targetIndex] = temp
+
+    try {
+      // Optimistik arayüz güncellemesi
+      setKategoriler(yeniListe.map((k, idx) => ({ ...k, sira_no: idx + 1 })))
+
+      for (let i = 0; i < yeniListe.length; i++) {
+        const item = yeniListe[i]
+        const yeniSira = i + 1
+        if (item.sira_no !== yeniSira) {
+          await ipcInvoke(MENU_KANALLARI.KATEGORI_GUNCELLE, item.id, { sira_no: yeniSira })
+        }
+      }
+      success('Sıralama Güncellendi', `"${temp.ad}" kategorisi ${yon === 'yukari' ? 'yukarı' : 'aşağı'} taşındı.`)
+      verileriGetir()
+    } catch (err: any) {
+      error('Hata', 'Sıralama güncellenirken hata oluştu: ' + err.message)
+      verileriGetir()
+    }
+  }
+
+  // Sürükle - Bırak (Drag & Drop) ile Sıralama
+  const onKatDragStart = (e: React.DragEvent, katId: number) => {
+    setSuruklenenKatId(katId)
+    e.dataTransfer.setData('text/plain', String(katId))
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const onKatDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const onKatDrop = async (e: React.DragEvent, hedefKatId: number) => {
+    e.preventDefault()
+    const kaynakKatId = suruklenenKatId || Number(e.dataTransfer.getData('text/plain'))
+    setSuruklenenKatId(null)
+
+    if (!kaynakKatId || kaynakKatId === hedefKatId) return
+
+    const kaynakIndex = siraliKategoriler.findIndex(k => k.id === kaynakKatId)
+    const hedefIndex = siraliKategoriler.findIndex(k => k.id === hedefKatId)
+    if (kaynakIndex === -1 || hedefIndex === -1) return
+
+    const yeniListe = [...siraliKategoriler]
+    const [tasinanItem] = yeniListe.splice(kaynakIndex, 1)
+    yeniListe.splice(hedefIndex, 0, tasinanItem)
+
+    try {
+      // Optimistik arayüz güncellemesi
+      setKategoriler(yeniListe.map((k, idx) => ({ ...k, sira_no: idx + 1 })))
+
+      for (let i = 0; i < yeniListe.length; i++) {
+        const item = yeniListe[i]
+        const yeniSira = i + 1
+        if (item.sira_no !== yeniSira) {
+          await ipcInvoke(MENU_KANALLARI.KATEGORI_GUNCELLE, item.id, { sira_no: yeniSira })
+        }
+      }
+      success('Sıralama Güncellendi', `"${tasinanItem.ad}" yeni konumuna taşındı.`)
+      verileriGetir()
+    } catch (err: any) {
+      error('Hata', 'Sürükleme sırası kaydedilemedi: ' + err.message)
+      verileriGetir()
     }
   }
 
@@ -976,7 +1078,7 @@ export default function MenuSettings() {
                 </span>
               </button>
 
-              {kategoriler.map(kat => (
+              {siraliKategoriler.map(kat => (
                 <button
                   key={kat.id}
                   type="button"
@@ -995,9 +1097,14 @@ export default function MenuSettings() {
                     />
                     <span className="truncate">{kat.ad}</span>
                   </div>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-surface-400 shrink-0">
-                    {kat.urun_sayisi || 0}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950/70 border border-cyan-500/30 text-cyan-300">
+                      #{kat.sira_no ?? 999}
+                    </span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-surface-400">
+                      {kat.urun_sayisi || 0}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -1206,7 +1313,7 @@ export default function MenuSettings() {
                         className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none"
                       >
                         <option value="tum">Tüm Kategoriler ({urunler.length} Ürün)</option>
-                        {kategoriler.map(k => (
+                        {siraliKategoriler.map(k => (
                           <option key={k.id} value={String(k.id)}>
                             {k.ad} ({k.urun_sayisi || 0} Ürün)
                           </option>
@@ -1242,7 +1349,7 @@ export default function MenuSettings() {
                           className="h-8 px-2 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none max-w-[125px]"
                         >
                           <option value="tum">Tüm Kat.</option>
-                          {kategoriler.map(k => (
+                          {siraliKategoriler.map(k => (
                             <option key={k.id} value={String(k.id)}>{k.ad}</option>
                           ))}
                         </select>
@@ -1674,25 +1781,64 @@ export default function MenuSettings() {
       {/* SUBTAB 3: KATEGORİ YÖNETİMİ */}
       {subTab === 'kategoriler' && (
         <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-4 flex flex-col overflow-hidden">
+          {/* Bilgi ve İpucu Çubuğu */}
+          <div className="mb-3 p-2.5 px-3.5 rounded-lg bg-[#0E1322] border border-[#1E253A] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2 text-surface-300">
+              <Sparkles size={14} className="text-cyan-400" />
+              <span>
+                <strong className="text-white">Kategori Sıralama Mantığı:</strong> Sıra numarası küçük olanlar (1, 2, 3...) her zaman en başta görünür. Eşit olanlar alfabetik sıralanır.
+              </span>
+            </div>
+            <span className="text-[11px] text-surface-400">
+              Kartları sürükleyip bırakabilir veya <strong className="text-cyan-300">▲ / ▼</strong> butonlarıyla sıralayabilirsiniz.
+            </span>
+          </div>
+
           <div className="flex-1 overflow-y-auto pos-scrollbar pr-1 pb-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-              {kategoriler.map(kat => (
+              {siraliKategoriler.map((kat, index) => (
                 <div
                   key={kat.id}
-                  className="bg-[#0E121E] border border-[#1E2436] hover:border-brand-500/40 rounded-xl p-4 flex flex-col justify-between transition-all group shadow-sm"
+                  draggable
+                  onDragStart={e => onKatDragStart(e, kat.id)}
+                  onDragOver={onKatDragOver}
+                  onDrop={e => onKatDrop(e, kat.id)}
+                  className={clsx(
+                    "bg-[#0E121E] border rounded-xl p-4 flex flex-col justify-between transition-all group shadow-sm select-none",
+                    suruklenenKatId === kat.id
+                      ? "opacity-40 border-cyan-500 border-dashed scale-95"
+                      : "border-[#1E2436] hover:border-brand-500/40"
+                  )}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#1A1F30]">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span title="Sürükleyip bırakarak sıralayın" className="inline-flex items-center">
+                          <GripVertical
+                            size={15}
+                            className="text-slate-500 group-hover:text-slate-300 cursor-grab active:cursor-grabbing shrink-0"
+                          />
+                        </span>
                         <span
-                          className="w-4 h-4 rounded-full shadow-xs"
+                          className="w-3.5 h-3.5 rounded-full shadow-xs shrink-0"
                           style={{ backgroundColor: kat.renk || '#3B82F6' }}
                         />
-                        <h3 className="font-bold text-white text-base tracking-tight">{kat.ad}</h3>
+                        <h3 className="font-bold text-white text-base tracking-tight truncate" title={kat.ad}>
+                          {kat.ad}
+                        </h3>
                       </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 text-surface-400">
-                        {kat.urun_sayisi || 0} Ürün
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                        {/* Sıra Numarası Rozeti (Badge) */}
+                        <span
+                          title={`Görüntülenme Sıra Numarası: ${kat.sira_no ?? 999}`}
+                          className="px-2 py-0.5 rounded-md text-[11px] font-mono font-black bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 shadow-sm"
+                        >
+                          #{kat.sira_no ?? 999}
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 text-surface-400">
+                          {kat.urun_sayisi || 0} Ürün
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between text-xs font-mono text-surface-400 mb-3">
@@ -1701,24 +1847,49 @@ export default function MenuSettings() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1A1F30]">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      leftIcon={<Edit2 size={13} />}
-                      onClick={() => katModaliniAc(kat)}
-                      className="text-xs h-8"
-                    >
-                      Düzenle
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => katSil(kat.id)}
-                      className="text-xs h-8 text-rose-400 hover:bg-rose-950/30"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#1A1F30] gap-2">
+                    {/* Hızlı Yukarı / Aşağı Ok Butonları */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => kategoriSirala(kat.id, 'yukari')}
+                        title="Yukarı / Öne Taşı"
+                        className="w-7 h-7 rounded-lg bg-[#141A28] border border-[#222B3F] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
+                      >
+                        <ChevronUp size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === siraliKategoriler.length - 1}
+                        onClick={() => kategoriSirala(kat.id, 'asagi')}
+                        title="Aşağı / Arkaya Taşı"
+                        className="w-7 h-7 rounded-lg bg-[#141A28] border border-[#222B3F] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                    </div>
+
+                    {/* Düzenle & Sil */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        leftIcon={<Edit2 size={13} />}
+                        onClick={() => katModaliniAc(kat)}
+                        className="text-xs h-8"
+                      >
+                        Düzenle
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => katSil(kat.id)}
+                        className="text-xs h-8 text-rose-400 hover:bg-rose-950/30"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1749,6 +1920,25 @@ export default function MenuSettings() {
               onChange={e => setKatAd(e.target.value)}
               className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
             />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-mono text-surface-400 uppercase">Sıra Numarası (Öncelik)</label>
+              <span className="text-[11px] font-mono text-cyan-400 font-bold">1 = En Başta</span>
+            </div>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Örn: 1, 2, 3... (Varsayılan: 999)"
+              value={katSiraNo}
+              onChange={e => setKatSiraNo(e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
+              className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm font-mono focus:border-brand-500 focus:outline-none"
+            />
+            <p className="text-[11px] text-surface-500 mt-1 font-mono">
+              Küçük sayılar (1, 2, 3...) menüde en başta gösterilir. Eşit olanlar kendi arasında alfabetik sıralanır.
+            </p>
           </div>
 
           <div>
@@ -1896,7 +2086,7 @@ export default function MenuSettings() {
                     className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
                   >
                     <option value="" disabled>Kategori Seçiniz...</option>
-                    {kategoriler.map(k => (
+                    {siraliKategoriler.map(k => (
                       <option key={k.id} value={String(k.id)}>{k.ad}</option>
                     ))}
                   </select>

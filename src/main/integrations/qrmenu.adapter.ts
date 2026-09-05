@@ -22,7 +22,7 @@ export class QRMenuAdapter {
     
     try {
       const db = veritabaniGetir()
-      const kategoriler = db.prepare('SELECT id, ad, renk, ikon FROM kategori WHERE aktif = 1').all()
+      const kategoriler = db.prepare('SELECT id, ad, renk, ikon, sira_no FROM kategori WHERE aktif = 1 ORDER BY sira_no ASC, ad ASC').all()
       const urunler = db.prepare('SELECT id, kategori_id, ad, fiyat, birim, resim_yolu FROM urun WHERE aktif = 1').all()
 
       const payload = {

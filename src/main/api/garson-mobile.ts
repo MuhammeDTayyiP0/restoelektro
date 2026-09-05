@@ -2275,8 +2275,14 @@ function bolumGeri() {
 async function menuYukle() {
   const data = await apiFetch('/api/garson/menu');
   if (!data) return;
+  const kategoriler = (data.kategoriler || []).sort((a, b) => {
+    const orderA = a.sira_no !== undefined && a.sira_no !== null ? a.sira_no : 999;
+    const orderB = b.sira_no !== undefined && b.sira_no !== null ? b.sira_no : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.ad || '').localeCompare(b.ad || '', 'tr');
+  });
   menu = {
-    kategoriler: data.kategoriler || [],
+    kategoriler: kategoriler,
     urunler: data.urunler || [],
     opsiyonlar: data.opsiyonlar || [],
     varyantlar: data.varyantlar || []

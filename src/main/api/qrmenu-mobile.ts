@@ -1105,7 +1105,14 @@ export function qrMenuHTML(): string {
         const data = await res.json();
 
         menuState.isletme_adi = data.isletme_adi || 'Restoran';
-        menuState.kategoriler = data.kategoriler || [];
+        const cats = data.kategoriler || [];
+        cats.sort((a, b) => {
+          const orderA = a.sira_no !== undefined && a.sira_no !== null ? a.sira_no : 999;
+          const orderB = b.sira_no !== undefined && b.sira_no !== null ? b.sira_no : 999;
+          if (orderA !== orderB) return orderA - orderB;
+          return (a.ad || '').localeCompare(b.ad || '', 'tr');
+        });
+        menuState.kategoriler = cats;
         menuState.urunler = data.urunler || [];
 
         document.getElementById('isletmeAdi').textContent = menuState.isletme_adi;

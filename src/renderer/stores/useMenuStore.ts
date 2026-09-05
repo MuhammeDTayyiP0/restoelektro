@@ -34,7 +34,14 @@ export const useMenuStore = create<MenuState>((set, get) => ({
         ipcInvoke<Urun[]>(MENU_KANALLARI.URUNLER)
       ])
       
-      set({ kategoriler, urunler, yukleniyor: false })
+      const siraliKategoriler = (kategoriler || []).sort((a, b) => {
+        const orderA = a.sira_no !== undefined && a.sira_no !== null ? a.sira_no : 999
+        const orderB = b.sira_no !== undefined && b.sira_no !== null ? b.sira_no : 999
+        if (orderA !== orderB) return orderA - orderB
+        return (a.ad || '').localeCompare(b.ad || '', 'tr')
+      })
+      
+      set({ kategoriler: siraliKategoriler, urunler, yukleniyor: false })
     } catch (err: any) {
       set({ hata: err.message, yukleniyor: false })
     }

@@ -508,7 +508,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   // Menüyü getir
   app.get('/api/garson/menu', jwtDogrula, (req, res) => {
     const db = veritabaniGetir()
-    const kategoriler = db.prepare('SELECT * FROM kategori WHERE aktif = 1 ORDER BY sira').all()
+    const kategoriler = db.prepare('SELECT * FROM kategori WHERE aktif = 1 ORDER BY sira_no ASC, ad ASC').all()
     const urunler = db.prepare('SELECT * FROM urun WHERE aktif = 1 ORDER BY sira').all()
     const opsiyonlar = db.prepare('SELECT * FROM urun_opsiyonu WHERE aktif = 1').all()
     const varyantlar = db.prepare('SELECT * FROM urun_varyant WHERE aktif = 1').all()
@@ -709,7 +709,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   // Herkese açık menü (token gerekmez)
   app.get(['/api/qrmenu', '/api/menu'], (req, res) => {
     const db = veritabaniGetir()
-    const kategoriler = db.prepare('SELECT id, ad, renk, ikon FROM kategori WHERE aktif = 1 ORDER BY sira').all()
+    const kategoriler = db.prepare('SELECT id, ad, renk, ikon, sira_no FROM kategori WHERE aktif = 1 ORDER BY sira_no ASC, ad ASC').all()
     const urunler = db.prepare(`
       SELECT id, kategori_id, ad, kisaltma, fiyat, birim, resim_yolu, satis_turleri
       FROM urun WHERE aktif = 1 ORDER BY sira

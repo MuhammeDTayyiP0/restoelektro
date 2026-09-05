@@ -9,6 +9,7 @@ export interface Kategori {
   ad: string
   ust_kategori_id: number | null
   sira: number
+  sira_no?: number
   renk: string
   ikon: string | null
   aktif: boolean
@@ -104,6 +105,7 @@ export interface YeniUrun {
 export interface YeniKategori {
   ad: string
   ust_kategori_id?: number
+  sira_no?: number
   renk?: string
   ikon?: string
 }

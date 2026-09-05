@@ -361,14 +361,14 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
       kategoriId = kategoriRow.id
       db.prepare(`
         UPDATE kategori 
-        SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, aktif = 1 
+        SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, sira_no = COALESCE(sira_no, ?), aktif = 1 
         WHERE id = ?
-      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kategoriId)
+      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira, kategoriId)
     } else {
       const katSonuc = db.prepare(`
-        INSERT INTO kategori (ad, renk, ikon, sira, aktif)
-        VALUES (?, ?, ?, ?, 1)
-      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira)
+        INSERT INTO kategori (ad, renk, ikon, sira, sira_no, aktif)
+        VALUES (?, ?, ?, ?, ?, 1)
+      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira)
       kategoriId = Number(katSonuc.lastInsertRowid)
       console.log(`➕ [Seed] Yeni Kategori: ${kat.ad} (ID: ${kategoriId})`)
     }
