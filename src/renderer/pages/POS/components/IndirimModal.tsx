@@ -113,7 +113,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
       size="lg"
     >
       <div 
-        className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+        className="flex flex-col gap-2 sm:gap-3 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
         style={{ transform: 'translateZ(0)' }}
       >
         

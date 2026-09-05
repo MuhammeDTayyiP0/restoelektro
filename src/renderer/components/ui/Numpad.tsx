@@ -25,7 +25,7 @@ export const Numpad = React.memo(function Numpad({
 }: NumpadProps) {
   
   return (
-    <div className={clsx('w-full max-w-sm flex flex-col gap-2 sm:gap-3 select-none flex-shrink-0 shrink-0', className)}>
+    <div className={clsx('w-full max-w-sm flex flex-col gap-1.5 sm:gap-2.5 select-none flex-shrink-0 shrink-0', className)}>
       {showDisplay && (
         <div className="bg-[#090A0F] h-12 sm:h-14 2xl:h-16 rounded-xl flex items-center justify-end px-4 sm:px-5 border border-[#1E2436] shadow-inner mb-1 flex-shrink-0">
           <span className="text-xl sm:text-2xl font-bold font-mono text-white tracking-widest truncate">

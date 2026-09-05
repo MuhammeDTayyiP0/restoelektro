@@ -160,7 +160,7 @@ export default function PosPage() {
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
-        className="w-[350px] sm:w-[370px] lg:w-[400px] xl:w-[430px] 2xl:w-[470px] flex-shrink-0 shrink-0 bg-[#0C1017] border-r border-[#1E2436] flex flex-col h-full z-10 shadow-[6px_0_30px_rgba(0,0,0,0.6)] overflow-hidden"
+        className="w-[320px] sm:w-[340px] md:w-[360px] lg:w-[380px] xl:w-[410px] 2xl:w-[440px] flex-shrink-0 shrink-0 bg-[#0C1017] border-r border-[#1E2436] flex flex-col h-full z-10 shadow-[6px_0_30px_rgba(0,0,0,0.6)] overflow-hidden"
       >
         <PosCart />
       </motion.aside>

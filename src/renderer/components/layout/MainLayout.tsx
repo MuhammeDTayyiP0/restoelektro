@@ -13,15 +13,15 @@ export function MainLayout() {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#090A0F] text-surface-100 overflow-hidden">
+    <div className="flex flex-col w-screen h-screen bg-[#090A0F] text-surface-100 overflow-hidden select-none">
       <Header />
       
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar />
         
         {/* Ana İçerik Alanı */}
-        <main className="flex-1 relative overflow-hidden flex flex-col bg-[#090A0F]">
-          <div className="flex-1 overflow-y-auto pos-scrollbar p-4 lg:p-6">
+        <main className="flex-1 min-h-0 relative overflow-hidden flex flex-col bg-[#090A0F]">
+          <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar p-3 sm:p-4 lg:p-6">
             <Outlet />
           </div>
         </main>

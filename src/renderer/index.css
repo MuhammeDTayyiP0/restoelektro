@@ -23,6 +23,18 @@
     --text-muted: #94a3b8;
   }
 
+  html,
+  body,
+  #root {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden !important;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   body {
     background-color: #090a0f;
     color: #f1f5f9;
@@ -43,6 +55,15 @@
 
 @layer utilities {
 
+  /* Kaydırma çubuğu gizleme */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* Endüstriyel POS Izgara Deseni */
   .bg-pos-grid {
     background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
@@ -61,8 +82,8 @@
 
   /* Özel POS Scrollbar — Dokunmatik ve masaüstü için optimize */
   .pos-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .pos-scrollbar::-webkit-scrollbar-track {
@@ -73,7 +94,7 @@
   .pos-scrollbar::-webkit-scrollbar-thumb {
     background: #1e2538;
     border-radius: 6px;
-    border: 2px solid rgba(14, 18, 30, 0.6);
+    border: 1px solid rgba(14, 18, 30, 0.6);
     transition: background 0.2s ease;
   }
 
@@ -124,7 +145,7 @@
 
   /* POS Ekran ve Esneklik Düzenleri */
   .pos-screen-container {
-    @apply h-screen w-full overflow-hidden flex flex-col;
+    @apply h-screen w-screen overflow-hidden flex flex-col select-none;
   }
 
   .pos-flex-scroll {
@@ -137,53 +158,89 @@
 
   /* Numpad Tuş Stilleri */
   .pos-numpad-btn {
-    @apply h-12 sm:h-14 xl:h-16 text-xl sm:text-2xl;
+    @apply h-11 sm:h-12 md:h-14 xl:h-14 2xl:h-16 text-lg sm:text-xl xl:text-2xl;
   }
 }
 
 /* ============================================================
    KÜÇÜK VE DÜŞÜK ÇÖZÜNÜRLÜKLÜ POS EKRANLARI İÇİN RESPONSIVE KURALLAR
-   (1366x768, 1024x768 ve dikey yüksekliği 768px ve altı olan monitörler)
+   (1024x768, 1280x800, 1366x768 ve %125 / %150 DPI Dokunmatik Monitörler)
    ============================================================ */
-@media (max-height: 768px) {
+@media (max-height: 800px), (max-width: 1280px) {
 
   /* Scrollbar daha ince */
   .pos-scrollbar::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
   }
 
-  /* Numpad Tuş Yüksekliklerini 42-44px seviyesine çek */
+  /* Numpad Tuş Yüksekliklerini kompakt dokunmatik seviyeye çek */
   .pos-numpad-btn {
-    height: 2.75rem !important;
-    font-size: 1.125rem !important;
-    line-height: 1.75rem !important;
-    border-radius: 0.625rem !important;
+    height: 2.5rem !important;
+    min-height: 2.5rem !important;
+    font-size: 1.05rem !important;
+    line-height: 1.5rem !important;
+    border-radius: 0.5rem !important;
+    padding: 0 !important;
   }
 
-  /* Buton ve kart içi boşlukları küçült */
+  /* Buton ve kart içi boşlukları daralt */
   .pos-compact-card {
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.375rem 0.5rem !important;
   }
 
   .pos-compact-btn {
-    padding-top: 0.375rem !important;
-    padding-bottom: 0.375rem !important;
-    height: 2.25rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    height: 2rem !important;
     font-size: 0.75rem !important;
   }
 
   .pos-action-deck-btn {
-    height: 3rem !important;
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
     font-size: 0.8125rem !important;
+  }
+
+  /* Düşük ekranlarda 3 kolon ızgara */
+  .pos-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Ürün kartı dikey sıkıştırma */
+  .pos-product-card {
+    aspect-ratio: 16 / 10 !important;
+  }
+
+  .pos-product-card-footer {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+@media (min-width: 1281px) and (max-height: 800px) {
+  .pos-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
   }
 }
 
 @media (max-height: 680px) {
   .pos-numpad-btn {
-    height: 2.375rem !important;
-    font-size: 1rem !important;
-    border-radius: 0.5rem !important;
+    height: 2.125rem !important;
+    min-height: 2.125rem !important;
+    font-size: 0.95rem !important;
+    border-radius: 0.375rem !important;
+  }
+
+  .pos-action-deck-btn {
+    height: 2.5rem !important;
+    min-height: 2.5rem !important;
+    font-size: 0.75rem !important;
   }
 }
 

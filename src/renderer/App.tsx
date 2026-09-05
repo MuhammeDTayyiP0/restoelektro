@@ -54,7 +54,7 @@ export default function App() {
   return (
     <ToastProvider>
       <HashRouter>
-        <div className="w-full h-full min-h-screen bg-[#090A0F] font-sans text-surface-100 selection:bg-brand-500/30">
+        <div className="w-screen h-screen overflow-hidden select-none bg-[#090A0F] font-sans text-surface-100 selection:bg-brand-500/30">
           <Routes>
             {/* Kök dizin kontrolü */}
             <Route path="/" element={<Navigate to="/login" replace />} />

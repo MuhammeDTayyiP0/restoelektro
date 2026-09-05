@@ -31,28 +31,28 @@ export function PosLayout() {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen bg-[#090A0F] overflow-hidden select-none">
+    <div className="flex flex-col w-screen h-screen bg-[#090A0F] overflow-hidden select-none">
       {/* Özel POS Header - Kompakt, Endüstriyel ve Odaklı */}
       <header 
-        className="h-14 bg-[#0B0E17] border-b border-[#1E2436] text-white flex items-center justify-between px-3 sm:px-4 z-20 shrink-0 shadow-md"
+        className="h-12 sm:h-14 bg-[#0B0E17] border-b border-[#1E2436] text-white flex items-center justify-between px-2.5 sm:px-4 z-20 shrink-0 flex-shrink-0 shadow-md"
         style={{ WebkitAppRegion: 'drag' } as any}
       >
         
-        <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as any}>
+        <div className="flex items-center gap-2 sm:gap-3" style={{ WebkitAppRegion: 'no-drag' } as any}>
           <button 
             onClick={() => navigate('/tables')}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-[#141926] hover:bg-[#1C2336] text-surface-200 hover:text-white rounded-xl border border-[#1E2436] hover:border-brand-500/50 transition-all touch-feedback shadow-sm"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-[#141926] hover:bg-[#1C2336] text-surface-200 hover:text-white rounded-xl border border-[#1E2436] hover:border-brand-500/50 transition-all touch-feedback shadow-sm"
           >
-            <ArrowLeft size={18} className="text-brand-400" />
+            <ArrowLeft size={16} className="text-brand-400 sm:w-[18px] sm:h-[18px]" />
             <span className="font-semibold text-xs sm:text-sm">Masalara Dön</span>
           </button>
         </div>
 
         {/* Orta & Sağ Taraf — Saat, Personel ve Durum */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+        <div className="flex items-center gap-2 sm:gap-3" style={{ WebkitAppRegion: 'no-drag' } as any}>
           {/* Canlı Saat */}
-          <div className="flex items-center gap-2 bg-[#090A0F] border border-[#1E2436] px-3 py-1 rounded-xl">
-            <Clock size={15} className="text-brand-400" />
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#090A0F] border border-[#1E2436] px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xl">
+            <Clock size={14} className="text-brand-400" />
             <span className="font-mono font-bold text-xs sm:text-sm text-white tracking-wider">
               {zaman.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
@@ -60,8 +60,8 @@ export function PosLayout() {
 
           {/* Kasiyer / Personel Bilgisi */}
           {personel && (
-            <div className="flex items-center gap-2 px-2.5 py-1 bg-[#121624] border border-[#1E2436] rounded-xl">
-              <div className="w-6 h-6 rounded-lg bg-[#182035] border border-brand-500/30 flex items-center justify-center text-brand-400 text-xs font-bold">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-[#121624] border border-[#1E2436] rounded-xl">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-[#182035] border border-brand-500/30 flex items-center justify-center text-brand-400 text-[10px] sm:text-xs font-bold">
                 {personel?.ad?.charAt(0)}{personel?.soyad?.charAt(0)}
               </div>
               <span className="font-semibold text-xs text-white hidden sm:inline">
@@ -71,7 +71,7 @@ export function PosLayout() {
           )}
           
           {/* Bağlantı Durumu */}
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#121624] border border-[#1E2436] rounded-xl">
+          <div className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:py-1 bg-[#121624] border border-[#1E2436] rounded-xl">
             {online ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 status-beacon-green" />
@@ -88,7 +88,7 @@ export function PosLayout() {
       </header>
 
       {/* POS İçeriği - Tam genişlik ve yükseklik */}
-      <main className="flex-1 flex overflow-hidden bg-[#090A0F]">
+      <main className="flex-1 min-h-0 flex overflow-hidden bg-[#090A0F]">
         <Outlet />
       </main>
     </div>

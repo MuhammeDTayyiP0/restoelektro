@@ -57,13 +57,13 @@ export function Modal({
     md: 'max-w-xl',
     lg: 'max-w-3xl',
     xl: 'max-w-5xl',
-    full: 'w-[98vw] max-w-[1560px] h-[95vh] max-h-[95vh]',
+    full: 'w-[98vw] max-w-[1560px] h-[92vh] max-h-[94vh]',
   }
 
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden select-none isolate pointer-events-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-1.5 sm:p-3 md:p-5 overflow-hidden select-none isolate pointer-events-auto">
           {/* Overlay - Blur kaldırıldı, GPU dostu mat yarı saydam zemin */}
           <motion.div 
             initial={{ opacity: 0 }}
@@ -83,12 +83,12 @@ export function Modal({
             transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{ transform: 'translateZ(0)', willChange: 'opacity, transform' }}
             className={clsx(
-              'relative z-50 isolate w-full bg-[#0D101A] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-[#1E2436] my-auto pointer-events-auto',
+              'relative z-50 isolate w-full max-h-[94vh] sm:max-h-[90vh] bg-[#0D101A] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-[#1E2436] my-auto pointer-events-auto',
               sizes[size]
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-3.5 border-b border-[#1A1F30] bg-[#090B12] flex-shrink-0 shrink-0">
+            <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#1A1F30] bg-[#090B12] flex-shrink-0 shrink-0">
               <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-brand-500" />
                 {title}
@@ -105,17 +105,17 @@ export function Modal({
             
             {/* Body */}
             <div className={clsx(
-              'text-surface-200 select-text',
+              'text-surface-200 select-text flex-1 min-h-0',
               size === 'full' 
-                ? 'flex-1 min-h-0 overflow-hidden flex flex-col p-0' 
-                : 'p-4 sm:p-6 overflow-y-auto pos-scrollbar max-h-[75vh]'
+                ? 'overflow-hidden flex flex-col p-0' 
+                : 'p-3 sm:p-5 md:p-6 overflow-y-auto pos-scrollbar'
             )}>
               {children}
             </div>
             
             {/* Footer */}
             {footer && (
-              <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-3 rounded-b-2xl flex-shrink-0 shrink-0">
+              <div className="px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-2.5 sm:gap-3 rounded-b-2xl flex-shrink-0 shrink-0">
                 {footer}
               </div>
             )}

@@ -162,11 +162,11 @@ export default function PosMenu() {
     <div className="flex flex-col h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none">
 
       {/* 1. ÜST KOMUTA ÇUBUĞU: ARAMA, PORSIYON & HIZLI FİLTRELER */}
-      <div className="p-3 bg-[#0C1017] border-b border-[#1E2436] shrink-0 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div className="p-2 sm:p-2.5 2xl:p-3 bg-[#0C1017] border-b border-[#1E2436] flex-shrink-0 shrink-0 flex flex-col md:flex-row items-stretch md:items-center gap-2 sm:gap-2.5">
 
         {/* Arama & Barkod Inputu */}
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={aramaMetni}
@@ -175,20 +175,20 @@ export default function PosMenu() {
               if (e.target.value && seciliKategoriId) kategoriSec(null)
             }}
             placeholder="Ürün adı, kod veya barkod ara..."
-            className="w-full h-12 pl-10 pr-9 bg-[#090D15] border border-[#1F293D] focus:border-cyan-400 rounded-xl font-mono text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none transition-colors shadow-inner"
+            className="w-full h-10 sm:h-11 2xl:h-12 pl-9 pr-8 bg-[#090D15] border border-[#1F293D] focus:border-cyan-400 rounded-xl font-mono text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none transition-colors shadow-inner"
           />
           {aramaMetni && (
             <button
               onClick={() => setAramaMetni('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           )}
         </div>
 
         {/* Porsiyon Seçici Segmented Toggle */}
-        <div className="flex items-center bg-[#090D15] p-1 rounded-xl border border-[#1F293D] h-12 w-full md:w-auto shrink-0 shadow-inner">
+        <div className="flex items-center bg-[#090D15] p-0.5 sm:p-1 rounded-xl border border-[#1F293D] h-10 sm:h-11 2xl:h-12 w-full md:w-auto shrink-0 shadow-inner">
           {[
             { p: 0.5, label: '0.5x Yarım', short: '0.5x' },
             { p: 1, label: '1x Porsiyon', short: '1x' },
@@ -200,14 +200,14 @@ export default function PosMenu() {
               whileTap={{ scale: 0.95 }}
               onClick={() => setAktifPorsiyon(p)}
               className={clsx(
-                'flex-1 md:flex-initial px-2.5 sm:px-3.5 h-10 flex items-center justify-center font-mono font-bold text-xs rounded-lg transition-all',
+                'flex-1 md:flex-initial px-2 sm:px-3 h-8 sm:h-9 2xl:h-10 flex items-center justify-center font-mono font-bold text-[11px] sm:text-xs rounded-lg transition-all',
                 aktifPorsiyon === p
                   ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)] border border-cyan-300'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-[#141B29]'
               )}
             >
-              <span className="hidden sm:inline">{label}</span>
-              <span className="sm:hidden">{short}</span>
+              <span className="hidden lg:inline">{label}</span>
+              <span className="lg:hidden">{short}</span>
             </motion.button>
           ))}
         </div>
@@ -217,46 +217,46 @@ export default function PosMenu() {
           whileTap={{ scale: 0.95 }}
           onClick={() => setHizliFiltre(hizliFiltre === 'populer' ? 'hepsi' : 'populer')}
           className={clsx(
-            'h-12 px-3.5 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-1.5 border transition-all shrink-0',
+            'h-10 sm:h-11 2xl:h-12 px-3 sm:px-3.5 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-1.5 border transition-all shrink-0',
             hizliFiltre === 'populer'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
               : 'bg-[#090D15] text-slate-400 border-[#1F293D] hover:text-slate-200 hover:bg-[#141B29]'
           )}
         >
-          <Flame size={15} className={hizliFiltre === 'populer' ? 'text-amber-400 fill-amber-400' : ''} />
+          <Flame size={14} className={hizliFiltre === 'populer' ? 'text-amber-400 fill-amber-400' : ''} />
           <span>Hızlı Satış</span>
         </motion.button>
       </div>
 
       {/* 2. KATEGORİ SEÇİCİ (ERGONOMIC HIGH-SPEED CAROUSEL BAR) */}
       {!aramaMetni && (
-        <div className="relative flex items-center bg-[#0C1017] border-b border-[#1E2436] px-2 py-2 shrink-0">
+        <div className="relative flex items-center bg-[#0C1017] border-b border-[#1E2436] px-2 py-1.5 flex-shrink-0 shrink-0">
 
           {/* Sol Kaydırma Butonu */}
           <button
             onClick={() => scrollKategori('left')}
-            className="hidden md:flex w-8 h-12 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 mr-1.5 transition-colors"
+            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 mr-1.5 transition-colors"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
 
           {/* Kategori Butonları Listesi */}
           <div
             ref={kategoriScrollRef}
-            className="flex items-center gap-2 overflow-x-auto pos-scrollbar py-0.5 w-full scroll-smooth"
+            className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-shrink-0 py-0.5 w-full scroll-smooth"
           >
             {/* Tümü Butonu */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => kategoriSec(null)}
               className={clsx(
-                'flex-shrink-0 h-12 px-4 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center gap-2 border transition-all shadow-sm',
+                'flex-shrink-0 h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center gap-1.5 sm:gap-2 border transition-all shadow-sm',
                 seciliKategoriId === null
                   ? 'bg-[#1E293B] text-white border-slate-500 shadow-[0_0_12px_rgba(255,255,255,0.1)]'
                   : 'bg-[#0E131E] text-slate-400 border-[#1E2638] hover:bg-[#151D2C] hover:text-slate-200'
               )}
             >
-              <Layers size={15} />
+              <Layers size={14} />
               <span>TÜM MENÜ</span>
               <span className="bg-[#090A0F] text-slate-400 px-1.5 py-0.5 rounded text-[10px]">
                 {tumUrunler.length}
@@ -275,7 +275,7 @@ export default function PosMenu() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => kategoriSec(kat.id)}
                   className={clsx(
-                    'flex-shrink-0 h-12 px-4 rounded-xl font-mono font-bold text-xs uppercase tracking-tight flex items-center gap-2 border transition-all shadow-sm relative overflow-hidden',
+                    'flex-shrink-0 h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-tight flex items-center gap-1.5 sm:gap-2 border transition-all shadow-sm relative overflow-hidden',
                     isActive
                       ? 'border-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-[#121B2A]'
                       : 'bg-[#0E131E] text-slate-300 border-[#1E2638] hover:bg-[#151D2C] hover:text-white'
@@ -301,15 +301,15 @@ export default function PosMenu() {
           {/* Sağ Kaydırma Butonu */}
           <button
             onClick={() => scrollKategori('right')}
-            className="hidden md:flex w-8 h-12 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 ml-1.5 transition-colors"
+            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 ml-1.5 transition-colors"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       )}
 
       {/* 3. ÜRÜN KARTLARI — ADAPTİF GRİD */}
-      <div className="flex-1 overflow-y-auto pos-scrollbar p-3.5">
+      <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar p-2 sm:p-3">
         <ProductGrid
           urunler={gosterilenUrunler}
           aktifPorsiyon={aktifPorsiyon}
@@ -326,7 +326,7 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-3.5 bg-[#0E121B] text-slate-100 select-none"
+            className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
             {/* Ürün Bilgi Kartı */}
@@ -440,7 +440,7 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-hidden"
+            className="flex flex-col gap-2 sm:gap-3 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
             {/* Ürün & Fiyat Bilgisi */}
@@ -630,7 +630,7 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-4 bg-[#0E121B] text-slate-100 select-none"
+            className="flex flex-col gap-3 sm:gap-4 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
 
