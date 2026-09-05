@@ -33,19 +33,19 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#090A0F] text-surface-100 p-4 sm:p-6 overflow-hidden select-none">
+    <div className="flex flex-col h-full w-full bg-[#090A0F] text-surface-100 p-2 sm:p-4 lg:p-6 overflow-hidden select-none">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 shrink-0 pb-4 border-b border-[#1A1F30]">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-[#121624] border border-[#1E2538] flex items-center justify-center text-brand-400 shadow-md">
-            <SettingsIcon size={22} />
+      <div className="flex items-center justify-between mb-3 sm:mb-5 shrink-0 pb-3 sm:pb-4 border-b border-[#1A1F30]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#121624] border border-[#1E2538] flex items-center justify-center text-brand-400 shadow-md">
+            <SettingsIcon size={20} className="sm:w-[22px] sm:h-[22px]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
               Sistem & Donanım Ayarları
             </h1>
-            <p className="text-xs text-surface-400 mt-0.5 font-mono">
+            <p className="text-[11px] sm:text-xs text-surface-400 mt-0.5 font-mono">
               Yazıcılar, masalar, personeller, veritabanı ve parametreler
             </p>
           </div>
@@ -58,11 +58,11 @@ export default function SettingsPage() {
       </div>
 
       {/* Ana Çerçeve (Kategori Menüsü + İçerik) */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 bg-[#0E111B] rounded-2xl border border-[#1E2436] overflow-hidden shadow-2xl">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row bg-[#0E111B] rounded-2xl border border-[#1E2436] overflow-hidden shadow-2xl">
         
         {/* Sol Kategori Menüsü */}
-        <div className="w-full lg:w-72 bg-[#090B12] border-b lg:border-b-0 lg:border-r border-[#1A1F30] p-3 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto shrink-0 pos-scrollbar">
-          <div className="hidden lg:block px-3 py-2 text-[10px] font-bold text-surface-500 uppercase tracking-wider font-mono">
+        <div className="w-full lg:w-60 xl:w-72 bg-[#090B12] border-b lg:border-b-0 lg:border-r border-[#1A1F30] p-2 sm:p-3 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto shrink-0 pos-scrollbar">
+          <div className="hidden lg:block px-3 py-1.5 text-[10px] font-bold text-surface-500 uppercase tracking-wider font-mono">
             Ayar Modülleri
           </div>
 
@@ -74,14 +74,14 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => setActiveTab(cat.id)}
                 className={clsx(
-                  "flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all duration-150 shrink-0 lg:w-full",
+                  "flex items-center gap-2.5 sm:gap-3 px-3 py-2.5 sm:px-3.5 sm:py-3 rounded-xl text-left transition-all duration-150 shrink-0 lg:w-full",
                   isActive
                     ? "bg-brand-950/50 text-white border border-brand-500/50 shadow-md shadow-brand-950/40"
                     : "text-surface-400 hover:text-surface-200 hover:bg-[#121522] border border-transparent"
                 )}
               >
                 <div className={clsx(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
+                  "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
                   isActive
                     ? "bg-brand-600 border-brand-400 text-white"
                     : "bg-[#141826] border-[#1E2436] text-surface-400"
@@ -102,7 +102,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Sağ İçerik Alanı */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 pos-scrollbar bg-[#0D101A]">
+        <div className={clsx(
+          "flex-1 min-h-0 bg-[#0D101A] flex flex-col",
+          activeTab === 'menu'
+            ? "overflow-hidden p-1.5 sm:p-3"
+            : "overflow-y-auto p-4 sm:p-6 lg:p-8 pos-scrollbar"
+        )}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -110,7 +115,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.15 }}
-              className="h-full"
+              className="h-full flex flex-col min-h-0"
             >
               {activeTab === 'templates' && <PrinterTemplateSettings />}
               {activeTab === 'tables' && <TableSettings />}

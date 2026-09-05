@@ -836,10 +836,10 @@ export default function MenuSettings() {
 
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0D101A] text-surface-100 p-2 sm:p-4 overflow-hidden select-none">
+    <div className="flex flex-col h-full w-full bg-[#0D101A] text-surface-100 p-2 sm:p-3.5 overflow-hidden select-none min-h-0">
       
       {/* Üst Sekme & Kontrol Barı */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 shrink-0 pb-3 border-b border-[#1A1F30]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 shrink-0 pb-2.5 border-b border-[#1A1F30]">
         
         {/* Modül Sekmeleri */}
         <div className="flex items-center gap-1.5 p-1 bg-[#090B12] border border-[#1E2436] rounded-xl overflow-x-auto pos-scrollbar">
@@ -847,7 +847,7 @@ export default function MenuSettings() {
             type="button"
             onClick={() => setSubTab('urunler')}
             className={clsx(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
+              "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'urunler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                 : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
@@ -864,7 +864,7 @@ export default function MenuSettings() {
             type="button"
             onClick={() => setSubTab('fiyat-guncelleme')}
             className={clsx(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
+              "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'fiyat-guncelleme'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                 : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
@@ -878,7 +878,7 @@ export default function MenuSettings() {
             type="button"
             onClick={() => setSubTab('kategoriler')}
             className={clsx(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
+              "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'kategoriler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                 : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
@@ -921,7 +921,7 @@ export default function MenuSettings() {
                 size="sm"
                 leftIcon={<Plus size={16} />}
                 onClick={() => urunModaliniAc()}
-                className="font-bold text-xs shadow-md shadow-brand-900/30"
+                className="font-bold text-xs shadow-md shadow-brand-900/30 whitespace-nowrap"
               >
                 Ürün Ekle
               </Button>
@@ -934,7 +934,7 @@ export default function MenuSettings() {
               size="sm"
               leftIcon={<Plus size={16} />}
               onClick={() => katModaliniAc()}
-              className="font-bold text-xs"
+              className="font-bold text-xs whitespace-nowrap"
             >
               Yeni Kategori
             </Button>
@@ -944,11 +944,11 @@ export default function MenuSettings() {
 
       {/* SUBTAB 1: ÜRÜN & MENÜ YÖNETİMİ (SPLIT PANE) */}
       {subTab === 'urunler' && (
-        <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 sm:gap-4 overflow-hidden">
           
           {/* Sol Kategori Filtre Paneli */}
-          <div className="w-full md:w-64 bg-[#090B12] rounded-xl border border-[#1E2436] p-3 flex flex-col shrink-0 overflow-hidden">
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1A1F30]">
+          <div className="w-full md:w-52 lg:w-60 xl:w-64 bg-[#090B12] rounded-xl border border-[#1E2436] p-2.5 sm:p-3 flex flex-col shrink-0 overflow-hidden max-h-44 md:max-h-none">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1A1F30] shrink-0">
               <span className="text-[11px] font-mono font-bold text-surface-400 uppercase">Kategoriler</span>
               <button
                 type="button"
@@ -959,12 +959,12 @@ export default function MenuSettings() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto pos-scrollbar flex md:flex-col gap-1.5 pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar flex md:flex-col gap-1.5 pr-1">
               <button
                 type="button"
                 onClick={() => setSeciliKategoriId(null)}
                 className={clsx(
-                  "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback",
+                  "flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback shrink-0 md:shrink",
                   seciliKategoriId === null
                     ? "bg-brand-950/60 text-white border-brand-500/60 shadow-sm"
                     : "bg-[#0E121E] border-transparent text-surface-300 hover:bg-[#141826] hover:text-white"
@@ -982,15 +982,15 @@ export default function MenuSettings() {
                   type="button"
                   onClick={() => setSeciliKategoriId(kat.id)}
                   className={clsx(
-                    "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback group",
+                    "flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback group shrink-0 md:shrink",
                     seciliKategoriId === kat.id
                       ? "bg-brand-950/60 text-white border-brand-500/60 shadow-sm"
                       : "bg-[#0E121E] border-transparent text-surface-300 hover:bg-[#141826] hover:text-white"
                   )}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span 
-                      className="w-3 h-3 rounded-full shrink-0 shadow-xs" 
+                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 shadow-xs" 
                       style={{ backgroundColor: kat.renk || '#3B82F6' }} 
                     />
                     <span className="truncate">{kat.ad}</span>
@@ -1004,8 +1004,8 @@ export default function MenuSettings() {
           </div>
 
           {/* Sağ Ürün Listesi */}
-          <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-4 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto pos-scrollbar pr-1 pb-4">
+          <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-3 sm:p-4 flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar pr-1 pb-4">
               {yukleniyor ? (
                 <div className="flex items-center justify-center h-48 text-surface-400 font-mono text-sm">
                   <RefreshCw className="animate-spin mr-2" size={18} /> Ürünler yükleniyor...
@@ -1024,84 +1024,90 @@ export default function MenuSettings() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                   {gosterilenUrunler.map(urun => {
                     const kategori = kategoriler.find(k => k.id === urun.kategori_id)
+                    const satisTurleriListesi = getUrunSatisTurleri(urun)
                     return (
                       <motion.div
                         key={urun.id}
                         layout
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="relative bg-[#0E121E] border border-[#1E2436] hover:border-brand-500/50 rounded-xl p-3.5 flex flex-col justify-between transition-all group shadow-sm hover:shadow-brand-950/20"
+                        className="relative bg-[#0E121E] border border-[#1E2436] hover:border-brand-500/50 rounded-xl p-3 flex items-center gap-3 transition-all group shadow-sm hover:shadow-brand-950/20 min-w-0"
                       >
-                        <div>
-                          {/* Üst Şerit: Kategori ve Fiyat */}
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full shrink-0"
-                                style={{ backgroundColor: kategori?.renk || '#3B82F6' }}
-                              />
-                              <span className="text-[11px] font-semibold text-surface-400 truncate">
-                                {urun.kategori_adi}
+                        {/* Sol Taraf: Küçük Ürün Görseli */}
+                        <div className="w-16 h-16 rounded-lg bg-[#141A26] border border-[#222C42] flex items-center justify-center flex-shrink-0 overflow-hidden text-slate-300 shadow-inner group-hover:border-brand-500/40 transition-colors">
+                          {urun.resim_yolu ? (
+                            <img
+                              src={formatResimUrl(urun.resim_yolu)}
+                              alt={urun.ad}
+                              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="font-mono font-black text-base text-surface-400">
+                              {urun.ad ? urun.ad.charAt(0).toUpperCase() : '?'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Orta Kısım: Ürün Adı, Kategori Rozeti ve Fiyat Rozetleri */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 overflow-hidden">
+                          <div className="min-w-0">
+                            <h3
+                              className="font-semibold text-white text-xs sm:text-sm truncate break-words"
+                              title={urun.ad}
+                            >
+                              {urun.ad}
+                            </h3>
+                            {urun.kisaltma && (
+                              <span className="text-[10px] font-mono text-surface-500 block truncate">
+                                #{urun.kisaltma}
                               </span>
-                            </div>
-
-                            <span className="text-xs font-bold text-emerald-400 font-mono shrink-0 text-right leading-tight max-w-[55%]">
-                              {formatSatisTurleri(urun)}
-                            </span>
+                            )}
                           </div>
 
-                          {/* Görsel Thumbnail & Ürün Adı */}
-                          <div className="flex items-start gap-2.5 mb-2.5">
-                            <div className="w-11 h-11 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center shrink-0 overflow-hidden text-slate-300 shadow-inner group-hover:border-brand-500/40 transition-colors">
-                              {urun.resim_yolu ? (
-                                <img src={formatResimUrl(urun.resim_yolu)} alt={urun.ad} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="font-mono font-black text-xs text-surface-400">
-                                  {urun.ad.charAt(0).toUpperCase()}
+                          {/* Kategori & Fiyat Rozetleri */}
+                          <div className="flex flex-wrap items-center gap-1 min-w-0">
+                            {urun.kategori_adi && (
+                              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#141826] border border-[#1E2538] max-w-full truncate">
+                                <span
+                                  className="w-2 h-2 rounded-full shrink-0"
+                                  style={{ backgroundColor: kategori?.renk || '#3B82F6' }}
+                                />
+                                <span className="text-[10px] font-medium text-surface-400 truncate">
+                                  {urun.kategori_adi}
                                 </span>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-white text-sm tracking-tight line-clamp-2 leading-snug" title={urun.ad}>
-                                {urun.ad}
-                              </h3>
-                              {urun.kisaltma && (
-                                <span className="text-[10px] font-mono text-surface-500 block truncate mt-0.5">
-                                  #{urun.kisaltma}
+                            {satisTurleriListesi && satisTurleriListesi.length > 0 ? (
+                              satisTurleriListesi.map((st, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-[10px] sm:text-[11px] font-bold text-emerald-400 font-mono bg-emerald-950/50 border border-emerald-800/40 px-1.5 py-0.5 rounded whitespace-nowrap truncate max-w-full"
+                                  title={`${st.birim}: ${Math.round(Number(st.fiyat) || 0)} ₺`}
+                                >
+                                  {st.birim}: {Math.round(Number(st.fiyat) || 0)} ₺
                                 </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Ekstra Bilgi Rozetleri */}
-                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-surface-400 mb-3">
-                            <span className="px-1.5 py-0.5 rounded bg-[#141826] border border-[#1E2538]">
-                              {urun.birim || 'Porsiyon'}
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded bg-[#141826] border border-[#1E2538]">
-                              KDV %{urun.kdv_orani || 10}
-                            </span>
-                            {urun.barkod && (
-                              <span className="px-1.5 py-0.5 rounded bg-[#141826] border border-[#1E2538] flex items-center gap-1">
-                                <Barcode size={11} /> {urun.barkod}
+                              ))
+                            ) : (
+                              <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 font-mono bg-emerald-950/50 border border-emerald-800/40 px-1.5 py-0.5 rounded whitespace-nowrap truncate max-w-full">
+                                {formatSatisTurleri(urun)}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Alt Butonlar */}
-                        <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-[#1A1F30]">
+                        {/* Sağ Taraf: Düzenle / Sil Butonları */}
+                        <div className="flex flex-col gap-1 flex-shrink-0">
                           <button
                             type="button"
                             onClick={() => urunModaliniAc(urun)}
                             className="p-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/60 hover:text-brand-300 border border-[#1E2538] hover:border-brand-700/50 text-surface-400 transition-all touch-feedback"
                             title="Düzenle"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={13} />
                           </button>
                           <button
                             type="button"
@@ -1109,7 +1115,7 @@ export default function MenuSettings() {
                             className="p-1.5 rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback"
                             title="Sil"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </motion.div>
@@ -1124,11 +1130,11 @@ export default function MenuSettings() {
 
       {/* SUBTAB 2: HIZLI & TOPLU FİYAT GÜNCELLEME */}
       {subTab === 'fiyat-guncelleme' && (
-        <div className="flex-1 min-h-0 bg-[#090A0F] rounded-xl border border-[#1E2230] p-3 sm:p-4 flex flex-col overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 bg-[#090A0F] rounded-xl border border-[#1E2230] p-2.5 sm:p-4 flex flex-col overflow-y-auto lg:overflow-hidden pos-scrollbar">
+          <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
             
             {/* SOL TARAF: FİLTRELEME & PARAMETRELER */}
-            <div className="lg:col-span-5 xl:col-span-5 flex flex-col min-h-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg">
+            <div className="w-full lg:w-[380px] xl:w-[440px] flex flex-col shrink-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg min-h-0">
               
               {/* Sol Panel Başlığı */}
               <div className="px-3.5 py-2.5 border-b border-[#1E2230] bg-[#0A0D17] flex items-center justify-between shrink-0">
@@ -1248,65 +1254,53 @@ export default function MenuSettings() {
                           <button
                             type="button"
                             onClick={handleTumunuSec}
-                            className="h-7 px-2 rounded-md bg-[#141826] hover:bg-[#1E2538] border border-emerald-600/30 text-[10px] font-mono text-emerald-400 flex items-center gap-1 transition-all touch-feedback"
+                            className="text-[10px] font-mono text-brand-400 hover:text-brand-300 underline"
                           >
-                            <CheckCheck size={12} />
-                            <span>Tümünü Seç</span>
+                            Tümünü Seç ({ozelGosterilenUrunler.length})
                           </button>
+                          <span className="text-surface-600">•</span>
                           <button
                             type="button"
                             onClick={handleSecimiTemizle}
-                            className="h-7 px-2 rounded-md bg-[#141826] hover:bg-[#1E2538] border border-rose-600/30 text-[10px] font-mono text-rose-400 flex items-center gap-1 transition-all touch-feedback"
+                            className="text-[10px] font-mono text-surface-400 hover:text-surface-200 underline"
                           >
-                            <X size={12} />
-                            <span>Temizle</span>
+                            Temizle
                           </button>
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#141826] border border-[#1E2230] text-amber-300">
-                          {ozelSecilenUrunIds.length} / {urunler.length} Seçili
+                        <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                          {ozelSecilenUrunIds.length} Seçili
                         </span>
                       </div>
 
                       {/* Ürün Seçim Listesi */}
-                      <div className="max-h-44 overflow-y-auto pos-scrollbar p-1 bg-[#0E121E] rounded-lg border border-[#1E2230] space-y-1">
+                      <div className="max-h-40 overflow-y-auto pos-scrollbar border border-[#1E2436] rounded-lg bg-[#0E121E] divide-y divide-[#1A1F30]">
                         {ozelGosterilenUrunler.length === 0 ? (
-                          <div className="py-4 text-center text-surface-500 text-[11px] font-mono">
-                            Aramaya uygun ürün bulunamadı
+                          <div className="p-3 text-center text-surface-500 text-xs font-mono">
+                            Ürün bulunamadı
                           </div>
                         ) : (
-                          ozelGosterilenUrunler.map(urun => {
-                            const secili = ozelSecilenUrunIds.includes(urun.id)
-                            const turler = getUrunSatisTurleri(urun)
+                          ozelGosterilenUrunler.map((u: any) => {
+                            const secili = ozelSecilenUrunIds.includes(u.id)
                             return (
                               <div
-                                key={urun.id}
-                                onClick={() => handleUrunSecimToggle(urun.id)}
+                                key={u.id}
+                                onClick={() => handleUrunSecimToggle(u.id)}
                                 className={clsx(
-                                  "flex items-center justify-between p-1.5 rounded-md border text-xs cursor-pointer transition-all select-none touch-feedback",
-                                  secili
-                                    ? "bg-brand-950/40 border-brand-500/50 text-white"
-                                    : "bg-[#090A0F] border-[#1E2230] text-surface-400 hover:text-white hover:border-[#2A334C]"
+                                  "px-2.5 py-1.5 flex items-center justify-between cursor-pointer transition-colors text-xs select-none",
+                                  secili ? "bg-brand-950/40 text-white" : "hover:bg-[#141826] text-surface-300"
                                 )}
                               >
-                                <div className="flex items-center gap-2 min-w-0 pr-1">
-                                  <div className={clsx("shrink-0", secili ? "text-brand-400" : "text-surface-600")}>
-                                    {secili ? <CheckSquare size={14} /> : <Square size={14} />}
-                                  </div>
-                                  <div className="truncate">
-                                    <p className={clsx("font-bold truncate text-[11px]", secili ? "text-white" : "text-surface-300")}>
-                                      {urun.ad}
-                                    </p>
-                                    <p className="text-[9px] text-surface-500 font-mono truncate">
-                                      {urun.kategori_adi}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0 font-mono text-[10px]">
-                                  <span className="font-bold text-surface-300">{formatPara(urun.fiyat)}</span>
-                                  {turler.length > 1 && (
-                                    <span className="block text-[9px] text-brand-400 font-semibold">{turler.length} Birim</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {secili ? (
+                                    <CheckSquare size={14} className="text-brand-400 shrink-0" />
+                                  ) : (
+                                    <Square size={14} className="text-surface-500 shrink-0" />
                                   )}
+                                  <span className="truncate">{u.ad}</span>
                                 </div>
+                                <span className="text-[10px] font-mono text-surface-400 shrink-0 ml-2">
+                                  {u.fiyat} ₺
+                                </span>
                               </div>
                             )
                           })
@@ -1316,73 +1310,56 @@ export default function MenuSettings() {
                   )}
                 </div>
 
-                {/* 2. Dinamik Hedef Birim Seçimi */}
-                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2">
+                {/* 2. Hedef Satış Türü / Birim */}
+                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      2. Hedef Birim / Satış Türü
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                      2. Hedef Satış Türü (Birim)
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold">
-                      {hedefBirimModu === 'hepsi' ? 'Tüm Satış Türleri' : seciliOzelBirim}
+                    <span className="text-[10px] font-mono text-surface-400">
+                      {hedefBirimModu === 'hepsi' ? 'Tüm Birimler' : seciliOzelBirim}
                     </span>
                   </div>
 
-                  {/* Birim Modu Butonları */}
                   <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
                     <button
                       type="button"
                       onClick={() => setHedefBirimModu('hepsi')}
                       className={clsx(
-                        "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
-                        hedefBirimModu === 'hepsi'
-                          ? "bg-brand-600 text-white shadow-xs"
-                          : "text-surface-400 hover:text-white"
+                        "py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
+                        hedefBirimModu === 'hepsi' ? "bg-brand-600 text-white shadow-xs" : "text-surface-400 hover:text-white"
                       )}
                     >
-                      <Layers size={13} />
-                      <span>Tüm Birimler</span>
+                      Tüm Satış Türleri
                     </button>
                     <button
                       type="button"
                       onClick={() => setHedefBirimModu('belirli')}
                       className={clsx(
-                        "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
-                        hedefBirimModu === 'belirli'
-                          ? "bg-brand-600 text-white shadow-xs"
-                          : "text-surface-400 hover:text-white"
+                        "py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
+                        hedefBirimModu === 'belirli' ? "bg-brand-600 text-white shadow-xs" : "text-surface-400 hover:text-white"
                       )}
                     >
-                      <SlidersHorizontal size={13} />
-                      <span>Belirli Bir Birim</span>
+                      Belirli Birim
                     </button>
                   </div>
 
-                  {/* Belirli Birim Seçim Dropdown'ı */}
-                  {hedefBirimModu === 'belirli' ? (
+                  {hedefBirimModu === 'belirli' && (
                     <div className="space-y-1.5 pt-0.5">
                       <label className="text-[10px] font-mono text-surface-400 uppercase block">
-                        Hedef Birim Seçin
+                        Yalnızca Bu Birimi Güncelle
                       </label>
                       <select
                         value={seciliOzelBirim}
                         onChange={e => setSeciliOzelBirim(e.target.value)}
-                        className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                        className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none uppercase"
                       >
                         {tumBirimler.map(b => (
-                          <option key={b} value={b}>
-                            {b} (Birim Fiyatı)
-                          </option>
+                          <option key={b} value={b}>{b}</option>
                         ))}
                       </select>
-                      <p className="text-[10px] text-surface-400">
-                        Yalnızca <strong className="text-emerald-400 font-bold">{seciliOzelBirim}</strong> birimindeki fiyatlar güncellenir, diğer birimler korunur.
-                      </p>
                     </div>
-                  ) : (
-                    <p className="text-[10px] text-surface-400 pt-0.5">
-                      Seçilen ürünlerdeki tüm satış türleri (Porsiyon, KG, Adet, Gram, Litre vb.) güncellenir.
-                    </p>
                   )}
                 </div>
 
@@ -1390,24 +1367,20 @@ export default function MenuSettings() {
                 <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      3. Fiyat Değişim Kuralı
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                      3. Değişim Kuralı
                     </span>
-                    <span className={clsx(
-                      "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded",
-                      Number(artisDegeri) >= 0 ? "bg-emerald-950/60 text-emerald-400 border border-emerald-600/30" : "bg-rose-950/60 text-rose-400 border border-rose-600/30"
-                    )}>
-                      {Number(artisDegeri) >= 0 ? `+${artisDegeri}` : artisDegeri} {artisTipi === 'yuzde' ? '%' : '₺'}
+                    <span className="text-[10px] font-mono font-bold text-emerald-400">
+                      {artisTipi === 'yuzde' ? `+%${artisDegeri}` : `+${artisDegeri} ₺`}
                     </span>
                   </div>
 
-                  {/* Yüzde vs Sabit Tutar */}
                   <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
                     <button
                       type="button"
                       onClick={() => setArtisTipi('yuzde')}
                       className={clsx(
-                        "py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 touch-feedback",
+                        "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
                         artisTipi === 'yuzde' ? "bg-brand-600 text-white shadow-xs" : "text-surface-400 hover:text-white"
                       )}
                     >
@@ -1418,7 +1391,7 @@ export default function MenuSettings() {
                       type="button"
                       onClick={() => setArtisTipi('tutar')}
                       className={clsx(
-                        "py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 touch-feedback",
+                        "flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all touch-feedback",
                         artisTipi === 'tutar' ? "bg-brand-600 text-white shadow-xs" : "text-surface-400 hover:text-white"
                       )}
                     >
@@ -1427,26 +1400,25 @@ export default function MenuSettings() {
                     </button>
                   </div>
 
-                  {/* Değişim Miktarı Input */}
-                  <div>
-                    <label className="text-[10px] font-mono text-surface-400 uppercase block mb-1">
-                      {artisTipi === 'yuzde' ? 'Değişim Oranı (%) (+ veya -)' : 'Değişim Tutarı (₺) (+ veya -)'}
-                    </label>
+                  <div className="relative">
                     <input
                       type="text"
                       inputMode="decimal"
-                      autoComplete="off"
                       value={artisDegeri}
                       onChange={e => {
                         let val = e.target.value.replace(/,/g, '.').replace(/[^0-9.-]/g, '')
                         setArtisDegeri(val)
                       }}
-                      className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
+                      placeholder="Değer giriniz (Örn: 10 veya -5)"
+                      className="w-full h-10 px-3 pr-10 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
                     />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 font-mono text-xs font-bold">
+                      {artisTipi === 'yuzde' ? '%' : '₺'}
+                    </span>
                   </div>
 
-                  {/* Hızlı Çipler */}
-                  <div className="flex items-center gap-1 overflow-x-auto pos-scrollbar pb-0.5">
+                  {/* Hızlı Butonlar */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pos-scrollbar pb-0.5">
                     {artisTipi === 'yuzde' ? (
                       [5, 10, 15, 20, 25, -5, -10].map(p => (
                         <button
@@ -1483,80 +1455,34 @@ export default function MenuSettings() {
                   </div>
                 </div>
 
-                {/* 4. Yuvarlama Kuralı */}
-                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
-                      <input
-                        type="checkbox"
-                        checked={yuvarlamaAktif}
-                        onChange={e => setYuvarlamaAktif(e.target.checked)}
-                        className="w-4 h-4 rounded border-[#1E2230] bg-[#0E121E] text-brand-600 focus:ring-0 focus:outline-none"
-                      />
-                      <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider">
-                        Fiyat Yuvarlama Kuralı
-                      </span>
-                    </label>
-                    {yuvarlamaAktif && (
-                      <span className="text-[10px] font-mono text-amber-300 font-bold">
-                        {yuvarlamaKati} ₺ Katı
-                      </span>
-                    )}
-                  </div>
-
-                  {yuvarlamaAktif && (
-                    <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
-                      <button
-                        type="button"
-                        onClick={() => setYuvarlamaKati(5)}
-                        className={clsx(
-                          "py-1.5 rounded text-[10px] font-mono font-bold transition-all touch-feedback",
-                          yuvarlamaKati === 5 ? "bg-amber-600 text-white" : "text-surface-400 hover:text-white"
-                        )}
-                      >
-                        5 ₺ Katına Yuvarla
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setYuvarlamaKati(10)}
-                        className={clsx(
-                          "py-1.5 rounded text-[10px] font-mono font-bold transition-all touch-feedback",
-                          yuvarlamaKati === 10 ? "bg-amber-600 text-white" : "text-surface-400 hover:text-white"
-                        )}
-                      >
-                        10 ₺ Katına Yuvarla
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sol Panel Alt Aksiyon Butonları */}
-                <div className="pt-1 flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setOnizlemeModalAcik(true)}
-                    className="h-10 text-xs font-bold border border-[#1E2230] hover:bg-[#141826] text-surface-300 flex items-center justify-center gap-1.5 flex-1"
-                  >
-                    <Eye size={14} />
-                    <span>Geniş Önizleme</span>
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleTopluFiyatKaydet}
-                    isLoading={topluKayitYukleniyor}
-                    disabled={etkilenenFiyatSayisi === 0}
-                    className="h-10 text-xs font-bold shadow-lg shadow-brand-900/40 flex-1 flex items-center justify-center gap-1.5"
-                  >
-                    <Check size={14} />
-                    <span>Uygula & Kaydet</span>
-                  </Button>
-                </div>
-
               </div>
+
+              {/* Sol Panel Alt Aksiyon Butonları (Sticky Bottom) */}
+              <div className="p-3 border-t border-[#1E2230] bg-[#0A0D17] flex items-center gap-2 shrink-0 sticky bottom-0 z-10">
+                <Button
+                  variant="ghost"
+                  onClick={() => setOnizlemeModalAcik(true)}
+                  className="h-10 text-xs font-bold border border-[#1E2230] hover:bg-[#141826] text-surface-300 flex items-center justify-center gap-1.5 flex-1"
+                >
+                  <Eye size={14} />
+                  <span>Geniş Önizleme</span>
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleTopluFiyatKaydet}
+                  isLoading={topluKayitYukleniyor}
+                  disabled={etkilenenFiyatSayisi === 0}
+                  className="h-10 text-xs font-bold shadow-lg shadow-brand-900/40 flex-1 flex items-center justify-center gap-1.5"
+                >
+                  <Check size={14} />
+                  <span>Uygula & Kaydet</span>
+                </Button>
+              </div>
+
             </div>
 
             {/* SAĞ TARAF: CANLI DEĞİŞİM SİMÜLASYON KARTI */}
-            <div className="lg:col-span-7 xl:col-span-7 flex flex-col min-h-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg">
+            <div className="w-full lg:flex-1 flex flex-col min-h-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg">
               
               {/* Sağ Panel Başlık & Kontroller */}
               <div className="px-3.5 py-2.5 border-b border-[#1E2230] bg-[#0A0D17] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
@@ -1600,8 +1526,8 @@ export default function MenuSettings() {
                 </div>
               </div>
 
-              {/* Canlı Simülasyon Tablosu */}
-              <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar">
+              {/* Canlı Simülasyon Tablosu (max-h-[300px] overflow-y-auto) */}
+              <div className="flex-1 min-h-0 max-h-[300px] lg:max-h-none overflow-y-auto pos-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#1E2230] bg-[#0A0D17] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
@@ -1721,8 +1647,8 @@ export default function MenuSettings() {
                 </table>
               </div>
 
-              {/* Sağ Panel Alt Özet & Kaydet Çubuğu */}
-              <div className="p-3 border-t border-[#1E2230] bg-[#0A0D17] flex items-center justify-between shrink-0">
+              {/* Sağ Panel Alt Özet & Kaydet Çubuğu (sticky bottom-0) */}
+              <div className="p-3 border-t border-[#1E2230] bg-[#0A0D17] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 sticky bottom-0 z-20">
                 <div className="text-xs font-mono text-surface-400">
                   Toplam <strong className="text-white font-bold">{etkilenenUrunSayisi}</strong> ürün (<strong className="text-emerald-400 font-bold">{etkilenenFiyatSayisi}</strong> satış fiyatı) etkilenecek.
                 </div>
@@ -1731,7 +1657,7 @@ export default function MenuSettings() {
                   onClick={handleTopluFiyatKaydet}
                   isLoading={topluKayitYukleniyor}
                   disabled={etkilenenFiyatSayisi === 0}
-                  className="h-9 px-5 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand-900/30"
+                  className="h-9 px-5 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-brand-900/30 w-full sm:w-auto"
                 >
                   <Check size={14} />
                   <span>Fiyatları Kaydet ({etkilenenUrunSayisi})</span>
@@ -1873,15 +1799,15 @@ export default function MenuSettings() {
         title={duzenlenenUrun ? `Ürün Düzenle: ${duzenlenenUrun.ad}` : 'Yeni Ürün Ekle'}
         size="lg"
       >
-        <form key={duzenlenenUrun ? `urun-${duzenlenenUrun.id}` : 'urun-yeni'} onSubmit={urunKaydet} className="flex flex-col gap-4">
+        <form key={duzenlenenUrun ? `urun-${duzenlenenUrun.id}` : 'urun-yeni'} onSubmit={urunKaydet} className="flex flex-col gap-4 max-h-[85vh] overflow-y-auto pos-scrollbar pr-1">
           
           {/* Sekme Butonları (Tabs) */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#090C15] border border-[#1E2436] rounded-xl">
+          <div className="flex items-center gap-1.5 p-1 bg-[#090C15] border border-[#1E2436] rounded-xl overflow-x-auto pos-scrollbar shrink-0">
             <button
               type="button"
               onClick={() => setUrunModalTab('genel')}
               className={clsx(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'genel'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                   : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
@@ -1894,7 +1820,7 @@ export default function MenuSettings() {
               type="button"
               onClick={() => setUrunModalTab('satis')}
               className={clsx(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'satis'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                   : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
@@ -1912,7 +1838,7 @@ export default function MenuSettings() {
               type="button"
               onClick={() => setUrunModalTab('stok')}
               className={clsx(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback",
+                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'stok'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
                   : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
@@ -1933,9 +1859,9 @@ export default function MenuSettings() {
           {/* ═════════════════════════════════════════════════════════ */}
           {urunModalTab === 'genel' && (
             <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
-              {/* Ad & Kısa Ad */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              {/* Ad, Kategori ve Kod Bilgileri (Responsive Grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Ürün Adı *</label>
                   <input
                     type="text"
@@ -1960,10 +1886,7 @@ export default function MenuSettings() {
                     className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
-              </div>
 
-              {/* Kategori & Barkod & Yazıcı Grubu */}
-              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kategori *</label>
                   <select
@@ -2157,7 +2080,7 @@ export default function MenuSettings() {
           {/* ═════════════════════════════════════════════════════════ */}
           {urunModalTab === 'satis' && (
             <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
                 <div>
                   <h4 className="text-xs font-mono uppercase text-surface-300 font-bold">Dinamik Satış Türleri & Fiyatlandırma</h4>
                   <p className="text-[11px] text-surface-500">Bu ürün için geçerli satış birimlerini (Porsiyon, KG vb.) ve fiyatlarını alt alta tanımlayın.</p>
@@ -2165,7 +2088,7 @@ export default function MenuSettings() {
                 <button
                   type="button"
                   onClick={satisTuruEkle}
-                  className="px-3 py-1.5 rounded-lg bg-brand-950/80 border border-brand-500/50 hover:bg-brand-900/80 text-brand-300 text-xs font-bold flex items-center gap-1.5 transition-all touch-feedback shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-brand-950/80 border border-brand-500/50 hover:bg-brand-900/80 text-brand-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all touch-feedback shadow-sm shrink-0 whitespace-nowrap"
                 >
                   <Plus size={14} />
                   <span>Satış Türü Ekle</span>
@@ -2173,14 +2096,14 @@ export default function MenuSettings() {
               </div>
 
               {/* Satış Türleri Tablosu */}
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pos-scrollbar pr-1">
+              <div className="flex flex-col gap-2 max-h-56 sm:max-h-64 overflow-y-auto pos-scrollbar pr-1">
                 {satisTurleri.map((tur, index) => (
-                  <div key={tur.id} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#090C15] border border-[#1E2436]">
-                    <div className="w-8 h-8 rounded-lg bg-[#141826] border border-[#1E2538] flex items-center justify-center text-xs font-mono font-bold text-surface-400 shrink-0">
+                  <div key={tur.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 p-2.5 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#141826] border border-[#1E2538] flex items-center justify-center text-xs font-mono font-bold text-surface-400 shrink-0">
                       {index + 1}
                     </div>
 
-                    <div className="w-36 shrink-0">
+                    <div className="w-28 sm:w-36 shrink-0">
                       <label className="text-[10px] font-mono text-surface-500 uppercase block mb-1">Birim</label>
                       <select
                         value={tur.birim}
@@ -2199,7 +2122,7 @@ export default function MenuSettings() {
                       </select>
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-[120px]">
                       <label className="text-[10px] font-mono text-surface-500 uppercase block mb-1">Satış Fiyatı (₺)</label>
                       <div className="relative">
                         <input
@@ -2241,14 +2164,14 @@ export default function MenuSettings() {
               <button
                 type="button"
                 onClick={satisTuruEkle}
-                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#222C42] hover:border-brand-500/60 bg-[#090C15] hover:bg-brand-950/20 text-brand-400 hover:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 transition-all touch-feedback"
+                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#222C42] hover:border-brand-500/60 bg-[#090C15] hover:bg-brand-950/20 text-brand-400 hover:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 transition-all touch-feedback shrink-0"
               >
                 <Plus size={15} />
                 <span>+ Yeni Satış Türü Ekle (Örn: KG, Adet)</span>
               </button>
 
               {/* KDV Oranı & Kart Önizleme */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">KDV Oranı (%)</label>
                   <select
@@ -2279,7 +2202,7 @@ export default function MenuSettings() {
           {/* ═════════════════════════════════════════════════════════ */}
           {urunModalTab === 'stok' && (
             <div className="flex flex-col gap-4 animate-in fade-in-50 duration-150">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
                 <div>
                   <h4 className="text-xs font-mono uppercase text-surface-300 font-bold">Reçete Kalemleri (Hammadde Kullanımı)</h4>
                   <p className="text-[11px] text-surface-500">Sipariş satıldığında hammadde stoklarından düşülecek sarfiyat miktarları.</p>
@@ -2287,7 +2210,7 @@ export default function MenuSettings() {
                 <button
                   type="button"
                   onClick={receteKalemiEkle}
-                  className="px-3 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/50 hover:bg-cyan-900/80 text-cyan-300 text-xs font-bold flex items-center gap-1.5 transition-all touch-feedback shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/50 hover:bg-cyan-900/80 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all touch-feedback shadow-sm shrink-0 whitespace-nowrap"
                 >
                   <Plus size={14} />
                   <span>Hammadde Ekle</span>
@@ -2316,13 +2239,13 @@ export default function MenuSettings() {
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pos-scrollbar pr-1">
+                <div className="flex flex-col gap-2 max-h-56 sm:max-h-60 overflow-y-auto pos-scrollbar pr-1">
                   {receteKalemleri.map((kalem, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                    <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 rounded-xl bg-[#090C15] border border-[#1E2436]">
                       <select
                         value={kalem.hammadde_id}
                         onChange={e => receteKalemiGuncelle(idx, 'hammadde_id', e.target.value)}
-                        className="flex-1 h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                        className="flex-1 min-w-[140px] h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
                       >
                         {hammaddeler.length === 0 ? (
                           <option value="0">Tanımlı hammadde bulunamadı</option>
@@ -2333,7 +2256,7 @@ export default function MenuSettings() {
                         )}
                       </select>
 
-                      <div className="w-28 relative">
+                      <div className="w-28 sm:w-32 relative shrink-0">
                         <input
                           type="text"
                           inputMode="decimal"
@@ -2358,7 +2281,7 @@ export default function MenuSettings() {
                       <button
                         type="button"
                         onClick={() => receteKalemiSil(idx)}
-                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback"
+                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback shrink-0"
                         title="Bu Hammaddeyi Kaldır"
                       >
                         <Trash2 size={14} />
@@ -2371,7 +2294,7 @@ export default function MenuSettings() {
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#1A1F30]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mt-4 pt-3 border-t border-[#1A1F30] shrink-0">
             <div className="flex items-center gap-2">
               {urunModalTab !== 'genel' && (
                 <Button
@@ -2379,7 +2302,7 @@ export default function MenuSettings() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setUrunModalTab(urunModalTab === 'stok' ? 'satis' : 'genel')}
-                  className="text-xs"
+                  className="text-xs flex-1 sm:flex-none"
                 >
                   ← Önceki Sekme
                 </Button>
@@ -2390,14 +2313,14 @@ export default function MenuSettings() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setUrunModalTab(urunModalTab === 'genel' ? 'satis' : 'stok')}
-                  className="text-xs text-brand-400 hover:text-brand-300"
+                  className="text-xs text-brand-400 hover:text-brand-300 flex-1 sm:flex-none"
                 >
                   Sonraki Sekme →
                 </Button>
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 justify-end">
               <Button type="button" variant="ghost" onClick={() => setUrunModalAcik(false)}>
                 İptal
               </Button>
