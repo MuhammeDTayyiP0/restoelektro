@@ -9,7 +9,10 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  Utensils
+  Bike,
+  CalendarDays,
+  Banknote,
+  Shield
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useUIStore } from '../../stores/useUIStore'
@@ -22,10 +25,14 @@ export function Sidebar() {
   // Yetkilere göre menü öğeleri
   const navItems = [
     { to: '/tables', icon: LayoutDashboard, label: 'Masalar', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
+    { to: '/delivery', icon: Bike, label: 'Paket', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
+    { to: '/reservations', icon: CalendarDays, label: 'Rezerv.', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
     { to: '/kitchen', icon: ChefHat, label: 'Mutfak', allowedRoles: ['admin', 'mutfak'] },
     { to: '/inventory', icon: Package, label: 'Stok & Menü', allowedRoles: ['admin', 'mudur'] },
+    { to: '/cash', icon: Banknote, label: 'Kasa', allowedRoles: ['admin', 'mudur', 'kasiyer'] },
     { to: '/customers', icon: Users, label: 'Müşteriler', allowedRoles: ['admin', 'mudur', 'kasiyer', 'garson'] },
     { to: '/reports', icon: BarChart3, label: 'Raporlar', allowedRoles: ['admin', 'mudur', 'kasiyer'] },
+    { to: '/audit', icon: Shield, label: 'Denetim', allowedRoles: ['admin', 'mudur'] },
     { to: '/settings', icon: Settings, label: 'Ayarlar', allowedRoles: ['admin', 'mudur'] },
   ]
 
@@ -50,14 +57,14 @@ export function Sidebar() {
       {/* Sidebar Container */}
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 flex flex-col w-24 lg:w-26 bg-[#0B0E17] text-surface-200 transition-transform duration-300 ease-in-out border-r border-[#1E2436] select-none shadow-2xl',
+          'fixed lg:static inset-y-0 left-0 z-50 flex flex-col w-24 lg:w-26 bg-[#12110E] text-surface-200 transition-transform duration-300 ease-in-out border-r border-[#322C26] select-none shadow-2xl',
           sidebarAcik ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo Alanı */}
-        <div className="h-18 flex flex-col items-center justify-center border-b border-[#1A1F30] px-2 relative">
-          <div className="w-11 h-11 rounded-xl bg-[#141928] border border-brand-500/40 flex items-center justify-center text-white font-mono font-bold text-lg shadow-md shadow-brand-950/50 relative">
-            <span className="text-brand-400">ER</span>
+        <div className="h-18 flex flex-col items-center justify-center border-b border-[#322C26] px-2 relative">
+          <div className="w-11 h-11 rounded-xl bg-brand-600 border border-brand-400/25 flex items-center justify-center text-white font-semibold text-[15px] tracking-wide shadow-pos relative">
+            <span>ER</span>
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 status-beacon-green" />
           </div>
           <span className="text-[10px] font-mono font-semibold tracking-wider text-surface-400 mt-1 uppercase">
@@ -77,15 +84,15 @@ export function Sidebar() {
                 className={({ isActive }) => clsx(
                   'group relative flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl transition-all duration-150 touch-feedback min-h-[64px]',
                   isActive 
-                    ? 'bg-[#151D33] text-white shadow-md shadow-brand-950/40 border border-brand-500/40' 
-                    : 'text-surface-400 hover:text-surface-100 hover:bg-[#121624] border border-transparent'
+                    ? 'bg-[#241F1A] text-white shadow-md shadow-brand-950/40 border border-brand-500/40' 
+                    : 'text-surface-400 hover:text-surface-100 hover:bg-[#1e1a16] border border-transparent'
                 )}
               >
                 {({ isActive }) => (
                   <>
                     {/* Aktif sol dikey neon çizgi */}
                     {isActive && (
-                      <span className="absolute left-0 inset-y-2 w-1 rounded-r-full bg-brand-500 status-beacon-blue" />
+                      <span className="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-brand-400" />
                     )}
                     <IconComponent 
                       size={22} 
@@ -108,7 +115,7 @@ export function Sidebar() {
         </nav>
 
         {/* Alt Alan — Güncelleme Modülü & Çıkış Butonu */}
-        <div className="p-2 border-t border-[#1A1F30] flex flex-col items-center gap-2">
+        <div className="p-2 border-t border-[#322C26] flex flex-col items-center gap-2">
           {/* Güncelleme Durum Rozeti ve Popover */}
           <UpdateWidget />
 

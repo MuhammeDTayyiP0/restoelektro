@@ -13,7 +13,7 @@ export function qrMenuHTML(): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0A0A0A">
+  <meta name="theme-color" content="#0B0A08">
   <meta name="description" content="Dijital Menü — Lezzetlerimizi keşfedin">
   <title>Dijital Menü</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -29,24 +29,23 @@ export function qrMenuHTML(): string {
        ========================================================================== */
     :root {
       /* Surfaces */
-      --bg-base: #0A0A0A;
-      --bg-surface: #141414;
-      --bg-elevated: #1A1A1A;
-      --bg-glass: rgba(14, 14, 14, 0.92);
+      --bg-base: #0B0A08;
+      --bg-surface: #171410;
+      --bg-elevated: #1E1A16;
+      --bg-glass: rgba(11, 10, 8, 0.92);
 
-      /* Gold Accent System */
-      --gold-500: #D4AF37;
-      --gold-400: #E2C566;
-      --gold-600: #B8952E;
-      --gold-glow: rgba(212, 175, 55, 0.18);
-      --gold-border: rgba(212, 175, 55, 0.12);
-      --gold-border-active: rgba(212, 175, 55, 0.35);
+      /* Clay Accent System */
+      --gold-500: #9A5F48;
+      --gold-400: #C08F7A;
+      --gold-600: #824E3C;
+      --gold-glow: rgba(154, 95, 72, 0.18);
+      --gold-border: rgba(154, 95, 72, 0.12);
+      --gold-border-active: rgba(154, 95, 72, 0.35);
 
-      /* Text Hierarchy */
-      --text-primary: #F0EDE6;
-      --text-secondary: #8A8278;
-      --text-muted: #5C564E;
-      --text-gold: #D4AF37;
+      --text-primary: #F4EFE8;
+      --text-secondary: #9C9284;
+      --text-muted: #5C554C;
+      --text-gold: #C08F7A;
 
       /* Borders */
       --border-subtle: rgba(255, 255, 255, 0.06);
@@ -329,7 +328,7 @@ export function qrMenuHTML(): string {
     }
 
     .cat-pill.active .cat-pill-count {
-      background: rgba(212, 175, 55, 0.2);
+      background: rgba(154, 95, 72, 0.2);
       color: var(--gold-400);
     }
 
@@ -406,7 +405,7 @@ export function qrMenuHTML(): string {
     }
 
     .dish-row:active {
-      background: rgba(212, 175, 55, 0.04);
+      background: rgba(154, 95, 72, 0.04);
     }
 
     .dish-row-top {
@@ -488,7 +487,7 @@ export function qrMenuHTML(): string {
     }
 
     .dish-card-rich:active {
-      background: rgba(212, 175, 55, 0.04);
+      background: rgba(154, 95, 72, 0.04);
     }
 
     .dish-thumb {
@@ -746,7 +745,7 @@ export function qrMenuHTML(): string {
 
     .shimmer-block {
       height: 20px;
-      background: linear-gradient(90deg, #141414 0%, #1E1E1E 50%, #141414 100%);
+      background: linear-gradient(90deg, #171410 0%, #1E1A16 50%, #171410 100%);
       background-size: 200% 100%;
       animation: shimmer 1.6s infinite ease-in-out;
       border-radius: var(--radius-sm);

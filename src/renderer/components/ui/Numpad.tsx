@@ -27,7 +27,7 @@ export const Numpad = React.memo(function Numpad({
   return (
     <div className={clsx('w-full max-w-sm flex flex-col gap-1.5 sm:gap-2.5 select-none flex-shrink-0 shrink-0', className)}>
       {showDisplay && (
-        <div className="bg-[#090A0F] h-12 sm:h-14 2xl:h-16 rounded-xl flex items-center justify-end px-4 sm:px-5 border border-[#1E2436] shadow-inner mb-1 flex-shrink-0">
+        <div className="bg-[#0B0A08] h-12 sm:h-14 2xl:h-16 rounded-xl flex items-center justify-end px-4 sm:px-5 border border-[#322C26] shadow-inner mb-1 flex-shrink-0">
           <span className="text-xl sm:text-2xl font-bold font-mono text-white tracking-widest truncate">
             {value || '0'}
           </span>
@@ -62,8 +62,8 @@ export const Numpad = React.memo(function Numpad({
                     isClear
                       ? 'bg-rose-950/30 hover:bg-rose-900/40 text-rose-400 border-rose-900/50 active:bg-rose-900/60 shadow-inner'
                       : isBackspace
-                      ? 'bg-[#151927] hover:bg-[#1D2336] text-surface-200 border-[#242C40] active:bg-[#252E44]'
-                      : 'bg-[#111522] hover:bg-[#181E30] text-white border-[#1F273B] active:bg-[#20283F] hover:border-brand-500/40'
+                      ? 'bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border-[#403830] active:bg-[#403830]'
+                      : 'bg-[#1e1a16] hover:bg-[#241F1A] text-white border-[#3A342C] active:bg-[#3A342C] hover:border-brand-500/40'
                   )}
                   aria-label={isBackspace ? 'Sil' : isClear ? 'Temizle' : `Tuş ${key}`}
                 >

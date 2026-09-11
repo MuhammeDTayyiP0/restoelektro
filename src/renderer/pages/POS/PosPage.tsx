@@ -3,12 +3,13 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useMenuStore } from '../../stores/useMenuStore'
 import { usePosStore } from '../../stores/usePosStore'
 import { ipcInvoke, useIPCListener } from '../../hooks/useIPC'
-import { HESAP_KANALLARI } from '../../../common/ipc-channels'
+import { HESAP_KANALLARI, MASA_KANALLARI } from '../../../common/ipc-channels'
 import type { Hesap } from '../../../common/types/pos.types'
 import { useToast } from '../../components/ui/Toast'
 import { motion } from 'framer-motion'
 import { Activity, Server } from 'lucide-react'
 import { APP_VERSION_TAG } from '../../utils/version'
+import { useAuthStore } from '../../stores/useAuthStore'
 
 // Alt Bileşenler
 import PosMenu from './components/PosMenu'
@@ -25,6 +26,7 @@ export default function PosPage() {
   
   const { menuyuGetir, yukleniyor: menuYukleniyor } = useMenuStore()
   const { hesapAyarla, hesapGuncelle, aktifHesap } = usePosStore()
+  const { personel } = useAuthStore()
   const [hesapYukleniyor, setHesapYukleniyor] = useState(true)
 
   // Sayfa yüklendiğinde menüyü getir
@@ -61,6 +63,20 @@ export default function PosPage() {
     hesabiYukle()
   }, [hesabiYukle])
 
+  useEffect(() => {
+    if (!masaId) return
+    const adi = personel ? `${personel.ad} ${personel.soyad}` : ''
+    ipcInvoke(MASA_KANALLARI.KILIT, masaId, personel?.id, adi).then((res: any) => {
+      if (res && res.kilitli) {
+        error('Masa kilitli', res.hata || 'Başka terminalde açık')
+        navigate('/tables')
+      }
+    }).catch(() => {})
+    return () => {
+      ipcInvoke(MASA_KANALLARI.KILIT_AC, masaId).catch(() => {})
+    }
+  }, [masaId])
+
   // Anlık güncellemeleri dinle (Garson El Terminali vb.)
   useIPCListener('siparis:guncellendi', async (guncellenenHesapId: number, guncellenenMasaId?: number) => {
     try {
@@ -95,7 +111,7 @@ export default function PosPage() {
 
   if (menuYukleniyor || hesapYukleniyor) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full bg-[#090A0F] text-slate-100 select-none p-6 relative overflow-hidden">
+      <div className="flex flex-col items-center justify-center h-full w-full bg-[#0B0A08] text-slate-100 select-none p-6 relative overflow-hidden">
         {/* Subtle background tech grid */}
         <div 
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -109,10 +125,10 @@ export default function PosPage() {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative flex flex-col items-center w-full max-w-sm p-8 rounded-2xl bg-[#0E121B] border border-[#1E2436] shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-center z-10"
+          className="relative flex flex-col items-center w-full max-w-sm p-8 rounded-2xl bg-[#171410] border border-[#322C26] shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-center z-10"
         >
           {/* Hardware Diagnostic Icon */}
-          <div className="relative flex items-center justify-center w-16 h-16 mb-5 rounded-xl bg-[#141824] border border-[#252E45]">
+          <div className="relative flex items-center justify-center w-16 h-16 mb-5 rounded-xl bg-[#1e1a16] border border-[#403830]">
             <Server className="w-8 h-8 text-emerald-400" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -133,7 +149,7 @@ export default function PosPage() {
           </p>
 
           {/* Industrial Segmented Bar */}
-          <div className="w-full bg-[#090A0F] rounded-md h-2 p-0.5 border border-[#1E2436] flex items-center">
+          <div className="w-full bg-[#0B0A08] rounded-md h-2 p-0.5 border border-[#322C26] flex items-center">
             <motion.div 
               className="bg-emerald-500 h-full rounded-sm"
               initial={{ width: '15%' }}
@@ -154,19 +170,19 @@ export default function PosPage() {
   }
 
   return (
-    <div className="flex w-full h-full overflow-hidden bg-[#090A0F] select-none">
+    <div className="flex w-full h-full overflow-hidden bg-[#0B0A08] select-none">
       {/* Sol Taraf: Sepet ve Hesap Özeti (Industrial Split Layout) */}
       <motion.aside 
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
-        className="w-[320px] sm:w-[340px] md:w-[360px] lg:w-[380px] xl:w-[410px] 2xl:w-[440px] flex-shrink-0 shrink-0 bg-[#0C1017] border-r border-[#1E2436] flex flex-col h-full z-10 shadow-[6px_0_30px_rgba(0,0,0,0.6)] overflow-hidden"
+        className="w-[320px] sm:w-[340px] md:w-[360px] lg:w-[380px] xl:w-[410px] 2xl:w-[440px] flex-shrink-0 shrink-0 bg-[#171410] border-r border-[#322C26] flex flex-col h-full z-10 shadow-[6px_0_30px_rgba(0,0,0,0.6)] overflow-hidden"
       >
         <PosCart />
       </motion.aside>
 
       {/* Sağ Taraf: Menü ve Kategoriler */}
-      <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-[#090A0F]">
+      <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-[#0B0A08]">
         <PosMenu />
       </main>
     </div>

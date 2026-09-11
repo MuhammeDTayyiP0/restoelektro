@@ -10,23 +10,24 @@ import { existsSync, mkdirSync } from 'fs'
 import { migrationlariCalistir } from './migration-runner'
 import { otomatikYedekAl } from './backup'
 import { varsayilanIzgaraVeIcecekleriEkle } from './seed'
+import { egitimModuAktifMi } from '../services/terminal.service'
 
 // Veritabanı örneği (singleton)
 let db: Database.Database | null = null
 
 /**
  * Veritabanı dosya yolunu belirler (userData/database.sqlite)
- * Uygulama güncellense veya yeniden kurulsa bile userData klasörü korunur.
+ * Eğitim modunda ayrı dosya kullanılır — gerçek ciroya sızmaz.
  */
 export function veritabaniYoluGetir(): string {
   const userData = app.getPath('userData')
 
-  // userData klasörünü garanti altına al
   if (!existsSync(userData)) {
     mkdirSync(userData, { recursive: true })
   }
 
-  return join(userData, 'database.sqlite')
+  const dosya = egitimModuAktifMi() ? 'egitim.sqlite' : 'database.sqlite'
+  return join(userData, dosya)
 }
 
 /**
@@ -40,26 +41,23 @@ export async function veritabaniBaslat(): Promise<void> {
 
   const yol = veritabaniYoluGetir()
   console.log(`📂 SQLite Veritabanı Konumu (userData): ${yol}`)
+  if (egitimModuAktifMi()) {
+    console.log('🎓 EĞİTİM MODU — egitim.sqlite kullanılıyor')
+  }
 
-  // Veritabanını aç/oluştur
   db = new Database(yol)
 
-  // Performans & Veri Güvenliği Optimizasyonları
-  db.pragma('journal_mode = WAL')        // Write-Ahead Logging — eşzamanlı okuma/yazma performansı
-  db.pragma('synchronous = NORMAL')      // Dengeli veri güvenliği & yüksek performans
-  db.pragma('foreign_keys = ON')         // İlişkisel bütünlük kısıtlamalarını etkinleştir
-  db.pragma('temp_store = MEMORY')       // Geçici tablo ve sıralamalar bellekte tutulur
-  db.pragma('mmap_size = 268435456')     // 256MB bellek haritalı I/O (Memory-Mapped I/O)
-  db.pragma('cache_size = -64000')       // ~64MB RAM önbellek
-  db.pragma('busy_timeout = 5000')       // 5 saniye kilit bekleme süresi
+  db.pragma('journal_mode = WAL')
+  db.pragma('synchronous = NORMAL')
+  db.pragma('foreign_keys = ON')
+  db.pragma('temp_store = MEMORY')
+  db.pragma('mmap_size = 268435456')
+  db.pragma('cache_size = -64000')
+  db.pragma('busy_timeout = 5000')
 
-  // Migration öncesi açılış güvenlik yedeği al
   await otomatikYedekAl(db, 'acilis')
-
-  // Otomatik Migration ve Şema Senkronizasyonu
   await migrationlariCalistir(db)
 
-  // Varsayılan Izgara & İçecekler Veri Kontrolü ve Tamamlama (Seed)
   try {
     varsayilanIzgaraVeIcecekleriEkle(db)
   } catch (seedErr) {
@@ -69,9 +67,6 @@ export async function veritabaniBaslat(): Promise<void> {
   console.log('✅ Veritabanı başarıyla başlatıldı ve güncellendi')
 }
 
-/**
- * Aktif veritabanı bağlantısını döndürür
- */
 export function veritabaniGetir(): Database.Database {
   if (!db) {
     throw new Error('Veritabanı başlatılmamış! Önce veritabaniBaslat() çağrılmalı.')
@@ -79,13 +74,9 @@ export function veritabaniGetir(): Database.Database {
   return db
 }
 
-/**
- * Veritabanı bağlantısını güvenli şekilde kapatır
- */
 export function veritabaniKapat(): void {
   if (db) {
     try {
-      // WAL checkpoint yaparak tüm değişiklikleri ana dosyaya flush et
       db.pragma('wal_checkpoint(TRUNCATE)')
       db.close()
       console.log('🔒 Veritabanı bağlantısı güvenle kapatıldı')

@@ -149,13 +149,13 @@ export default function QRPrintModal({
                 onClick={() => setPrintOptions(p => ({ ...p, mode: 'thermal' }))}
                 className={`flex flex-col p-4 rounded-xl text-left border transition-all relative overflow-hidden ${
                   printOptions.mode === 'thermal'
-                    ? 'bg-[#101526] border-brand-500 shadow-lg shadow-brand-950/40 text-white'
-                    : 'bg-[#0A0C14] border-[#1E2538] text-surface-400 hover:text-surface-200 hover:bg-[#0E1220]'
+                    ? 'bg-[#1e1a16] border-brand-500 shadow-lg shadow-brand-950/40 text-white'
+                    : 'bg-[#171410] border-[#322C26] text-surface-400 hover:text-surface-200 hover:bg-[#171410]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    printOptions.mode === 'thermal' ? 'bg-brand-600 text-white' : 'bg-[#141928] text-surface-400'
+                    printOptions.mode === 'thermal' ? 'bg-brand-600 text-white' : 'bg-[#1e1a16] text-surface-400'
                   }`}>
                     <Receipt size={20} />
                   </div>
@@ -177,13 +177,13 @@ export default function QRPrintModal({
                 onClick={() => setPrintOptions(p => ({ ...p, mode: 'standard' }))}
                 className={`flex flex-col p-4 rounded-xl text-left border transition-all relative overflow-hidden ${
                   printOptions.mode === 'standard'
-                    ? 'bg-[#101526] border-brand-500 shadow-lg shadow-brand-950/40 text-white'
-                    : 'bg-[#0A0C14] border-[#1E2538] text-surface-400 hover:text-surface-200 hover:bg-[#0E1220]'
+                    ? 'bg-[#1e1a16] border-brand-500 shadow-lg shadow-brand-950/40 text-white'
+                    : 'bg-[#171410] border-[#322C26] text-surface-400 hover:text-surface-200 hover:bg-[#171410]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    printOptions.mode === 'standard' ? 'bg-brand-600 text-white' : 'bg-[#141928] text-surface-400'
+                    printOptions.mode === 'standard' ? 'bg-brand-600 text-white' : 'bg-[#1e1a16] text-surface-400'
                   }`}>
                     <FileText size={20} />
                   </div>
@@ -203,8 +203,8 @@ export default function QRPrintModal({
           </div>
 
           {/* Termal / Standart Özel Ayarlar */}
-          <div className="bg-[#0A0C14] p-4 rounded-xl border border-[#1E2538] space-y-3.5">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1A2032]">
+          <div className="bg-[#171410] p-4 rounded-xl border border-[#322C26] space-y-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-[#322C26]">
               <span className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
                 <Sliders size={14} className="text-brand-400" />
                 Şablon & Düzen Seçenekleri
@@ -227,7 +227,7 @@ export default function QRPrintModal({
                         className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border transition-colors ${
                           printOptions.paperWidth === w
                             ? 'bg-brand-600 border-brand-400 text-white'
-                            : 'bg-[#121624] border-[#1E2538] text-surface-400 hover:text-white'
+                            : 'bg-[#1e1a16] border-[#322C26] text-surface-400 hover:text-white'
                         }`}
                       >
                         {w === '80mm' ? '80mm (Standart)' : '58mm (Dar)'}
@@ -241,7 +241,7 @@ export default function QRPrintModal({
                   <select
                     value={seciliYazici}
                     onChange={e => setSeciliYazici(e.target.value)}
-                    className="w-full h-9 px-3 bg-[#121624] border border-[#1E2538] rounded-lg text-xs text-white focus:outline-none focus:border-brand-500"
+                    className="w-full h-9 px-3 bg-[#1e1a16] border border-[#322C26] rounded-lg text-xs text-white focus:outline-none focus:border-brand-500"
                   >
                     <option value="">Varsayılan Sistem Diyaloğu</option>
                     {yazicilar.map(y => (
@@ -263,7 +263,7 @@ export default function QRPrintModal({
                         className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold border transition-colors ${
                           printOptions.gridCols === c
                             ? 'bg-brand-600 border-brand-400 text-white'
-                            : 'bg-[#121624] border-[#1E2538] text-surface-400 hover:text-white'
+                            : 'bg-[#1e1a16] border-[#322C26] text-surface-400 hover:text-white'
                         }`}
                       >
                         {c} Sütun
@@ -278,7 +278,7 @@ export default function QRPrintModal({
                       type="checkbox"
                       checked={printOptions.showCutGuides !== false}
                       onChange={e => setPrintOptions(p => ({ ...p, showCutGuides: e.target.checked }))}
-                      className="rounded border-[#1E2538] bg-[#121624] text-brand-500 focus:ring-0 w-4 h-4 cursor-pointer"
+                      className="rounded border-[#322C26] bg-[#1e1a16] text-brand-500 focus:ring-0 w-4 h-4 cursor-pointer"
                     />
                     <Scissors size={14} className="text-surface-400" />
                     <span>Kesim Kılavuz Çizgileri</span>
@@ -288,14 +288,14 @@ export default function QRPrintModal({
             )}
 
             {/* Restoran Adı & Metin Ayarları */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#181D2E]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#241F1A]">
               <div>
                 <label className="text-[11px] font-semibold text-surface-400 block mb-1">İşletme Adı</label>
                 <input
                   type="text"
                   value={printOptions.restoName || ''}
                   onChange={e => setPrintOptions(p => ({ ...p, restoName: e.target.value }))}
-                  className="w-full h-8 px-3 rounded-lg bg-[#121624] border border-[#1E2538] text-xs text-white focus:outline-none focus:border-brand-500"
+                  className="w-full h-8 px-3 rounded-lg bg-[#1e1a16] border border-[#322C26] text-xs text-white focus:outline-none focus:border-brand-500"
                   placeholder="ETİBOL RESTORAN"
                 />
               </div>
@@ -306,7 +306,7 @@ export default function QRPrintModal({
                   type="text"
                   value={printOptions.guideText || ''}
                   onChange={e => setPrintOptions(p => ({ ...p, guideText: e.target.value }))}
-                  className="w-full h-8 px-3 rounded-lg bg-[#121624] border border-[#1E2538] text-xs text-white focus:outline-none focus:border-brand-500"
+                  className="w-full h-8 px-3 rounded-lg bg-[#1e1a16] border border-[#322C26] text-xs text-white focus:outline-none focus:border-brand-500"
                   placeholder="Menüyü İncelemek İçin Okutunuz"
                 />
               </div>
@@ -362,7 +362,7 @@ export default function QRPrintModal({
                   type="button"
                   onClick={() => setActivePreviewIndex(p => Math.max(0, p - 1))}
                   disabled={activePreviewIndex === 0}
-                  className="px-2 py-0.5 rounded bg-[#141828] text-surface-300 disabled:opacity-30"
+                  className="px-2 py-0.5 rounded bg-[#1e1a16] text-surface-300 disabled:opacity-30"
                 >
                   ◀
                 </button>
@@ -371,7 +371,7 @@ export default function QRPrintModal({
                   type="button"
                   onClick={() => setActivePreviewIndex(p => Math.min(items.length - 1, p + 1))}
                   disabled={activePreviewIndex === items.length - 1}
-                  className="px-2 py-0.5 rounded bg-[#141828] text-surface-300 disabled:opacity-30"
+                  className="px-2 py-0.5 rounded bg-[#1e1a16] text-surface-300 disabled:opacity-30"
                 >
                   ▶
                 </button>
@@ -380,7 +380,7 @@ export default function QRPrintModal({
           </div>
 
           {/* Önizleme Kağıdı / Kartı */}
-          <div className="w-full bg-[#07090F] p-4 rounded-2xl border border-[#1E2538] flex items-center justify-center min-h-[380px] shadow-inner relative overflow-hidden">
+          <div className="w-full bg-[#0B0A08] p-4 rounded-2xl border border-[#322C26] flex items-center justify-center min-h-[380px] shadow-inner relative overflow-hidden">
             
             {/* Termal Önizleme */}
             {printOptions.mode === 'thermal' ? (
@@ -449,7 +449,7 @@ export default function QRPrintModal({
               </div>
             ) : (
               /* Standart / Pleksi Masa Standı Önizlemesi */
-              <div className="w-[250px] bg-white text-black rounded-2xl p-4 border-2 border-[#1E2538] shadow-2xl text-center relative">
+              <div className="w-[250px] bg-white text-black rounded-2xl p-4 border-2 border-[#322C26] shadow-2xl text-center relative">
                 {printOptions.showCutGuides !== false && (
                   <>
                     <div className="absolute top-1.5 left-1.5 w-2 h-2 border-t border-l border-dashed border-gray-400" />
@@ -467,7 +467,7 @@ export default function QRPrintModal({
                 </div>
 
                 {/* Masa No Badge */}
-                <div className="inline-block bg-[#090A0F] text-white px-3 py-1 rounded-lg border border-[#1E2538] mb-2">
+                <div className="inline-block bg-[#0B0A08] text-white px-3 py-1 rounded-lg border border-[#322C26] mb-2">
                   <div className="text-sm font-black tracking-wider leading-tight">
                     {previewItem?.masaNo ? `MASA: ${previewItem.masaNo}` : previewItem?.title}
                   </div>

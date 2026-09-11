@@ -13,23 +13,18 @@ export function garsonMobilHTML(): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#090A0F">
+  <meta name="theme-color" content="#0B0A08">
   <title>ETİBOL POS - Garson Terminali</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* Industrial Charcoal Base */
-      --bg-base: #090A0F;
-      --bg-surface: #121620;
-      --bg-surface-elevated: #181E2C;
-      --bg-surface-glass: rgba(18, 22, 32, 0.88);
-      --border-subtle: #1E2536;
-      --border-focus: #2E3B56;
+      --bg-base: #0B0A08;
+      --bg-surface: #171410;
+      --bg-surface-elevated: #1E1A16;
+      --bg-surface-glass: rgba(23, 20, 16, 0.88);
+      --border-subtle: #322C26;
+      --border-focus: #4A433A;
       
-      /* High Contrast Functional POS Accents */
       --pos-green: #10B981;
       --pos-green-deep: #064E3B;
       --pos-green-glow: rgba(16, 185, 129, 0.25);
@@ -42,18 +37,17 @@ export function garsonMobilHTML(): string {
       --pos-amber-deep: #451A03;
       --pos-amber-glow: rgba(245, 158, 11, 0.25);
       
-      --pos-cyan: #0EA5E9;
-      --pos-cyan-deep: #0C4A6E;
-      --pos-cyan-glow: rgba(14, 165, 233, 0.25);
+      --pos-cyan: #9A5F48;
+      --pos-cyan-deep: #3D261F;
+      --pos-cyan-glow: rgba(154, 95, 72, 0.25);
       
-      --pos-purple: #8B5CF6;
-      --pos-purple-deep: #2E1065;
+      --pos-purple: #8A8178;
+      --pos-purple-deep: #2A2622;
       
-      /* Typography Colors */
-      --text-primary: #F8FAFC;
-      --text-secondary: #94A3B8;
-      --text-muted: #64748B;
-      --text-dark: #090A0F;
+      --text-primary: #F4EFE8;
+      --text-secondary: #9C9284;
+      --text-muted: #7A7166;
+      --text-dark: #0B0A08;
 
       /* Metrics & Geometry */
       --radius-sm: 8px;
@@ -69,7 +63,7 @@ export function garsonMobilHTML(): string {
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
       touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
@@ -105,7 +99,7 @@ export function garsonMobilHTML(): string {
       justify-content: center;
       min-height: 100dvh;
       padding: 24px;
-      background: radial-gradient(circle at 50% 15%, #182032 0%, var(--bg-base) 70%);
+      background: var(--bg-base);
       position: relative;
       z-index: 10;
     }
@@ -114,15 +108,13 @@ export function garsonMobilHTML(): string {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: var(--bg-surface-elevated);
+      background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: var(--radius-full);
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--pos-cyan);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
       margin-bottom: 20px;
     }
 
@@ -130,20 +122,19 @@ export function garsonMobilHTML(): string {
       width: 72px;
       height: 72px;
       background: var(--bg-surface);
-      border: 2px solid var(--border-focus);
-      border-radius: var(--radius-xl);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--pos-cyan);
       margin-bottom: 16px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 24px var(--pos-cyan-glow);
     }
 
     .login-title {
       font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
       margin-bottom: 6px;
       color: var(--text-primary);
     }
@@ -162,19 +153,17 @@ export function garsonMobilHTML(): string {
     }
 
     .pin-dot {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: var(--radius-full);
       border: 2px solid var(--border-subtle);
       background: var(--bg-surface);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.15s ease;
     }
 
     .pin-dot.filled {
       border-color: var(--pos-cyan);
       background: var(--pos-cyan);
-      box-shadow: 0 0 14px var(--pos-cyan-glow);
-      transform: scale(1.15);
     }
 
     .numpad {
@@ -303,11 +292,9 @@ export function garsonMobilHTML(): string {
     }
 
     .header-staff-name {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--pos-cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
       margin-top: 1px;
     }
 
@@ -373,31 +360,22 @@ export function garsonMobilHTML(): string {
     }
 
     .section-tag {
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .section-tag::after {
-      content: '';
-      width: 40px;
-      height: 1px;
-      background: var(--border-subtle);
+      display: none;
     }
 
     .section-count {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      background: var(--bg-surface-elevated);
-      padding: 3px 8px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
     }
 
     /* ===== BÖLÜM & MASA SEÇİM GRİDLERİ ===== */
@@ -485,23 +463,31 @@ export function garsonMobilHTML(): string {
 
     .masa-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
       margin-bottom: 20px;
     }
 
+    @media (min-width: 480px) {
+      .masa-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
     .masa-card {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 16px 14px;
+      aspect-ratio: 1 / 1;
+      min-height: 104px;
+      background: #161310;
+      border-radius: 50%;
+      padding: 10px;
       cursor: pointer;
-      border: 1px solid var(--border-subtle);
+      border: 1.5px solid #3A342C;
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 96px;
-      transition: all 0.15s ease;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -10px 18px rgba(0,0,0,0.35);
+      transition: transform 0.12s ease;
       touch-action: manipulation;
     }
 
@@ -509,87 +495,67 @@ export function garsonMobilHTML(): string {
       transform: scale(0.96);
     }
 
-    /* Free Table (Boş Masa) - Crisp Emerald Industrial */
     .masa-card.bos {
-      border-color: rgba(16, 185, 129, 0.35);
-      background: linear-gradient(180deg, #111a1a 0%, var(--bg-surface) 100%);
+      border-color: #3A342C;
+      background: #161310;
     }
 
     .masa-card.bos:active {
-      border-color: var(--pos-green);
-      background: #0d221c;
+      border-color: var(--border-focus);
+      background: #1A1714;
     }
 
-    /* Occupied Table (Dolu Masa) - Crisp Crimson Industrial */
     .masa-card.dolu {
-      border-color: rgba(239, 68, 68, 0.45);
-      background: linear-gradient(180deg, #221217 0%, var(--bg-surface) 100%);
-      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.08);
+      border-color: rgba(154, 95, 72, 0.6);
+      background: #2A1E18;
     }
 
     .masa-card.dolu:active {
-      border-color: var(--pos-red);
-      background: #2b1218;
+      border-color: var(--pos-cyan);
+      background: #32241C;
     }
 
     .masa-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
+      display: none;
     }
 
     .masa-num {
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.5px;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
       color: var(--text-primary);
+      line-height: 1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 6px;
     }
 
     .masa-card.dolu .masa-num {
-      color: #FCA5A5;
+      color: #F4EFE8;
     }
 
     .masa-status-pill {
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 3px 8px;
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .masa-card.bos .masa-status-pill {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--pos-green);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .masa-card.dolu .masa-status-pill {
-      background: rgba(239, 68, 68, 0.2);
-      color: #F87171;
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      display: none;
     }
 
     .masa-bottom {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      width: 100%;
+      margin-top: 6px;
     }
 
     .masa-price {
-      font-size: 18px;
-      font-weight: 800;
+      font-size: 12px;
+      font-weight: 700;
       color: var(--text-primary);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.2px;
+      font-variant-numeric: tabular-nums;
     }
 
     .masa-card.bos .masa-price {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
@@ -616,10 +582,11 @@ export function garsonMobilHTML(): string {
     }
 
     .detay-summary-total {
-      font-size: 32px;
-      font-weight: 900;
-      color: var(--pos-cyan);
-      letter-spacing: -1px;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.6px;
+      font-variant-numeric: tabular-nums;
     }
 
     .btn-new-order-add {
@@ -684,8 +651,8 @@ export function garsonMobilHTML(): string {
     }
 
     .siparis-item-qty {
-      font-weight: 800;
-      color: var(--pos-cyan);
+      font-weight: 700;
+      color: var(--text-secondary);
       margin-right: 4px;
     }
 
@@ -754,18 +721,20 @@ export function garsonMobilHTML(): string {
     }
 
     .siparis-status-badge {
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 3px 8px;
-      border-radius: var(--radius-full);
-      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 4px;
+      text-transform: none;
+      letter-spacing: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      border-radius: 0;
     }
 
-    .status-bekliyor { background: rgba(245, 158, 11, 0.15); color: var(--pos-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .status-hazir { background: rgba(16, 185, 129, 0.15); color: var(--pos-green); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .status-diger { background: var(--bg-surface-elevated); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+    .status-bekliyor { color: var(--pos-amber); }
+    .status-hazir { color: var(--pos-green); }
+    .status-diger { color: var(--text-muted); }
 
     /* ===== SİPARİŞ GİRİŞİ (ORDER ENTRY) ===== */
     .search-filter-bar {
@@ -789,7 +758,6 @@ export function garsonMobilHTML(): string {
 
     .search-input:focus {
       border-color: var(--pos-cyan);
-      box-shadow: 0 0 0 3px var(--pos-cyan-glow);
     }
 
     .search-icon-pos {
@@ -840,7 +808,6 @@ export function garsonMobilHTML(): string {
       background: var(--pos-cyan);
       color: #fff;
       border-color: var(--pos-cyan);
-      box-shadow: 0 4px 14px var(--pos-cyan-glow);
     }
 
     .kategori-pill:active {
@@ -1385,17 +1352,17 @@ export function garsonMobilHTML(): string {
       bottom: calc(68px + env(safe-area-inset-bottom));
       left: 14px;
       right: 14px;
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border-focus);
-      border-radius: var(--radius-xl);
-      padding: 12px 18px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
       z-index: 90;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px var(--pos-cyan-glow);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
     .sepet-floating-bar:active {
@@ -1411,27 +1378,29 @@ export function garsonMobilHTML(): string {
     .sepet-count-pill {
       background: var(--pos-cyan);
       color: #fff;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: var(--radius-full);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
-      font-size: 14px;
+      font-weight: 700;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
     }
 
     .sepet-floating-label {
-      font-weight: 800;
+      font-weight: 600;
       font-size: 14px;
       color: var(--text-primary);
     }
 
     .sepet-floating-total {
       font-size: 18px;
-      font-weight: 900;
-      color: var(--pos-cyan);
-      letter-spacing: -0.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+      font-variant-numeric: tabular-nums;
     }
 
     /* ===== SEPET BOTTOM SHEET / MODAL ===== */
@@ -1516,11 +1485,12 @@ export function garsonMobilHTML(): string {
     }
 
     .sepet-cart-item {
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      margin-bottom: 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--border-subtle);
+      border-radius: 0;
+      padding: 12px 0;
+      margin-bottom: 0;
     }
 
     .sepet-item-head {
@@ -1528,11 +1498,12 @@ export function garsonMobilHTML(): string {
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 10px;
+      gap: 10px;
     }
 
     .sepet-item-name {
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-primary);
       flex: 1;
       padding-right: 8px;
@@ -1540,8 +1511,9 @@ export function garsonMobilHTML(): string {
 
     .sepet-item-price {
       font-size: 15px;
-      font-weight: 800;
-      color: var(--pos-cyan);
+      font-weight: 700;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
     }
 
     .sepet-item-controls {
@@ -1762,12 +1734,10 @@ export function garsonMobilHTML(): string {
 
     .pos-toast.success {
       border-color: var(--pos-green);
-      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7), 0 0 16px var(--pos-green-glow);
     }
 
     .pos-toast.error {
       border-color: var(--pos-red);
-      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7), 0 0 16px var(--pos-red-glow);
     }
 
     /* ===== LOADING SPINNER ===== */
@@ -1808,7 +1778,7 @@ export function garsonMobilHTML(): string {
   <div id="loginScreen" class="login-screen">
     <div class="pos-badge-top">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-      Mobil Garson Terminali
+      Mobil garson
     </div>
     
     <div class="login-brand-icon">
@@ -1882,8 +1852,8 @@ export function garsonMobilHTML(): string {
     <div style="display:flex; align-items:center; gap:12px;">
       <div class="sepet-count-pill" id="sepetAdet">0</div>
       <div>
-        <div class="sepet-floating-label">Sipariş Sepeti</div>
-        <div style="font-size:11px; color:var(--text-secondary);">Mutfak siparişi için dokunun</div>
+        <div class="sepet-floating-label">Sepet</div>
+        <div style="font-size:11px; color:var(--text-secondary);">Mutfağa göndermek için dokunun</div>
       </div>
     </div>
     <div class="sepet-floating-total" id="sepetTutar">₺0</div>
@@ -1895,7 +1865,7 @@ export function garsonMobilHTML(): string {
     <div class="modal-sheet-header">
       <div class="modal-sheet-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-        Gönderilecek Kalemler
+        Gönderilecekler
       </div>
       <button class="btn-modal-close" onclick="sepetModalKapat()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -2203,8 +2173,8 @@ function masalariCiz() {
       html += '    <div style="font-size:12px; color:var(--text-secondary);">Toplam '+masaList.length+' Masa</div>';
       html += '  </div>';
       html += '  <div class="bolum-meta">';
-      html += '    <span style="color:var(--pos-green);">'+bosSayisi+' Boş</span>';
-      html += '    <span style="color:'+(doluSayisi > 0 ? 'var(--pos-red)' : 'var(--text-muted)')+'; font-weight:700;">'+doluSayisi+' Dolu</span>';
+      html += '    <span style="color:var(--text-muted);">'+bosSayisi+' boş</span>';
+      html += '    <span style="color:'+(doluSayisi > 0 ? 'var(--pos-cyan)' : 'var(--text-muted)')+';">'+doluSayisi+' dolu</span>';
       html += '  </div>';
       html += '</div>';
     }
@@ -2234,19 +2204,15 @@ function masalariCiz() {
       masaList.forEach(m => {
         const isDolu = m.durum === 'dolu';
         const cls = isDolu ? 'dolu' : 'bos';
-        const statusText = isDolu ? 'DOLU' : 'BOŞ';
-        const tutarMetin = isDolu && m.toplam_tutar 
-          ? '₺' + Number(m.toplam_tutar).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) 
-          : 'Sipariş Yok';
+        const tutarMetin = isDolu && m.toplam_tutar
+          ? '₺' + Number(m.toplam_tutar).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          : '';
 
         html += '<div class="masa-card '+cls+'" onclick="masaSec('+m.id+',\\''+m.numara+'\\','+(m.hesap_id || 'null')+')">';
-        html += '  <div class="masa-top">';
-        html += '    <span class="masa-num">Masa '+m.numara+'</span>';
-        html += '    <span class="masa-status-pill">'+statusText+'</span>';
-        html += '  </div>';
-        html += '  <div class="masa-bottom">';
-        html += '    <span class="masa-price">'+tutarMetin+'</span>';
-        html += '  </div>';
+        html += '  <div class="masa-num">'+m.numara+'</div>';
+        if (tutarMetin) {
+          html += '  <div class="masa-bottom"><span class="masa-price">'+tutarMetin+'</span></div>';
+        }
         html += '</div>';
       });
       html += '</div>';
@@ -2349,7 +2315,7 @@ async function masaDetayCiz(masaId) {
       const isIptal = s.durum === 'iptal';
       const iptalCls = isIptal ? 'iptal' : '';
       const statusCls = s.durum === 'bekliyor' ? 'status-bekliyor' : (s.durum === 'hazir' ? 'status-hazir' : 'status-diger');
-      const ikramEtiketi = s.ikram ? '<span style="background:var(--pos-purple); color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; margin-left:6px;">İKRAM</span>' : '';
+      const ikramEtiketi = s.ikram ? '<span style="color:var(--pos-cyan); font-size:11px; margin-left:6px;">ikram</span>' : '';
       const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
 
       html += '<div class="siparis-item-row '+iptalCls+'">';
@@ -3069,7 +3035,7 @@ function sepetListeCiz() {
 
   sepet.forEach((s) => {
     const isKg = s.secilenSatisTuru === 'kg' || s.birim?.toLowerCase() === 'kg';
-    const ikramEtiketi = s.ikram ? '<span style="background:var(--pos-purple); color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:6px; font-weight:800;">İKRAM</span>' : '';
+    const ikramEtiketi = s.ikram ? '<span style="color:var(--pos-cyan); font-size:11px; margin-left:6px;">ikram</span>' : '';
     
     let urunBaslik = '';
     let birimFiyat = 0;
@@ -3080,12 +3046,12 @@ function sepetListeCiz() {
       const kFiyat = s.kilo_fiyati || s.fiyat;
       birimFiyat = kFiyat * gr;
       toplamFiyat = birimFiyat * s.miktar;
-      urunBaslik = '<span style="background:rgba(16, 185, 129, 0.2); color:var(--pos-green); border:1px solid rgba(16, 185, 129, 0.4); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; margin-right:6px;">' + gr + ' KG</span>' + s.ad;
+      urunBaslik = '<span style="color:var(--text-secondary); font-size:12px; margin-right:6px;">' + gr + ' kg</span>' + s.ad;
     } else {
       birimFiyat = s.fiyat * (s.porsiyon || 1);
       toplamFiyat = birimFiyat * s.miktar;
       const porsiyonMetin = (s.porsiyon && s.porsiyon !== 1) ? ((s.porsiyon === 0.5 ? '(0.5 Porsiyon) ' : (s.porsiyon === 2 ? '(Double) ' : '(' + s.porsiyon + ' Porsiyon) '))) : '';
-      urunBaslik = (porsiyonMetin ? '<span style="background:rgba(14, 165, 233, 0.2); color:var(--pos-cyan); border:1px solid rgba(14, 165, 233, 0.4); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; margin-right:6px;">' + porsiyonMetin + '</span>' : '') + s.ad;
+      urunBaslik = (porsiyonMetin ? '<span style="color:var(--text-secondary); font-size:12px; margin-right:6px;">' + porsiyonMetin + '</span>' : '') + s.ad;
     }
 
     const fiyatMetni = s.ikram 

@@ -16,6 +16,7 @@ import {
   pencereyiGoster,
   trayKucultmeBildirimiGoster,
 } from './services/tray.service'
+import { terminalAyarYukle, ikinciKasaMi } from './services/terminal.service'
 
 // Uygulama adı — userData yolunun tutarlılığı için
 app.name = 'ETİBOL POS'
@@ -133,26 +134,27 @@ function pencereOlustur(): void {
 async function uygulamaBaslat(): Promise<void> {
   try {
     console.log('🚀 ETİBOL POS başlatılıyor...')
+    const terminal = terminalAyarYukle()
 
-    // 1. Veritabanını başlat ve migration'ları çalıştır
-    console.log('📦 Veritabanı bağlantısı kuruluyor...')
-    await veritabaniBaslat()
-    console.log('✅ Veritabanı hazır')
+    if (terminal.rol === 'ikinci') {
+      console.log(`🔗 İkinci kasa terminali (${terminal.terminalId}) → ${terminal.anaUrl || '(adres yok)'}`)
+      ipcHandlerlariniKaydet(ipcMain, 'ikinci')
+    } else {
+      console.log('📦 Veritabanı bağlantısı kuruluyor...')
+      await veritabaniBaslat()
+      console.log('✅ Veritabanı hazır')
 
-    // 2. IPC handler'larını kaydet
-    console.log('🔌 IPC handler\'ları kaydediliyor...')
-    ipcHandlerlariniKaydet(ipcMain)
-    console.log('✅ IPC handler\'ları kayıtlı')
+      console.log('🔌 IPC handler\'ları kaydediliyor...')
+      ipcHandlerlariniKaydet(ipcMain, 'ana')
+      console.log('✅ IPC handler\'ları kayıtlı')
 
-    // 3. REST API sunucusunu başlat (Boss & Garson modülleri için)
-    console.log('🌐 API sunucusu başlatılıyor...')
-    await apiSunucusunuBaslat()
-    console.log('✅ API sunucusu aktif')
+      console.log('🌐 API sunucusu başlatılıyor...')
+      await apiSunucusunuBaslat()
+      console.log('✅ API sunucusu aktif')
+    }
 
-    // 4. Ana pencereyi oluştur
     pencereOlustur()
 
-    // 5. System Tray (Bildirim Alanı) servisini başlat
     if (anaPencere) {
       trayBaslat(anaPencere, tamamenCikisYap)
       console.log('🟢 System Tray servisi aktif')
@@ -175,12 +177,14 @@ app.whenReady().then(uygulamaBaslat)
 app.on('window-all-closed', async () => {
   if (isAppQuitting) {
     try {
-      const db = veritabaniGetir()
-      await otomatikYedekAl(db, 'kapanis')
+      if (!ikinciKasaMi()) {
+        const db = veritabaniGetir()
+        await otomatikYedekAl(db, 'kapanis')
+      }
     } catch {
       // sessizce devam et
     }
-    veritabaniKapat()
+    try { veritabaniKapat() } catch { /* ikinci kasada db yok */ }
     trayYokEt()
     app.quit()
   }
@@ -199,12 +203,14 @@ app.on('activate', () => {
 app.on('before-quit', async () => {
   isAppQuitting = true
   try {
-    const db = veritabaniGetir()
-    await otomatikYedekAl(db, 'kapanis')
+    if (!ikinciKasaMi()) {
+      const db = veritabaniGetir()
+      await otomatikYedekAl(db, 'kapanis')
+    }
   } catch {
     // sessizce devam et
   }
-  veritabaniKapat()
+  try { veritabaniKapat() } catch { /* ikinci kasada db yok */ }
   trayYokEt()
 })
 

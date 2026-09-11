@@ -134,12 +134,12 @@ export function UpdateWidget() {
         className={clsx(
           'w-full group flex flex-col items-center justify-center gap-1 py-2 px-1.5 rounded-xl border transition-all duration-200 touch-feedback select-none relative',
           isPopoverOpen
-            ? 'bg-[#151D33] border-brand-500/50 shadow-lg shadow-brand-950/60 text-white'
+            ? 'bg-[#241F1A] border-brand-500/50 shadow-lg shadow-brand-950/60 text-white'
             : status === 'available' || status === 'downloaded'
-            ? 'bg-[#141C2E] border-amber-500/50 text-white hover:border-amber-400'
+            ? 'bg-[#1E1A16] border-amber-500/50 text-white hover:border-amber-400'
             : status === 'error'
-            ? 'bg-[#181116] border-rose-900/60 text-rose-300 hover:border-rose-700'
-            : 'bg-[#0E121E] border-[#1E2436] text-surface-300 hover:text-white hover:bg-[#141928] hover:border-brand-500/30'
+            ? 'bg-[#1e1a16] border-rose-900/60 text-rose-300 hover:border-rose-700'
+            : 'bg-[#171410] border-[#322C26] text-surface-300 hover:text-white hover:bg-[#1e1a16] hover:border-brand-500/30'
         )}
         title="Uygulama Güncelleme Modülü"
         aria-label="Uygulama Güncelleme Paneli"
@@ -173,7 +173,7 @@ export function UpdateWidget() {
 
         {/* Bildirim Noktası (Güncelleme hazır veya mevcutsa) */}
         {(status === 'available' || status === 'downloaded') && (
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-[#0B0E17]" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-[#12110E]" />
         )}
       </button>
 
@@ -186,23 +186,23 @@ export function UpdateWidget() {
             animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 6, x: -6 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="fixed lg:absolute left-20 lg:left-[calc(100%+8px)] bottom-3 w-84 sm:w-92 bg-[#0B0E17] border border-[#1E2436] rounded-2xl shadow-2xl z-50 p-4 text-surface-100 flex flex-col gap-3.5 select-none"
+            className="fixed z-50 left-24 bottom-4 w-80 max-w-[calc(100vw-7.5rem)] max-h-[min(28rem,calc(100vh-5rem))] overflow-y-auto lg:absolute lg:left-[calc(100%+10px)] lg:bottom-0 bg-[#12110E] border border-[#322C26] rounded-2xl shadow-2xl p-4 text-surface-100 flex flex-col gap-3 select-none pos-scrollbar"
             style={{
               boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(30, 36, 54, 0.9)',
             }}
           >
             {/* Header: Başlık ve Kapat Butonu */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#141928] border border-brand-500/30 flex items-center justify-center text-brand-400">
+            <div className="flex items-start justify-between gap-2 pb-3 border-b border-[#322C26]">
+              <div className="flex items-start gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-[#1e1a16] border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
                   <Zap size={16} />
                 </div>
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                    ETİBOL POS Güncelleyici
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-white leading-tight">
+                    Güncelleyici
                   </h4>
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-surface-400">
-                    <span>Mevcut:</span>
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-mono text-surface-400 mt-0.5">
+                    <span>Sürüm</span>
                     <span className="text-surface-200 font-bold">{currentVersion}</span>
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export function UpdateWidget() {
 
               <button
                 onClick={() => setPopoverOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-surface-400 hover:text-white hover:bg-[#151D33] border border-transparent hover:border-[#1E2436] transition-colors"
+                className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-surface-400 hover:text-white hover:bg-[#241F1A] border border-transparent hover:border-[#322C26] transition-colors"
                 aria-label="Kapat"
               >
                 <X size={15} />
@@ -223,15 +223,15 @@ export function UpdateWidget() {
               {/* DURUM 1: Varsayılan (Idle) veya Güncel (Not Available) */}
               {(status === 'idle' || status === 'not-available') && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-[#0E121E] border border-[#1A2033] rounded-xl flex items-center gap-3">
+                  <div className="p-3 bg-[#171410] border border-[#322C26] rounded-xl flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-700/40 flex items-center justify-center text-emerald-400 shrink-0">
                       <CheckCircle2 size={18} />
                     </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-semibold text-white">
+                    <div className="flex flex-col min-w-0 text-left">
+                      <span className="text-xs font-semibold text-white leading-snug">
                         {status === 'not-available' ? 'Sisteminiz En Güncel Sürümde' : 'Güncelleme Kontrolü'}
                       </span>
-                      <span className="text-[10px] text-surface-400">
+                      <span className="text-[10px] text-surface-400 leading-snug mt-0.5 break-words">
                         {lastChecked 
                           ? `Son kontrol: ${new Date(lastChecked).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
                           : 'GitHub Releases üzerinden yeni sürümleri denetleyin.'}
@@ -241,7 +241,7 @@ export function UpdateWidget() {
 
                   <button
                     onClick={kontrolEt}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#141C2E] hover:bg-[#1A243D] text-white font-semibold text-xs rounded-xl border border-brand-500/40 hover:border-brand-400 shadow-md shadow-brand-950/40 transition-all touch-feedback"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1E1A16] hover:bg-[#322C26] text-white font-semibold text-xs rounded-xl border border-brand-500/40 hover:border-brand-400 shadow-md shadow-brand-950/40 transition-all touch-feedback"
                   >
                     <RefreshCw size={14} className="text-brand-400" />
                     <span>Güncellemeleri Kontrol Et</span>
@@ -251,7 +251,7 @@ export function UpdateWidget() {
 
               {/* DURUM 1.5: Kontrol Ediliyor (Checking) */}
               {status === 'checking' && (
-                <div className="p-4 bg-[#0E121E] border border-[#1A2033] rounded-xl flex flex-col items-center justify-center gap-2.5 py-6">
+                <div className="p-4 bg-[#171410] border border-[#322C26] rounded-xl flex flex-col items-center justify-center gap-2.5 py-6">
                   <RefreshCw size={24} className="text-amber-400 animate-spin" />
                   <span className="text-xs font-semibold text-surface-200">
                     GitHub Releases Kontrol Ediliyor...
@@ -265,23 +265,23 @@ export function UpdateWidget() {
               {/* DURUM 2: Güncelleme Bulundu (Available) */}
               {status === 'available' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-[#1A160E] border border-amber-700/50 rounded-xl flex flex-col gap-2">
+                  <div className="p-3 bg-[#241F1A] border border-amber-700/50 rounded-xl flex flex-col gap-2">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-amber-950/60 border border-amber-600/50 flex items-center justify-center text-amber-400 shrink-0">
                         <Sparkles size={18} />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-amber-300">
-                          Yeni Sürüm ({newVersion || 'Mevcut'})!
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-amber-300 leading-snug">
+                          Yeni Sürüm {newVersion ? `(${newVersion})` : ''}
                         </span>
-                        <span className="text-[10px] text-surface-300">
+                        <span className="text-[10px] text-surface-300 leading-snug mt-0.5">
                           Yeni özellikler ve kararlılık iyileştirmeleri hazır.
                         </span>
                       </div>
                     </div>
 
                     {releaseNotes && (
-                      <div className="mt-1 p-2 bg-[#0C0E14] border border-[#232018] rounded-lg max-h-24 overflow-y-auto pos-scrollbar text-[10px] text-surface-300 font-mono">
+                      <div className="mt-1 p-2 bg-[#171410] border border-[#3a342c] rounded-lg max-h-24 overflow-y-auto pos-scrollbar text-[10px] text-surface-300 font-mono">
                         {releaseNotes}
                       </div>
                     )}
@@ -300,7 +300,7 @@ export function UpdateWidget() {
               {/* DURUM 3: İndiriliyor (Downloading - Canlı Progress Bar) */}
               {status === 'downloading' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-[#0E1322] border border-[#1E294A] rounded-xl flex flex-col gap-2.5">
+                  <div className="p-3 bg-[#171410] border border-[#3A342C] rounded-xl flex flex-col gap-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <HardDriveDownload size={16} className="text-brand-400 animate-pulse" />
@@ -312,7 +312,7 @@ export function UpdateWidget() {
                     </div>
 
                     {/* Progress Bar Container */}
-                    <div className="w-full h-3 bg-[#080B12] border border-[#1A2238] rounded-full overflow-hidden p-0.5 relative">
+                    <div className="w-full h-3 bg-[#110F0C] border border-[#322C26] rounded-full overflow-hidden p-0.5 relative">
                       <motion.div
                         className="h-full bg-gradient-to-r from-brand-500 via-amber-400 to-amber-500 rounded-full"
                         initial={{ width: 0 }}
@@ -322,16 +322,16 @@ export function UpdateWidget() {
                     </div>
 
                     {/* İlerleme ve Hız İstatistikleri */}
-                    <div className="flex items-center justify-between text-[10px] font-mono text-surface-300 px-0.5">
-                      <div className="flex items-center gap-1">
-                        <span className="text-surface-400">Hız:</span>
-                        <span className="text-surface-200 font-semibold">
+                    <div className="flex flex-col gap-1 text-[10px] font-mono text-surface-300 px-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-surface-400">Hız</span>
+                        <span className="text-surface-200 font-semibold truncate">
                           {progress ? formatSpeed(progress.bytesPerSecond) : '0 KB/s'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-surface-400">İndirilen:</span>
-                        <span className="text-surface-200 font-semibold">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-surface-400 shrink-0">İndirilen</span>
+                        <span className="text-surface-200 font-semibold truncate">
                           {progress ? `${formatBytes(progress.transferred)} / ${formatBytes(progress.total)}` : '0 MB'}
                         </span>
                       </div>
@@ -348,7 +348,7 @@ export function UpdateWidget() {
               {/* DURUM 4: Hazır (Downloaded - Yeniden Başlat ve Yükle) */}
               {status === 'downloaded' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-[#0D1C16] border border-emerald-700/50 rounded-xl flex flex-col gap-2.5">
+                  <div className="p-3 bg-[#171410] border border-emerald-700/50 rounded-xl flex flex-col gap-2.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-emerald-950/60 border border-emerald-600/50 flex items-center justify-center text-emerald-400 shrink-0">
                         <CheckCircle2 size={18} />
@@ -382,7 +382,7 @@ export function UpdateWidget() {
               {/* HATA DURUMU (Error) */}
               {status === 'error' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-[#1C0E12] border border-rose-800/50 rounded-xl flex flex-col gap-2">
+                  <div className="p-3 bg-[#241F1A] border border-rose-800/50 rounded-xl flex flex-col gap-2">
                     <div className="flex items-start gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-rose-950/60 border border-rose-700/50 flex items-center justify-center text-rose-400 shrink-0 mt-0.5">
                         <AlertCircle size={18} />
@@ -401,7 +401,7 @@ export function UpdateWidget() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={temizleHata}
-                      className="flex-1 py-2 px-3 bg-[#141928] hover:bg-[#1C2338] text-surface-300 hover:text-white text-xs font-semibold rounded-xl border border-[#1E2436] transition-colors"
+                      className="flex-1 py-2 px-3 bg-[#1e1a16] hover:bg-[#322C26] text-surface-300 hover:text-white text-xs font-semibold rounded-xl border border-[#322C26] transition-colors"
                     >
                       Kapat
                     </button>
@@ -419,9 +419,9 @@ export function UpdateWidget() {
             </div>
 
             {/* Footer Bilgi Çizgisi */}
-            <div className="pt-2 border-t border-[#151928] flex items-center justify-between text-[9px] font-mono text-surface-500">
-              <span>ETİBOL POS AutoUpdater</span>
-              <span>GitHub Releases</span>
+            <div className="pt-2 border-t border-[#1e1a16] flex items-center justify-between gap-2 text-[9px] font-mono text-surface-500">
+              <span className="truncate">ETİBOL POS</span>
+              <span className="shrink-0">GitHub Releases</span>
             </div>
           </motion.div>
         )}

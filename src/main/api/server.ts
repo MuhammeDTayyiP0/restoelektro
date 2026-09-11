@@ -14,6 +14,8 @@ import fs from 'fs'
 import multer from 'multer'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 import { varsayilanYerelIpGetir } from '../services/network.service'
+import { terminalAyarYukle } from '../services/terminal.service'
+import { ipcHandlerCalistir, yerelKanalMi } from '../ipc/ipc-registry'
 
 
 const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
@@ -721,6 +723,49 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       kategoriler,
       urunler,
     })
+  })
+
+  // ===== İKİNCİ KASA / LAN IPC KÖPRÜSÜ =====
+  app.get('/api/kasa/ping', (_req, res) => {
+    const t = terminalAyarYukle()
+    let isletme = 'ETİBOL POS'
+    try {
+      const db = veritabaniGetir()
+      const ayar = db.prepare("SELECT deger FROM ayar WHERE anahtar = 'isletme_adi'").get() as any
+      if (ayar?.deger) isletme = ayar.deger
+    } catch {
+      // db yoksa varsayılan
+    }
+    res.json({
+      basarili: true,
+      rol: 'ana',
+      egitim: Boolean(t.egitim),
+      terminalId: t.terminalId,
+      isletme,
+    })
+  })
+
+  app.post('/api/ipc', async (req, res) => {
+    const t = terminalAyarYukle()
+    if (t.egitim) {
+      return res.status(503).json({ basarili: false, hata: 'Ana kasa eğitim modunda. İkinci kasa bağlanamaz.' })
+    }
+    const { kanal, args, token } = req.body || {}
+    if (!token || token !== t.lanToken) {
+      return res.status(401).json({ basarili: false, hata: 'LAN jetonu hatalı' })
+    }
+    if (!kanal || typeof kanal !== 'string') {
+      return res.status(400).json({ basarili: false, hata: 'Kanal gerekli' })
+    }
+    if (yerelKanalMi(kanal)) {
+      return res.status(403).json({ basarili: false, hata: 'Bu kanal uzaktan çağrılamaz' })
+    }
+    try {
+      const sonuc = await ipcHandlerCalistir(kanal, Array.isArray(args) ? args : [])
+      res.json(sonuc)
+    } catch (hata: any) {
+      res.status(500).json({ basarili: false, hata: hata?.message || 'IPC hatası' })
+    }
   })
 
   // Sunucuyu başlat (httpServer kullanmalıyız ki Socket.io çalışsın)

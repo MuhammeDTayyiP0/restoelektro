@@ -93,7 +93,7 @@ export default function MenuSettings() {
 
   // Form State (Kategori)
   const [katAd, setKatAd] = useState('')
-  const [katRenk, setKatRenk] = useState('#3B82F6')
+  const [katRenk, setKatRenk] = useState('#9A5F48')
   const [katSiraNo, setKatSiraNo] = useState<number | string>(999)
   const [suruklenenKatId, setSuruklenenKatId] = useState<number | null>(null)
 
@@ -186,15 +186,15 @@ export default function MenuSettings() {
 
   // Renk Paleti Seçenekleri
   const hazirRenkler = [
-    '#3B82F6', // Brand Blue
+    '#9A5F48', // Kil
     '#10B981', // Emerald
     '#F59E0B', // Amber
     '#EF4444', // Rose
-    '#8B5CF6', // Purple
-    '#EC4899', // Pink
+    '#8B5CF6', // Mor
+    '#EC4899', // Pembe
     '#06B6D4', // Cyan
-    '#F97316', // Orange
-    '#6366F1', // Indigo
+    '#F97316', // Turuncu
+    '#5B7C99', // Slate
     '#14B8A6'  // Teal
   ]
 
@@ -254,12 +254,12 @@ export default function MenuSettings() {
     if (kat) {
       setDuzenlenenKat(kat)
       setKatAd(kat.ad || '')
-      setKatRenk(kat.renk || '#3B82F6')
+      setKatRenk(kat.renk || '#9A5F48')
       setKatSiraNo(kat.sira_no ?? 999)
     } else {
       setDuzenlenenKat(null)
       setKatAd('')
-      setKatRenk('#3B82F6')
+      setKatRenk('#9A5F48')
       const mevcutSiraNolari = kategoriler
         .map(k => k.sira_no)
         .filter((s): s is number => typeof s === 'number' && s < 999)
@@ -938,13 +938,13 @@ export default function MenuSettings() {
 
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0D101A] text-surface-100 p-2 sm:p-3.5 overflow-hidden select-none min-h-0">
+    <div className="flex flex-col h-full w-full bg-[#171410] text-surface-100 p-2 sm:p-3.5 overflow-hidden select-none min-h-0">
       
       {/* Üst Sekme & Kontrol Barı */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 shrink-0 pb-2.5 border-b border-[#1A1F30]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 shrink-0 pb-2.5 border-b border-[#322C26]">
         
         {/* Modül Sekmeleri */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#090B12] border border-[#1E2436] rounded-xl overflow-x-auto pos-scrollbar">
+        <div className="flex items-center gap-1.5 p-1 bg-[#110F0C] border border-[#322C26] rounded-xl overflow-x-auto pos-scrollbar">
           <button
             type="button"
             onClick={() => setSubTab('urunler')}
@@ -952,7 +952,7 @@ export default function MenuSettings() {
               "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'urunler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <Package size={15} />
@@ -969,7 +969,7 @@ export default function MenuSettings() {
               "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'fiyat-guncelleme'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <TrendingUp size={15} />
@@ -983,7 +983,7 @@ export default function MenuSettings() {
               "flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap touch-feedback",
               subTab === 'kategoriler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#121624]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <LayoutGrid size={15} />
@@ -1005,7 +1005,7 @@ export default function MenuSettings() {
                   placeholder="Ürün adı veya barkod ara..."
                   value={aramaMetni}
                   onChange={e => setAramaMetni(e.target.value)}
-                  className="w-full h-9 pl-9 pr-8 text-xs rounded-xl bg-[#090C15] border border-[#1E2436] text-white placeholder:text-surface-500 focus:outline-none focus:border-brand-500"
+                  className="w-full h-9 pl-9 pr-8 text-xs rounded-xl bg-[#110F0C] border border-[#322C26] text-white placeholder:text-surface-500 focus:outline-none focus:border-brand-500"
                 />
                 {aramaMetni && (
                   <button
@@ -1049,8 +1049,8 @@ export default function MenuSettings() {
         <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 sm:gap-4 overflow-hidden">
           
           {/* Sol Kategori Filtre Paneli */}
-          <div className="w-full md:w-52 lg:w-60 xl:w-64 bg-[#090B12] rounded-xl border border-[#1E2436] p-2.5 sm:p-3 flex flex-col shrink-0 overflow-hidden max-h-44 md:max-h-none">
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1A1F30] shrink-0">
+          <div className="w-full md:w-52 lg:w-60 xl:w-64 bg-[#110F0C] rounded-xl border border-[#322C26] p-2.5 sm:p-3 flex flex-col shrink-0 overflow-hidden max-h-44 md:max-h-none">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#322C26] shrink-0">
               <span className="text-[11px] font-mono font-bold text-surface-400 uppercase">Kategoriler</span>
               <button
                 type="button"
@@ -1069,7 +1069,7 @@ export default function MenuSettings() {
                   "flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback shrink-0 md:shrink",
                   seciliKategoriId === null
                     ? "bg-brand-950/60 text-white border-brand-500/60 shadow-sm"
-                    : "bg-[#0E121E] border-transparent text-surface-300 hover:bg-[#141826] hover:text-white"
+                    : "bg-[#171410] border-transparent text-surface-300 hover:bg-[#1e1a16] hover:text-white"
                 )}
               >
                 <span>Tüm Ürünler</span>
@@ -1087,13 +1087,13 @@ export default function MenuSettings() {
                     "flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-lg text-xs font-bold transition-all text-left border touch-feedback group shrink-0 md:shrink",
                     seciliKategoriId === kat.id
                       ? "bg-brand-950/60 text-white border-brand-500/60 shadow-sm"
-                      : "bg-[#0E121E] border-transparent text-surface-300 hover:bg-[#141826] hover:text-white"
+                      : "bg-[#171410] border-transparent text-surface-300 hover:bg-[#1e1a16] hover:text-white"
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span 
                       className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 shadow-xs" 
-                      style={{ backgroundColor: kat.renk || '#3B82F6' }} 
+                      style={{ backgroundColor: kat.renk || '#9A5F48' }} 
                     />
                     <span className="truncate">{kat.ad}</span>
                   </div>
@@ -1111,14 +1111,14 @@ export default function MenuSettings() {
           </div>
 
           {/* Sağ Ürün Listesi */}
-          <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-3 sm:p-4 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 bg-[#110F0C] rounded-xl border border-[#322C26] p-3 sm:p-4 flex flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar pr-1 pb-4">
               {yukleniyor ? (
                 <div className="flex items-center justify-center h-48 text-surface-400 font-mono text-sm">
                   <RefreshCw className="animate-spin mr-2" size={18} /> Ürünler yükleniyor...
                 </div>
               ) : gosterilenUrunler.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#1E2538] rounded-xl my-4">
+                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#322C26] rounded-xl my-4">
                   <Package size={36} className="text-surface-600 mb-2" />
                   <p className="font-semibold text-sm">Seçilen kriterde ürün bulunamadı</p>
                   <Button
@@ -1141,10 +1141,10 @@ export default function MenuSettings() {
                         layout
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="relative bg-[#0E121E] border border-[#1E2436] hover:border-brand-500/50 rounded-xl p-3 flex items-center gap-3 transition-all group shadow-sm hover:shadow-brand-950/20 min-w-0"
+                        className="relative bg-[#171410] border border-[#322C26] hover:border-brand-500/50 rounded-xl p-3 flex items-center gap-3 transition-all group shadow-sm hover:shadow-brand-950/20 min-w-0"
                       >
                         {/* Sol Taraf: Küçük Ürün Görseli */}
-                        <div className="w-16 h-16 rounded-lg bg-[#141A26] border border-[#222C42] flex items-center justify-center flex-shrink-0 overflow-hidden text-slate-300 shadow-inner group-hover:border-brand-500/40 transition-colors">
+                        <div className="w-16 h-16 rounded-lg bg-[#1E1A16] border border-[#3A342C] flex items-center justify-center flex-shrink-0 overflow-hidden text-slate-300 shadow-inner group-hover:border-brand-500/40 transition-colors">
                           {urun.resim_yolu ? (
                             <img
                               src={formatResimUrl(urun.resim_yolu)}
@@ -1177,10 +1177,10 @@ export default function MenuSettings() {
                           {/* Kategori & Fiyat Rozetleri */}
                           <div className="flex flex-wrap items-center gap-1 min-w-0">
                             {urun.kategori_adi && (
-                              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#141826] border border-[#1E2538] max-w-full truncate">
+                              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1e1a16] border border-[#322C26] max-w-full truncate">
                                 <span
                                   className="w-2 h-2 rounded-full shrink-0"
-                                  style={{ backgroundColor: kategori?.renk || '#3B82F6' }}
+                                  style={{ backgroundColor: kategori?.renk || '#9A5F48' }}
                                 />
                                 <span className="text-[10px] font-medium text-surface-400 truncate">
                                   {urun.kategori_adi}
@@ -1211,7 +1211,7 @@ export default function MenuSettings() {
                           <button
                             type="button"
                             onClick={() => urunModaliniAc(urun)}
-                            className="p-1.5 rounded-lg bg-[#141826] hover:bg-brand-950/60 hover:text-brand-300 border border-[#1E2538] hover:border-brand-700/50 text-surface-400 transition-all touch-feedback"
+                            className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-brand-950/60 hover:text-brand-300 border border-[#322C26] hover:border-brand-700/50 text-surface-400 transition-all touch-feedback"
                             title="Düzenle"
                           >
                             <Edit2 size={13} />
@@ -1219,7 +1219,7 @@ export default function MenuSettings() {
                           <button
                             type="button"
                             onClick={() => urunSil(urun.id)}
-                            className="p-1.5 rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback"
+                            className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-rose-950/60 hover:text-rose-300 border border-[#322C26] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback"
                             title="Sil"
                           >
                             <Trash2 size={13} />
@@ -1237,21 +1237,21 @@ export default function MenuSettings() {
 
       {/* SUBTAB 2: HIZLI & TOPLU FİYAT GÜNCELLEME */}
       {subTab === 'fiyat-guncelleme' && (
-        <div className="flex-1 min-h-0 bg-[#090A0F] rounded-xl border border-[#1E2230] p-2.5 sm:p-4 flex flex-col overflow-y-auto lg:overflow-hidden pos-scrollbar">
+        <div className="flex-1 min-h-0 bg-[#0B0A08] rounded-xl border border-[#322C26] p-2.5 sm:p-4 flex flex-col overflow-y-auto lg:overflow-hidden pos-scrollbar">
           <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
             
             {/* SOL TARAF: FİLTRELEME & PARAMETRELER */}
-            <div className="w-full lg:w-[380px] xl:w-[440px] flex flex-col shrink-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg min-h-0">
+            <div className="w-full lg:w-[380px] xl:w-[440px] flex flex-col shrink-0 bg-[#171410] border border-[#322C26] rounded-xl overflow-hidden shadow-lg min-h-0">
               
               {/* Sol Panel Başlığı */}
-              <div className="px-3.5 py-2.5 border-b border-[#1E2230] bg-[#0A0D17] flex items-center justify-between shrink-0">
+              <div className="px-3.5 py-2.5 border-b border-[#322C26] bg-[#171410] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal size={14} className="text-brand-400" />
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
                     Filtreleme & Parametreler
                   </span>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#141826] border border-[#1E2230] text-brand-300">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1e1a16] border border-[#322C26] text-brand-300">
                   {hedefUrunler.length} / {urunler.length} Ürün
                 </span>
               </div>
@@ -1260,7 +1260,7 @@ export default function MenuSettings() {
               <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar p-3 sm:p-3.5 space-y-3">
                 
                 {/* 1. Ürün Seçim Kapsamı */}
-                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2.5">
+                <div className="bg-[#0B0A08] border border-[#322C26] rounded-xl p-3 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
@@ -1272,7 +1272,7 @@ export default function MenuSettings() {
                   </div>
 
                   {/* Mod Seçici */}
-                  <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
+                  <div className="grid grid-cols-2 gap-1 bg-[#171410] p-1 rounded-lg border border-[#322C26]">
                     <button
                       type="button"
                       onClick={() => handleModDegistir('kategori')}
@@ -1310,7 +1310,7 @@ export default function MenuSettings() {
                       <select
                         value={topluKategoriId}
                         onChange={e => setTopluKategoriId(e.target.value)}
-                        className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none"
+                        className="w-full h-9 px-3 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none"
                       >
                         <option value="tum">Tüm Kategoriler ({urunler.length} Ürün)</option>
                         {siraliKategoriler.map(k => (
@@ -1319,7 +1319,7 @@ export default function MenuSettings() {
                           </option>
                         ))}
                       </select>
-                      <div className="px-2.5 py-1.5 rounded-lg bg-[#0E121E] border border-[#1E2230] text-[11px] font-mono text-surface-300 flex items-center justify-between">
+                      <div className="px-2.5 py-1.5 rounded-lg bg-[#171410] border border-[#322C26] text-[11px] font-mono text-surface-300 flex items-center justify-between">
                         <span className="text-surface-400 text-[10px]">Hedef Kapsam:</span>
                         <strong className="text-white text-[11px]">
                           {topluKategoriId === 'tum' ? 'Tüm Menü' : kategoriler.find(k => String(k.id) === topluKategoriId)?.ad || ''} ({hedefUrunler.length} Ürün)
@@ -1340,13 +1340,13 @@ export default function MenuSettings() {
                             value={ozelUrunArama}
                             onChange={e => setOzelUrunArama(e.target.value)}
                             placeholder="Ürün adı veya barkod..."
-                            className="w-full h-8 pl-8 pr-2 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white placeholder-surface-500 text-xs focus:border-brand-500 focus:outline-none"
+                            className="w-full h-8 pl-8 pr-2 rounded-lg border border-[#322C26] bg-[#171410] text-white placeholder-surface-500 text-xs focus:border-brand-500 focus:outline-none"
                           />
                         </div>
                         <select
                           value={ozelKategoriFiltre}
                           onChange={e => setOzelKategoriFiltre(e.target.value)}
-                          className="h-8 px-2 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none max-w-[125px]"
+                          className="h-8 px-2 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs font-semibold focus:border-brand-500 focus:outline-none max-w-[125px]"
                         >
                           <option value="tum">Tüm Kat.</option>
                           {siraliKategoriler.map(k => (
@@ -1380,7 +1380,7 @@ export default function MenuSettings() {
                       </div>
 
                       {/* Ürün Seçim Listesi */}
-                      <div className="max-h-40 overflow-y-auto pos-scrollbar border border-[#1E2436] rounded-lg bg-[#0E121E] divide-y divide-[#1A1F30]">
+                      <div className="max-h-40 overflow-y-auto pos-scrollbar border border-[#322C26] rounded-lg bg-[#171410] divide-y divide-[#322C26]">
                         {ozelGosterilenUrunler.length === 0 ? (
                           <div className="p-3 text-center text-surface-500 text-xs font-mono">
                             Ürün bulunamadı
@@ -1394,7 +1394,7 @@ export default function MenuSettings() {
                                 onClick={() => handleUrunSecimToggle(u.id)}
                                 className={clsx(
                                   "px-2.5 py-1.5 flex items-center justify-between cursor-pointer transition-colors text-xs select-none",
-                                  secili ? "bg-brand-950/40 text-white" : "hover:bg-[#141826] text-surface-300"
+                                  secili ? "bg-brand-950/40 text-white" : "hover:bg-[#1e1a16] text-surface-300"
                                 )}
                               >
                                 <div className="flex items-center gap-2 min-w-0">
@@ -1418,7 +1418,7 @@ export default function MenuSettings() {
                 </div>
 
                 {/* 2. Hedef Satış Türü / Birim */}
-                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2.5">
+                <div className="bg-[#0B0A08] border border-[#322C26] rounded-xl p-3 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
@@ -1429,7 +1429,7 @@ export default function MenuSettings() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
+                  <div className="grid grid-cols-2 gap-1 bg-[#171410] p-1 rounded-lg border border-[#322C26]">
                     <button
                       type="button"
                       onClick={() => setHedefBirimModu('hepsi')}
@@ -1460,7 +1460,7 @@ export default function MenuSettings() {
                       <select
                         value={seciliOzelBirim}
                         onChange={e => setSeciliOzelBirim(e.target.value)}
-                        className="w-full h-9 px-3 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none uppercase"
+                        className="w-full h-9 px-3 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs font-bold focus:border-brand-500 focus:outline-none uppercase"
                       >
                         {tumBirimler.map(b => (
                           <option key={b} value={b}>{b}</option>
@@ -1471,7 +1471,7 @@ export default function MenuSettings() {
                 </div>
 
                 {/* 3. Fiyat Değişim Kuralı */}
-                <div className="bg-[#090A0F] border border-[#1E2230] rounded-xl p-3 space-y-2.5">
+                <div className="bg-[#0B0A08] border border-[#322C26] rounded-xl p-3 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
@@ -1482,7 +1482,7 @@ export default function MenuSettings() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1 bg-[#0E121E] p-1 rounded-lg border border-[#1E2230]">
+                  <div className="grid grid-cols-2 gap-1 bg-[#171410] p-1 rounded-lg border border-[#322C26]">
                     <button
                       type="button"
                       onClick={() => setArtisTipi('yuzde')}
@@ -1517,7 +1517,7 @@ export default function MenuSettings() {
                         setArtisDegeri(val)
                       }}
                       placeholder="Değer giriniz (Örn: 10 veya -5)"
-                      className="w-full h-10 px-3 pr-10 rounded-lg border border-[#1E2230] bg-[#0E121E] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
+                      className="w-full h-10 px-3 pr-10 rounded-lg border border-[#322C26] bg-[#171410] text-white font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 font-mono text-xs font-bold">
                       {artisTipi === 'yuzde' ? '%' : '₺'}
@@ -1536,7 +1536,7 @@ export default function MenuSettings() {
                             "px-2 py-0.5 rounded text-[10px] font-mono border whitespace-nowrap transition-all touch-feedback",
                             artisDegeri === String(p)
                               ? "bg-brand-600 text-white border-brand-500"
-                              : "bg-[#0E121E] hover:bg-[#1E2538] border-[#1E2230] text-surface-300"
+                              : "bg-[#171410] hover:bg-[#322C26] border-[#322C26] text-surface-300"
                           )}
                         >
                           {p > 0 ? `+${p}%` : `${p}%`}
@@ -1552,7 +1552,7 @@ export default function MenuSettings() {
                             "px-2 py-0.5 rounded text-[10px] font-mono border whitespace-nowrap transition-all touch-feedback",
                             artisDegeri === String(t)
                               ? "bg-brand-600 text-white border-brand-500"
-                              : "bg-[#0E121E] hover:bg-[#1E2538] border-[#1E2230] text-surface-300"
+                              : "bg-[#171410] hover:bg-[#322C26] border-[#322C26] text-surface-300"
                           )}
                         >
                           {t > 0 ? `+${t}₺` : `${t}₺`}
@@ -1565,11 +1565,11 @@ export default function MenuSettings() {
               </div>
 
               {/* Sol Panel Alt Aksiyon Butonları (Sticky Bottom) */}
-              <div className="p-3 border-t border-[#1E2230] bg-[#0A0D17] flex items-center gap-2 shrink-0 sticky bottom-0 z-10">
+              <div className="p-3 border-t border-[#322C26] bg-[#171410] flex items-center gap-2 shrink-0 sticky bottom-0 z-10">
                 <Button
                   variant="ghost"
                   onClick={() => setOnizlemeModalAcik(true)}
-                  className="h-10 text-xs font-bold border border-[#1E2230] hover:bg-[#141826] text-surface-300 flex items-center justify-center gap-1.5 flex-1"
+                  className="h-10 text-xs font-bold border border-[#322C26] hover:bg-[#1e1a16] text-surface-300 flex items-center justify-center gap-1.5 flex-1"
                 >
                   <Eye size={14} />
                   <span>Geniş Önizleme</span>
@@ -1589,10 +1589,10 @@ export default function MenuSettings() {
             </div>
 
             {/* SAĞ TARAF: CANLI DEĞİŞİM SİMÜLASYON KARTI */}
-            <div className="w-full lg:flex-1 flex flex-col min-h-0 bg-[#0E121E] border border-[#1E2230] rounded-xl overflow-hidden shadow-lg">
+            <div className="w-full lg:flex-1 flex flex-col min-h-0 bg-[#171410] border border-[#322C26] rounded-xl overflow-hidden shadow-lg">
               
               {/* Sağ Panel Başlık & Kontroller */}
-              <div className="px-3.5 py-2.5 border-b border-[#1E2230] bg-[#0A0D17] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+              <div className="px-3.5 py-2.5 border-b border-[#322C26] bg-[#171410] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <TrendingUp size={14} className="text-emerald-400" />
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
@@ -1627,7 +1627,7 @@ export default function MenuSettings() {
                       value={simulasyonArama}
                       onChange={e => setSimulasyonArama(e.target.value)}
                       placeholder="Simülasyonda ara..."
-                      className="h-8 pl-8 pr-2 rounded-lg border border-[#1E2230] bg-[#090A0F] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-36 sm:w-44 font-mono"
+                      className="h-8 pl-8 pr-2 rounded-lg border border-[#322C26] bg-[#0B0A08] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-36 sm:w-44 font-mono"
                     />
                   </div>
                 </div>
@@ -1637,7 +1637,7 @@ export default function MenuSettings() {
               <div className="flex-1 min-h-0 max-h-[300px] lg:max-h-none overflow-y-auto pos-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#1E2230] bg-[#0A0D17] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
+                    <tr className="border-b border-[#322C26] bg-[#171410] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
                       <th className="py-2.5 px-3">Ürün Adı</th>
                       <th className="py-2.5 px-2.5">Birim</th>
                       <th className="py-2.5 px-2.5 text-right">Eski Fiyat</th>
@@ -1646,7 +1646,7 @@ export default function MenuSettings() {
                       <th className="py-2.5 px-2.5 text-center">Durum</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1A1F30] text-xs">
+                  <tbody className="divide-y divide-[#322C26] text-xs">
                     {filtreliSimulasyonListesi.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="text-center py-16 text-surface-500 font-mono text-xs">
@@ -1655,7 +1655,7 @@ export default function MenuSettings() {
                       </tr>
                     ) : (
                       filtreliSimulasyonListesi.map(satir => (
-                        <tr key={satir.id} className="hover:bg-[#121626] transition-colors">
+                        <tr key={satir.id} className="hover:bg-[#1e1a16] transition-colors">
                           <td className="py-2 px-3">
                             <p className="font-bold text-white text-xs truncate max-w-[150px] sm:max-w-[200px]">
                               {satir.urunAdi}
@@ -1689,7 +1689,7 @@ export default function MenuSettings() {
                                   ? "bg-emerald-950/60 text-emerald-300 border-emerald-600/40"
                                   : satir.fark < 0
                                   ? "bg-rose-950/60 text-rose-300 border-rose-600/40"
-                                  : "bg-[#141826] text-surface-400 border-[#1E2230]"
+                                  : "bg-[#1e1a16] text-surface-400 border-[#322C26]"
                               )}>
                                 {satir.fark > 0 ? (
                                   <>
@@ -1727,7 +1727,7 @@ export default function MenuSettings() {
                                     }
                                     handleManuelFiyatDegistir(satir.urunId, satir.birim, val)
                                   }}
-                                  className="w-24 h-7 px-2 text-right font-mono font-bold text-emerald-400 rounded-md border border-[#1E2230] bg-[#090A0F] focus:border-brand-500 focus:outline-none text-xs"
+                                  className="w-24 h-7 px-2 text-right font-mono font-bold text-emerald-400 rounded-md border border-[#322C26] bg-[#0B0A08] focus:border-brand-500 focus:outline-none text-xs"
                                 />
                               </div>
                             ) : (
@@ -1755,7 +1755,7 @@ export default function MenuSettings() {
               </div>
 
               {/* Sağ Panel Alt Özet & Kaydet Çubuğu (sticky bottom-0) */}
-              <div className="p-3 border-t border-[#1E2230] bg-[#0A0D17] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 sticky bottom-0 z-20">
+              <div className="p-3 border-t border-[#322C26] bg-[#171410] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 sticky bottom-0 z-20">
                 <div className="text-xs font-mono text-surface-400">
                   Toplam <strong className="text-white font-bold">{etkilenenUrunSayisi}</strong> ürün (<strong className="text-emerald-400 font-bold">{etkilenenFiyatSayisi}</strong> satış fiyatı) etkilenecek.
                 </div>
@@ -1780,9 +1780,9 @@ export default function MenuSettings() {
 
       {/* SUBTAB 3: KATEGORİ YÖNETİMİ */}
       {subTab === 'kategoriler' && (
-        <div className="flex-1 min-h-0 bg-[#090B12] rounded-xl border border-[#1E2436] p-4 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 bg-[#110F0C] rounded-xl border border-[#322C26] p-4 flex flex-col overflow-hidden">
           {/* Bilgi ve İpucu Çubuğu */}
-          <div className="mb-3 p-2.5 px-3.5 rounded-lg bg-[#0E1322] border border-[#1E253A] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <div className="mb-3 p-2.5 px-3.5 rounded-lg bg-[#171410] border border-[#322C26] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
             <div className="flex items-center gap-2 text-surface-300">
               <Sparkles size={14} className="text-cyan-400" />
               <span>
@@ -1804,14 +1804,14 @@ export default function MenuSettings() {
                   onDragOver={onKatDragOver}
                   onDrop={e => onKatDrop(e, kat.id)}
                   className={clsx(
-                    "bg-[#0E121E] border rounded-xl p-4 flex flex-col justify-between transition-all group shadow-sm select-none",
+                    "bg-[#171410] border rounded-xl p-4 flex flex-col justify-between transition-all group shadow-sm select-none",
                     suruklenenKatId === kat.id
                       ? "opacity-40 border-cyan-500 border-dashed scale-95"
-                      : "border-[#1E2436] hover:border-brand-500/40"
+                      : "border-[#322C26] hover:border-brand-500/40"
                   )}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#1A1F30]">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#322C26]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span title="Sürükleyip bırakarak sıralayın" className="inline-flex items-center">
                           <GripVertical
@@ -1821,7 +1821,7 @@ export default function MenuSettings() {
                         </span>
                         <span
                           className="w-3.5 h-3.5 rounded-full shadow-xs shrink-0"
-                          style={{ backgroundColor: kat.renk || '#3B82F6' }}
+                          style={{ backgroundColor: kat.renk || '#9A5F48' }}
                         />
                         <h3 className="font-bold text-white text-base tracking-tight truncate" title={kat.ad}>
                           {kat.ad}
@@ -1843,11 +1843,11 @@ export default function MenuSettings() {
 
                     <div className="flex items-center justify-between text-xs font-mono text-surface-400 mb-3">
                       <span>Renk Kodu:</span>
-                      <span className="font-bold text-surface-200">{kat.renk || '#3B82F6'}</span>
+                      <span className="font-bold text-surface-200">{kat.renk || '#9A5F48'}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-[#1A1F30] gap-2">
+                  <div className="flex items-center justify-between pt-2 border-t border-[#322C26] gap-2">
                     {/* Hızlı Yukarı / Aşağı Ok Butonları */}
                     <div className="flex items-center gap-1 shrink-0">
                       <button
@@ -1855,7 +1855,7 @@ export default function MenuSettings() {
                         disabled={index === 0}
                         onClick={() => kategoriSirala(kat.id, 'yukari')}
                         title="Yukarı / Öne Taşı"
-                        className="w-7 h-7 rounded-lg bg-[#141A28] border border-[#222B3F] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
+                        className="w-7 h-7 rounded-lg bg-[#1E1A16] border border-[#3A342C] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
                       >
                         <ChevronUp size={15} />
                       </button>
@@ -1864,7 +1864,7 @@ export default function MenuSettings() {
                         disabled={index === siraliKategoriler.length - 1}
                         onClick={() => kategoriSirala(kat.id, 'asagi')}
                         title="Aşağı / Arkaya Taşı"
-                        className="w-7 h-7 rounded-lg bg-[#141A28] border border-[#222B3F] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
+                        className="w-7 h-7 rounded-lg bg-[#1E1A16] border border-[#3A342C] text-slate-300 hover:text-white hover:bg-cyan-950/50 hover:border-cyan-500/50 flex items-center justify-center transition-all disabled:opacity-25 disabled:pointer-events-none touch-feedback"
                       >
                         <ChevronDown size={15} />
                       </button>
@@ -1918,7 +1918,7 @@ export default function MenuSettings() {
               placeholder="Örn: Ana Yemekler, İçecekler vb."
               value={katAd}
               onChange={e => setKatAd(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -1934,7 +1934,7 @@ export default function MenuSettings() {
               placeholder="Örn: 1, 2, 3... (Varsayılan: 999)"
               value={katSiraNo}
               onChange={e => setKatSiraNo(e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
-              className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm font-mono focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm font-mono focus:border-brand-500 focus:outline-none"
             />
             <p className="text-[11px] text-surface-500 mt-1 font-mono">
               Küçük sayılar (1, 2, 3...) menüde en başta gösterilir. Eşit olanlar kendi arasında alfabetik sıralanır.
@@ -1965,13 +1965,13 @@ export default function MenuSettings() {
                 type="color"
                 value={katRenk}
                 onChange={e => setKatRenk(e.target.value)}
-                className="h-10 w-16 rounded-xl border border-[#1E2436] bg-[#090C15] cursor-pointer p-0"
+                className="h-10 w-16 rounded-xl border border-[#322C26] bg-[#110F0C] cursor-pointer p-0"
               />
               <span className="text-xs font-mono uppercase text-surface-400">{katRenk}</span>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#1A1F30]">
+          <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#322C26]">
             <Button type="button" variant="ghost" onClick={() => setKatModalAcik(false)}>
               İptal
             </Button>
@@ -1992,7 +1992,7 @@ export default function MenuSettings() {
         <form key={duzenlenenUrun ? `urun-${duzenlenenUrun.id}` : 'urun-yeni'} onSubmit={urunKaydet} className="flex flex-col gap-4 max-h-[85vh] overflow-y-auto pos-scrollbar pr-1">
           
           {/* Sekme Butonları (Tabs) */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#090C15] border border-[#1E2436] rounded-xl overflow-x-auto pos-scrollbar shrink-0">
+          <div className="flex items-center gap-1.5 p-1 bg-[#110F0C] border border-[#322C26] rounded-xl overflow-x-auto pos-scrollbar shrink-0">
             <button
               type="button"
               onClick={() => setUrunModalTab('genel')}
@@ -2000,7 +2000,7 @@ export default function MenuSettings() {
                 "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'genel'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
               )}
             >
               <Package size={15} />
@@ -2013,7 +2013,7 @@ export default function MenuSettings() {
                 "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'satis'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
               )}
             >
               <DollarSign size={15} />
@@ -2031,7 +2031,7 @@ export default function MenuSettings() {
                 "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all touch-feedback whitespace-nowrap",
                 urunModalTab === 'stok'
                   ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                  : "text-surface-400 hover:text-surface-200 hover:bg-[#141826]"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
               )}
             >
               <SlidersHorizontal size={15} />
@@ -2061,7 +2061,7 @@ export default function MenuSettings() {
                     placeholder="Örn: Izgara Köfte Porsiyon"
                     value={urunAd}
                     onChange={e => setUrunAd(e.target.value)}
-                    className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
 
@@ -2073,7 +2073,7 @@ export default function MenuSettings() {
                     placeholder="Örn: Köfte Pors."
                     value={urunKisaltma}
                     onChange={e => setUrunKisaltma(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
 
@@ -2083,7 +2083,7 @@ export default function MenuSettings() {
                     required
                     value={urunKategoriId}
                     onChange={e => setUrunKategoriId(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
                   >
                     <option value="" disabled>Kategori Seçiniz...</option>
                     {siraliKategoriler.map(k => (
@@ -2100,7 +2100,7 @@ export default function MenuSettings() {
                     placeholder="Barkod okutun veya yazın..."
                     value={urunBarkod}
                     onChange={e => setUrunBarkod(e.target.value)}
-                    className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
 
@@ -2109,7 +2109,7 @@ export default function MenuSettings() {
                   <select
                     value={urunYaziciGrup}
                     onChange={e => setUrunYaziciGrup(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
                   >
                     <option value="mutfak">Ana Mutfak</option>
                     <option value="bar">Bar / İçecek</option>
@@ -2132,8 +2132,8 @@ export default function MenuSettings() {
                 </label>
 
                 {urunResimYolu ? (
-                  <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#090C15] border border-[#1E2436]">
-                    <div className="relative w-16 h-16 rounded-xl bg-[#141A26] border border-[#222C42] overflow-hidden shrink-0 shadow-md group">
+                  <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#110F0C] border border-[#322C26]">
+                    <div className="relative w-16 h-16 rounded-xl bg-[#1E1A16] border border-[#3A342C] overflow-hidden shrink-0 shadow-md group">
                       <img
                         src={formatResimUrl(urunResimYolu)}
                         alt="Ürün Görsel Önizleme"
@@ -2154,7 +2154,7 @@ export default function MenuSettings() {
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={resimYukleniyor}
-                          className="px-2.5 py-1 rounded-lg bg-[#141826] hover:bg-brand-950/70 hover:text-brand-300 border border-[#1E2538] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
+                          className="px-2.5 py-1 rounded-lg bg-[#1e1a16] hover:bg-brand-950/70 hover:text-brand-300 border border-[#322C26] hover:border-brand-600/50 text-xs font-semibold text-surface-300 transition-all touch-feedback flex items-center gap-1.5"
                         >
                           {resimYukleniyor ? (
                             <RefreshCw size={13} className="animate-spin text-brand-400" />
@@ -2168,7 +2168,7 @@ export default function MenuSettings() {
                           type="button"
                           onClick={handleResimKaldir}
                           disabled={resimYukleniyor}
-                          className="px-2.5 py-1 rounded-lg bg-[#141826] hover:bg-rose-950/70 hover:text-rose-300 border border-[#1E2538] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
+                          className="px-2.5 py-1 rounded-lg bg-[#1e1a16] hover:bg-rose-950/70 hover:text-rose-300 border border-[#322C26] hover:border-rose-600/50 text-xs font-semibold text-surface-400 transition-all touch-feedback flex items-center gap-1.5"
                         >
                           <Trash2 size={13} />
                           <span>Kaldır</span>
@@ -2195,7 +2195,7 @@ export default function MenuSettings() {
                       "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer touch-feedback group",
                       isDragging
                         ? "border-brand-400 bg-brand-950/40"
-                        : "border-[#1E2436] hover:border-brand-500/60 bg-[#090C15] hover:bg-[#0E1322]"
+                        : "border-[#322C26] hover:border-brand-500/60 bg-[#110F0C] hover:bg-[#171410]"
                     )}
                   >
                     {resimYukleniyor ? (
@@ -2205,7 +2205,7 @@ export default function MenuSettings() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center text-center">
-                        <div className="w-9 h-9 rounded-xl bg-[#141826] border border-[#222C42] flex items-center justify-center text-surface-400 group-hover:text-brand-400 group-hover:border-brand-500/40 mb-1.5 transition-colors">
+                        <div className="w-9 h-9 rounded-xl bg-[#1e1a16] border border-[#3A342C] flex items-center justify-center text-surface-400 group-hover:text-brand-400 group-hover:border-brand-500/40 mb-1.5 transition-colors">
                           <UploadCloud size={18} />
                         </div>
                         <p className="text-xs font-semibold text-white mb-0.5">
@@ -2219,7 +2219,7 @@ export default function MenuSettings() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1 rounded-xl border border-[#1E2436] bg-[#090C15] p-2 mt-1">
+                <div className="flex flex-col gap-1 rounded-xl border border-[#322C26] bg-[#110F0C] p-2 mt-1">
                   <label htmlFor="urun-gorsel-url" className="text-[10px] font-mono uppercase text-surface-500">URL ile İndir & Ekle</label>
                   <div className="flex gap-2">
                     <input
@@ -2236,7 +2236,7 @@ export default function MenuSettings() {
                         }
                       }}
                       disabled={resimYukleniyor}
-                      className="min-w-0 flex-1 h-9 px-3 rounded-lg border border-[#1E2436] bg-[#0D101A] text-white text-xs placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 disabled:opacity-50"
+                      className="min-w-0 flex-1 h-9 px-3 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 disabled:opacity-50"
                     />
                     <button
                       type="button"
@@ -2288,8 +2288,8 @@ export default function MenuSettings() {
               {/* Satış Türleri Tablosu */}
               <div className="flex flex-col gap-2 max-h-56 sm:max-h-64 overflow-y-auto pos-scrollbar pr-1">
                 {satisTurleri.map((tur, index) => (
-                  <div key={tur.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 p-2.5 rounded-xl bg-[#090C15] border border-[#1E2436]">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#141826] border border-[#1E2538] flex items-center justify-center text-xs font-mono font-bold text-surface-400 shrink-0">
+                  <div key={tur.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 p-2.5 rounded-xl bg-[#110F0C] border border-[#322C26]">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#1e1a16] border border-[#322C26] flex items-center justify-center text-xs font-mono font-bold text-surface-400 shrink-0">
                       {index + 1}
                     </div>
 
@@ -2298,7 +2298,7 @@ export default function MenuSettings() {
                       <select
                         value={tur.birim}
                         onChange={e => satisTuruGuncelle(tur.id, 'birim', e.target.value)}
-                        className="w-full h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                        className="w-full h-9 px-2.5 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
                       >
                         <option value="Porsiyon">Porsiyon</option>
                         <option value="KG">KG (Kilo)</option>
@@ -2329,7 +2329,7 @@ export default function MenuSettings() {
                             }
                             satisTuruGuncelle(tur.id, 'fiyat', val)
                           }}
-                          className="w-full h-9 px-3 pr-8 rounded-lg border border-[#1E2436] bg-[#0E121E] text-emerald-400 font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
+                          className="w-full h-9 px-3 pr-8 rounded-lg border border-[#322C26] bg-[#171410] text-emerald-400 font-mono text-sm font-bold focus:border-brand-500 focus:outline-none"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 font-mono text-xs font-bold">₺</span>
                       </div>
@@ -2340,7 +2340,7 @@ export default function MenuSettings() {
                         type="button"
                         onClick={() => satisTuruSil(tur.id)}
                         disabled={satisTurleri.length <= 1}
-                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-feedback"
+                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#1e1a16] hover:bg-rose-950/60 hover:text-rose-300 border border-[#322C26] hover:border-rose-700/50 text-surface-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-feedback"
                         title="Bu Satış Türünü Kaldır"
                       >
                         <Trash2 size={14} />
@@ -2354,7 +2354,7 @@ export default function MenuSettings() {
               <button
                 type="button"
                 onClick={satisTuruEkle}
-                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#222C42] hover:border-brand-500/60 bg-[#090C15] hover:bg-brand-950/20 text-brand-400 hover:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 transition-all touch-feedback shrink-0"
+                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#3A342C] hover:border-brand-500/60 bg-[#110F0C] hover:bg-brand-950/20 text-brand-400 hover:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 transition-all touch-feedback shrink-0"
               >
                 <Plus size={15} />
                 <span>+ Yeni Satış Türü Ekle (Örn: KG, Adet)</span>
@@ -2367,7 +2367,7 @@ export default function MenuSettings() {
                   <select
                     value={urunKdv}
                     onChange={e => setUrunKdv(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+                    className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
                   >
                     <option value="1">%1 (Temel Gıda)</option>
                     <option value="10">%10 (Standart Restoran)</option>
@@ -2377,7 +2377,7 @@ export default function MenuSettings() {
 
                 <div className="flex flex-col justify-end">
                   <label className="text-xs font-mono text-surface-400 uppercase block mb-1.5">Kart Fiyat Önizleme</label>
-                  <div className="h-11 px-3.5 rounded-xl bg-[#090C15] border border-[#1E2436] flex items-center overflow-x-auto pos-scrollbar">
+                  <div className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] flex items-center overflow-x-auto pos-scrollbar">
                     <span className="text-xs font-mono font-bold text-emerald-400 truncate">
                       {satisTurleri.filter(t => t.fiyat && Number(t.fiyat) > 0).map(t => `${t.birim}: ${Number(t.fiyat).toLocaleString('tr-TR')} ₺`).join(' | ') || 'Fiyat girilmedi'}
                     </span>
@@ -2413,8 +2413,8 @@ export default function MenuSettings() {
                   <span>Reçete bilgileri yükleniyor...</span>
                 </div>
               ) : receteKalemleri.length === 0 ? (
-                <div className="p-8 rounded-xl border border-dashed border-[#1E2436] bg-[#090C15] text-center">
-                  <div className="w-10 h-10 rounded-xl bg-[#141826] border border-[#1E2538] flex items-center justify-center text-surface-400 mx-auto mb-2.5">
+                <div className="p-8 rounded-xl border border-dashed border-[#322C26] bg-[#110F0C] text-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#1e1a16] border border-[#322C26] flex items-center justify-center text-surface-400 mx-auto mb-2.5">
                     <SlidersHorizontal size={20} />
                   </div>
                   <p className="text-xs font-semibold text-surface-300 mb-1">Bu ürün için henüz reçete / hammadde tanımlanmamış.</p>
@@ -2422,7 +2422,7 @@ export default function MenuSettings() {
                   <button
                     type="button"
                     onClick={receteKalemiEkle}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#141826] hover:bg-[#1E2436] border border-[#1E2538] text-xs font-bold text-surface-200 inline-flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] border border-[#322C26] text-xs font-bold text-surface-200 inline-flex items-center gap-1.5"
                   >
                     <Plus size={13} />
                     <span>İlk Hammaddeyi Ekle</span>
@@ -2431,11 +2431,11 @@ export default function MenuSettings() {
               ) : (
                 <div className="flex flex-col gap-2 max-h-56 sm:max-h-60 overflow-y-auto pos-scrollbar pr-1">
                   {receteKalemleri.map((kalem, idx) => (
-                    <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 rounded-xl bg-[#090C15] border border-[#1E2436]">
+                    <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 rounded-xl bg-[#110F0C] border border-[#322C26]">
                       <select
                         value={kalem.hammadde_id}
                         onChange={e => receteKalemiGuncelle(idx, 'hammadde_id', e.target.value)}
-                        className="flex-1 min-w-[140px] h-9 px-2.5 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
+                        className="flex-1 min-w-[140px] h-9 px-2.5 rounded-lg border border-[#322C26] bg-[#171410] text-white text-xs font-bold focus:border-brand-500 focus:outline-none"
                       >
                         {hammaddeler.length === 0 ? (
                           <option value="0">Tanımlı hammadde bulunamadı</option>
@@ -2461,7 +2461,7 @@ export default function MenuSettings() {
                             receteKalemiGuncelle(idx, 'miktar', val)
                           }}
                           placeholder="Miktar"
-                          className="w-full h-9 px-2.5 pr-10 rounded-lg border border-[#1E2436] bg-[#0E121E] text-white font-mono text-xs font-bold focus:border-brand-500 focus:outline-none"
+                          className="w-full h-9 px-2.5 pr-10 rounded-lg border border-[#322C26] bg-[#171410] text-white font-mono text-xs font-bold focus:border-brand-500 focus:outline-none"
                         />
                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-surface-500 uppercase">
                           {kalem.birim}
@@ -2471,7 +2471,7 @@ export default function MenuSettings() {
                       <button
                         type="button"
                         onClick={() => receteKalemiSil(idx)}
-                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#141826] hover:bg-rose-950/60 hover:text-rose-300 border border-[#1E2538] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback shrink-0"
+                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-[#1e1a16] hover:bg-rose-950/60 hover:text-rose-300 border border-[#322C26] hover:border-rose-700/50 text-surface-400 transition-all touch-feedback shrink-0"
                         title="Bu Hammaddeyi Kaldır"
                       >
                         <Trash2 size={14} />
@@ -2484,7 +2484,7 @@ export default function MenuSettings() {
           )}
 
           {/* Footer */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mt-4 pt-3 border-t border-[#1A1F30] shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mt-4 pt-3 border-t border-[#322C26] shrink-0">
             <div className="flex items-center gap-2">
               {urunModalTab !== 'genel' && (
                 <Button
@@ -2533,24 +2533,24 @@ export default function MenuSettings() {
           
           {/* Özet Kartları */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
-            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+            <div className="bg-[#110F0C] border border-[#322C26] p-2.5 rounded-lg">
               <span className="text-[10px] font-mono text-surface-500 uppercase block">Seçilen Ürün</span>
               <strong className="text-white font-mono text-base">{hedefUrunler.length} Adet</strong>
             </div>
-            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+            <div className="bg-[#110F0C] border border-[#322C26] p-2.5 rounded-lg">
               <span className="text-[10px] font-mono text-surface-500 uppercase block">Hedef Birim</span>
               <strong className="text-brand-400 font-mono text-xs uppercase">
                 {hedefBirimModu === 'hepsi' ? 'Tüm Satış Türleri' : `Sadece ${seciliOzelBirim}`}
               </strong>
             </div>
-            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+            <div className="bg-[#110F0C] border border-[#322C26] p-2.5 rounded-lg">
               <span className="text-[10px] font-mono text-surface-500 uppercase block">Uygulanan Kural</span>
               <strong className="text-emerald-400 font-mono text-xs">
                 {artisTipi === 'yuzde' ? `+%${artisDegeri}` : `+${artisDegeri} ₺`}
                 {yuvarlamaAktif ? ` (${yuvarlamaKati} ₺ Yuvarlama)` : ''}
               </strong>
             </div>
-            <div className="bg-[#090C15] border border-[#1E2436] p-2.5 rounded-lg">
+            <div className="bg-[#110F0C] border border-[#322C26] p-2.5 rounded-lg">
               <span className="text-[10px] font-mono text-surface-500 uppercase block">Güncellenecek Fiyat</span>
               <strong className="text-emerald-300 font-mono text-base">{etkilenenFiyatSayisi} Kalem</strong>
             </div>
@@ -2568,16 +2568,16 @@ export default function MenuSettings() {
                 value={simulasyonArama}
                 onChange={e => setSimulasyonArama(e.target.value)}
                 placeholder="Önizlemede filtrele..."
-                className="h-8 pl-8 pr-2.5 rounded-lg border border-[#1E2436] bg-[#090C15] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-full"
+                className="h-8 pl-8 pr-2.5 rounded-lg border border-[#322C26] bg-[#110F0C] text-white text-xs placeholder-surface-500 focus:border-brand-500 focus:outline-none w-full"
               />
             </div>
           </div>
 
           {/* Modal Simülasyon Tablosu */}
-          <div className="flex-1 min-h-[260px] max-h-[45vh] overflow-y-auto pos-scrollbar border border-[#1E2436] rounded-lg bg-[#090C15]">
+          <div className="flex-1 min-h-[260px] max-h-[45vh] overflow-y-auto pos-scrollbar border border-[#322C26] rounded-lg bg-[#110F0C]">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#1E2436] bg-[#0D101C] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
+                <tr className="border-b border-[#322C26] bg-[#171410] text-[10px] font-mono text-surface-400 uppercase sticky top-0 z-10">
                   <th className="py-2.5 px-3">Ürün</th>
                   <th className="py-2.5 px-3">Tür</th>
                   <th className="py-2.5 px-3 text-right">Eski Fiyat</th>
@@ -2586,7 +2586,7 @@ export default function MenuSettings() {
                   <th className="py-2.5 px-3 text-center">Durum</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1A1F30] text-xs font-mono">
+              <tbody className="divide-y divide-[#322C26] text-xs font-mono">
                 {filtreliSimulasyonListesi.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-8 text-surface-500 font-mono">
@@ -2595,7 +2595,7 @@ export default function MenuSettings() {
                   </tr>
                 ) : (
                   filtreliSimulasyonListesi.map(satir => (
-                    <tr key={`modal-${satir.id}`} className="hover:bg-[#121626] transition-colors">
+                    <tr key={`modal-${satir.id}`} className="hover:bg-[#1e1a16] transition-colors">
                       <td className="py-2 px-3 font-bold text-white font-sans text-xs">
                         {satir.urunAdi}
                         <span className="block text-[10px] text-surface-500 font-mono font-normal">
@@ -2627,7 +2627,7 @@ export default function MenuSettings() {
                               ? "bg-emerald-950/60 text-emerald-300 border-emerald-600/40"
                               : satir.fark < 0
                               ? "bg-rose-950/60 text-rose-300 border-rose-600/40"
-                              : "bg-[#141826] text-surface-400 border-[#1E2230]"
+                              : "bg-[#1e1a16] text-surface-400 border-[#322C26]"
                           )}>
                             {satir.fark > 0 ? (
                               <>
@@ -2662,7 +2662,7 @@ export default function MenuSettings() {
                               }
                               handleManuelFiyatDegistir(satir.urunId, satir.birim, val)
                             }}
-                            className="w-24 h-7 px-2 text-right font-bold text-emerald-400 rounded border border-[#1E2538] bg-[#0E121E] focus:border-brand-500 focus:outline-none text-xs"
+                            className="w-24 h-7 px-2 text-right font-bold text-emerald-400 rounded border border-[#322C26] bg-[#171410] focus:border-brand-500 focus:outline-none text-xs"
                           />
                         ) : (
                           <span className="text-surface-500">{formatPara(satir.eskiFiyat)}</span>
@@ -2683,7 +2683,7 @@ export default function MenuSettings() {
           </div>
 
           {/* Modal Alt Çubuk */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#1A1F30] shrink-0">
+          <div className="flex items-center justify-between pt-3 border-t border-[#322C26] shrink-0">
             <Button
               type="button"
               variant="ghost"

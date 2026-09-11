@@ -34,6 +34,11 @@ export interface Hesap {
   musteri_adi?: string
   siparisler?: Siparis[]
   odemeler?: Odeme[]
+  teslimat_durumu?: string | null
+  teslimat_telefon?: string | null
+  teslimat_adres?: string | null
+  teslimat_musteri?: string | null
+  kurye?: string | null
 }
 
 /** Sipariş durumu */

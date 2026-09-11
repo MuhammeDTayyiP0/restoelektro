@@ -12,7 +12,7 @@ export function bossMobilHTML(): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#090A0F">
+  <meta name="theme-color" content="#0B0A08">
   <title>ETİBOL POS - Patron Takip Paneli</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,29 +20,29 @@ export function bossMobilHTML(): string {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-base: #090A0F;
-      --bg-surface: #0E121E;
-      --bg-surface-elevated: #141A2B;
-      --border-subtle: #1E2538;
-      --border-focus: #2E3B56;
-      --brand-primary: #3B82F6;
+      --bg-base: #0B0A08;
+      --bg-surface: #171410;
+      --bg-surface-elevated: #1E1A16;
+      --border-subtle: #322C26;
+      --border-focus: #4A433A;
+      --brand-primary: #9A5F48;
       --pos-green: #10B981;
       --pos-amber: #F59E0B;
       --pos-red: #EF4444;
-      --text-main: #F8FAFC;
-      --text-muted: #94A3B8;
-      --text-dim: #64748B;
+      --text-main: #F4EFE8;
+      --text-muted: #9C9284;
+      --text-dim: #7A7166;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background-color: var(--bg-base);
       color: var(--text-main);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       min-height: 100vh;
       padding-bottom: 40px;
     }
     .header {
-      background: #0B0E17;
+      background: #12110E;
       border-bottom: 1px solid var(--border-subtle);
       padding: 16px 20px;
       display: flex;
@@ -55,9 +55,9 @@ export function bossMobilHTML(): string {
     .logo-area { display: flex; align-items: center; gap: 10px; }
     .logo-badge {
       width: 36px; height: 36px; border-radius: 10px;
-      background: #1E2538; border: 1px solid #2B354F;
+      background: #9A5F48; border: 1px solid rgba(192, 143, 122, 0.35);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; color: #60A5FA; font-size: 16px;
+      font-weight: 800; color: #FFF; font-size: 15px;
     }
     .logo-title { font-size: 15px; font-weight: 800; color: #FFF; letter-spacing: -0.3px; }
     .logo-sub { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }

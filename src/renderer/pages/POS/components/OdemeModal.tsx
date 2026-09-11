@@ -54,10 +54,10 @@ const SiparisItemRow = React.memo(({
       className={clsx(
         "flex items-center justify-between p-3 mb-1.5 rounded-xl border transition-all select-none",
         isIkram 
-          ? "opacity-50 bg-[#0E131E] border-[#1C2538] grayscale cursor-default" 
+          ? "opacity-50 bg-[#171410] border-[#322C26] grayscale cursor-default" 
           : isSelected 
-            ? "bg-[#142136] border-cyan-500 ring-1 ring-cyan-400/50 cursor-pointer" 
-            : "bg-[#0C1018] border-[#1A2234] hover:bg-[#111722] hover:border-[#26324A] cursor-pointer"
+            ? "bg-[#241f1a] border-cyan-500 ring-1 ring-cyan-400/50 cursor-pointer" 
+            : "bg-[#171410] border-[#322C26] hover:bg-[#1e1a16] hover:border-[#403830] cursor-pointer"
       )}
     >
       <div className="flex items-center gap-3">
@@ -65,10 +65,10 @@ const SiparisItemRow = React.memo(({
         <div className={clsx(
           "w-6 h-6 rounded-lg flex items-center justify-center border font-mono font-bold text-xs shrink-0 transition-colors",
           isIkram 
-            ? "border-[#222C42] text-slate-400" 
+            ? "border-[#3A342C] text-slate-400" 
             : isSelected 
               ? "bg-cyan-500 border-cyan-400 text-black shadow-sm" 
-              : "border-[#25324A] text-slate-400 bg-[#090D15]"
+              : "border-[#403830] text-slate-400 bg-[#110F0C]"
         )}>
           {isSelected ? secilenMiktar : ''}
         </div>
@@ -94,25 +94,25 @@ const SiparisItemRow = React.memo(({
       <div className="flex items-center gap-3">
         {!isIkram && siparis.miktar > 1 && (
           <div 
-            className="flex items-center gap-0.5 border border-[#222E44] rounded-lg p-0.5 bg-[#090D15] shadow-inner" 
+            className="flex items-center gap-0.5 border border-[#3A342C] rounded-lg p-0.5 bg-[#110F0C] shadow-inner" 
             onClick={e => e.stopPropagation()}
           >
              <button 
-               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#162133] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
+               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#241f1a] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
                disabled={secilenMiktar <= 0}
                onClick={(e) => onMiktarDegistir(siparis, -1, e)}
              >
                -
              </button>
              <button 
-               className="w-8 h-7 text-center text-xs font-mono font-black bg-[#121A28] border border-[#202C40] rounded text-cyan-400 hover:bg-[#182337] transition-colors"
+               className="w-8 h-7 text-center text-xs font-mono font-black bg-[#1E1A16] border border-[#3A342C] rounded text-cyan-400 hover:bg-[#241f1a] transition-colors"
                onClick={(e) => { e.stopPropagation(); onMiktarAyarla(siparis); }}
                title="Miktarı belirlemek için dokunun"
              >
                {secilenMiktar === 0 ? '0' : secilenMiktar}
              </button>
              <button 
-               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#162133] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
+               className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-[#241f1a] disabled:opacity-25 disabled:hover:bg-transparent font-bold text-sm"
                disabled={secilenMiktar >= siparis.miktar}
                onClick={(e) => onMiktarDegistir(siparis, 1, e)}
              >
@@ -140,7 +140,7 @@ const SiparisItemRow = React.memo(({
 
 /** Ödenen ürünlerin satırı – statik */
 const OdenmisItemRow = React.memo(({ siparis }: { siparis: any }) => (
-  <div className="flex items-center justify-between p-2.5 mb-1.5 rounded-xl border border-[#182030] bg-[#0A0E17]/60 opacity-60 select-none">
+  <div className="flex items-center justify-between p-2.5 mb-1.5 rounded-xl border border-[#241f1a] bg-[#171410]/60 opacity-60 select-none">
     <div className="flex items-center gap-2.5">
       <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
       <div className="flex flex-col">
@@ -186,7 +186,7 @@ const HizliTutarButonlari = React.memo(({
         key={val}
         type="button"
         onClick={() => onHizliTutar(val)} 
-        className="font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-[#121724] border border-[#222C42] text-slate-200 shadow-sm text-xs sm:text-sm hover:bg-[#1A2236] hover:text-white active:scale-95 flex items-center justify-center transition-all flex-shrink-0 shrink-0"
+        className="font-mono font-bold h-9 sm:h-10 xl:h-11 rounded-lg sm:rounded-xl bg-[#1e1a16] border border-[#3A342C] text-slate-200 shadow-sm text-xs sm:text-sm hover:bg-[#322C26] hover:text-white active:scale-95 flex items-center justify-center transition-all flex-shrink-0 shrink-0"
       >
         {val}₺
       </button>
@@ -450,17 +450,17 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
       size="full"
     >
       <div 
-        className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none"
+        className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-[#0B0A08] text-slate-100 select-none"
         style={{ transform: 'translateZ(0)' }}
       >
         
         {/* SOL KOLON: ADİSYON ÖZETİ VE ALMAN USULÜ BÖLÜMÜ */}
-        <div className="flex flex-col w-full lg:w-5/12 xl:w-4/12 bg-[#0C1017] border-r border-[#1E2436] h-full flex-shrink-0 shrink-0 overflow-hidden">
+        <div className="flex flex-col w-full lg:w-5/12 xl:w-4/12 bg-[#171410] border-r border-[#322C26] h-full flex-shrink-0 shrink-0 overflow-hidden">
           
           {/* Adisyon Başlık Bilgisi */}
-          <div className="flex items-center justify-between p-3 sm:p-3.5 border-b border-[#1E2436] bg-[#0E131E] flex-shrink-0 shrink-0">
+          <div className="flex items-center justify-between p-3 sm:p-3.5 border-b border-[#322C26] bg-[#171410] flex-shrink-0 shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#141A26] border border-[#222C42] flex items-center justify-center text-cyan-400">
+              <div className="w-9 h-9 rounded-xl bg-[#1E1A16] border border-[#3A342C] flex items-center justify-center text-cyan-400">
                 <Receipt size={18} />
               </div>
               <div className="flex flex-col">
@@ -480,7 +480,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
                 "h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg font-mono text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5",
                 seciliIdSayisi > 0 
                   ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
-                  : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
+                  : "bg-[#1e1a16] text-slate-300 border-[#3A342C] hover:bg-[#322C26]"
               )}
             >
               <SplitSquareHorizontal size={14} />
@@ -489,7 +489,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
           </div>
 
           {/* Sipariş Listesi */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 pos-scrollbar bg-[#090D15]">
+          <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 pos-scrollbar bg-[#110F0C]">
             {odenecekSiparisler.length === 0 && !odenmisLerinVar ? (
               <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-center">
                 <p className="text-xs font-mono">Ödenecek kalem bulunamadı.</p>
@@ -510,7 +510,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
 
                 {/* Ödenen Ürünler */}
                 {odenmisLerinVar && (
-                  <div className="mt-3 pt-2.5 border-t border-[#1C2538]">
+                  <div className="mt-3 pt-2.5 border-t border-[#322C26]">
                     <h4 className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
                       Ödenen Ürünler
                     </h4>
@@ -524,7 +524,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
           </div>
 
           {/* Adisyon Finansal Özeti & İndirim */}
-          <div className="p-3 sm:p-3.5 bg-[#0E131E] border-t border-[#1E2436] flex flex-col gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
+          <div className="p-3 sm:p-3.5 bg-[#171410] border-t border-[#322C26] flex flex-col gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
             <div className="flex justify-between items-center text-xs font-mono text-slate-400">
               <span>Ara Toplam</span>
               <span className="font-bold text-slate-200 tabular-nums">{formatPara(aktifHesap?.toplam_tutar || 0)}</span>
@@ -537,7 +537,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
               </div>
             )}
 
-            <div className="flex justify-between items-baseline pt-1.5 border-t border-[#1C2538]">
+            <div className="flex justify-between items-baseline pt-1.5 border-t border-[#322C26]">
               <span className="text-xs font-mono font-black text-slate-300 uppercase tracking-wider">
                 Genel Toplam
               </span>
@@ -550,7 +550,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
               <button 
                 type="button"
                 onClick={handleIndirim} 
-                className="flex-1 h-9 sm:h-10 rounded-xl font-mono text-xs font-bold bg-[#141926] hover:bg-[#1C2436] border border-[#222C42] text-amber-300 active:scale-95 flex items-center justify-center gap-1.5 transition-all"
+                className="flex-1 h-9 sm:h-10 rounded-xl font-mono text-xs font-bold bg-[#1e1a16] hover:bg-[#322C26] border border-[#3A342C] text-amber-300 active:scale-95 flex items-center justify-center gap-1.5 transition-all"
               >
                 <Tag size={14} />
                 {hesaplamalar.indirimTutar > 0 ? 'İndirimi Değiştir' : 'İndirim Uygula'}
@@ -569,12 +569,12 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
         </div>
 
         {/* SAĞ KOLON: TAHSİLAT KONSOLU, NUMPAD VE BÜYÜK ÖDEME BUTONLARI */}
-        <div className="flex-1 min-w-0 h-full flex flex-col p-2.5 sm:p-3.5 lg:p-4 bg-[#090A0F] overflow-y-auto pos-scrollbar gap-2 sm:gap-2.5">
+        <div className="flex-1 min-w-0 h-full flex flex-col p-2.5 sm:p-3.5 lg:p-4 bg-[#0B0A08] overflow-y-auto pos-scrollbar gap-2 sm:gap-2.5">
           
           {/* 1. DİJİTAL GÖSTERGELER (DUAL LED READOUTS) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 flex-shrink-0 shrink-0">
             {/* Kalan Toplam Hesap */}
-            <div className="bg-[#0C1017] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#1E2436] flex flex-col justify-between shadow-md">
+            <div className="bg-[#171410] rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-[#322C26] flex flex-col justify-between shadow-md">
               <span className="text-[9px] sm:text-[10px] font-mono font-black text-slate-400 uppercase tracking-wider mb-0.5">
                 KALAN HESAP TUTARI
               </span>
@@ -592,8 +592,8 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
             <div className={clsx(
               "rounded-xl sm:rounded-2xl p-2 sm:p-3 border shadow-sm flex flex-col justify-between transition-all",
               (almanUsuluAktif || girilenTutar)
-                ? "bg-[#0E1726] border-cyan-400 ring-1 ring-cyan-400/50"
-                : "bg-[#0C1017] border-[#1E2436]"
+                ? "bg-[#171410] border-cyan-400 ring-1 ring-cyan-400/50"
+                : "bg-[#171410] border-[#322C26]"
             )}>
               <span className="text-[9px] sm:text-[10px] font-mono font-black text-cyan-300 uppercase tracking-wider mb-0.5 flex items-center justify-between">
                 <span>TAHSİL EDİLECEK TUTAR</span>
@@ -625,13 +625,13 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
                       odemeAl('nakit')
                     }
                   }}
-                  className="w-full bg-[#090D15]/80 px-2.5 py-1 rounded-xl border border-[#222C42] focus:border-cyan-400 text-xl sm:text-2xl lg:text-3xl font-black font-mono text-cyan-400 tabular-nums tracking-tight outline-none shadow-inner transition-colors placeholder:text-cyan-700/50"
+                  className="w-full bg-[#110F0C]/80 px-2.5 py-1 rounded-xl border border-[#3A342C] focus:border-cyan-400 text-xl sm:text-2xl lg:text-3xl font-black font-mono text-cyan-400 tabular-nums tracking-tight outline-none shadow-inner transition-colors placeholder:text-cyan-700/50"
                 />
                 {girilenTutar ? (
                   <button
                     type="button"
                     onClick={() => setGirilenTutar('')}
-                    className="absolute right-2 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-bold bg-[#141A26] hover:bg-[#1E2538] text-slate-300 rounded border border-[#222C42] transition-colors"
+                    className="absolute right-2 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-bold bg-[#1E1A16] hover:bg-[#322C26] text-slate-300 rounded border border-[#3A342C] transition-colors"
                   >
                     Temizle
                   </button>
@@ -656,7 +656,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
               />
 
               {/* Endüstriyel Dokunmatik Numpad */}
-              <div className="bg-[#0C1017] rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 border border-[#1E2436] flex items-center justify-center shadow-inner flex-shrink-0 shrink-0">
+              <div className="bg-[#171410] rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 border border-[#322C26] flex items-center justify-center shadow-inner flex-shrink-0 shrink-0">
                 <Numpad
                   layout={[
                     ['7', '8', '9'],
@@ -694,7 +694,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
                 className={clsx(
                   "pos-action-deck-btn flex-1 xl:flex-1 h-12 sm:h-14 xl:h-auto min-h-[48px] xl:min-h-[90px] 2xl:min-h-[110px] rounded-xl sm:rounded-2xl font-mono font-black text-xs sm:text-sm xl:text-base uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-1.5 sm:gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
                   odemeIslemi
-                    ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
+                    ? "bg-[#1E1A16] border-[#322C26] text-slate-500 cursor-not-allowed opacity-50"
                     : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 active:bg-emerald-700"
                 )}
               >
@@ -715,7 +715,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
                 className={clsx(
                   "pos-action-deck-btn flex-1 xl:flex-1 h-12 sm:h-14 xl:h-auto min-h-[48px] xl:min-h-[90px] 2xl:min-h-[110px] rounded-xl sm:rounded-2xl font-mono font-black text-xs sm:text-sm xl:text-base uppercase tracking-wider flex flex-row xl:flex-col items-center justify-center gap-1.5 sm:gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
                   odemeIslemi
-                    ? "bg-[#141A26] border-[#1E2436] text-slate-500 cursor-not-allowed opacity-50"
+                    ? "bg-[#1E1A16] border-[#322C26] text-slate-500 cursor-not-allowed opacity-50"
                     : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40 active:bg-cyan-700"
                 )}
               >

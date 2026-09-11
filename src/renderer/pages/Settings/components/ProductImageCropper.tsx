@@ -203,7 +203,7 @@ export function ProductImageCropper({ kaynak, yukleniyor = false, onIptal, onKay
       const oran = CIKTI_GENISLIK / cerceveBoyutu.width
       const x = ((cerceveBoyutu.width - renderBoyutu.width) / 2 + konum.x) * oran
       const y = ((cerceveBoyutu.height - renderBoyutu.height) / 2 + konum.y) * oran
-      context.fillStyle = '#111827'
+      context.fillStyle = '#1e1a16'
       context.fillRect(0, 0, CIKTI_GENISLIK, CIKTI_YUKSEKLIK)
       context.drawImage(gorsel, x, y, renderBoyutu.width * oran, renderBoyutu.height * oran)
 
@@ -222,7 +222,7 @@ export function ProductImageCropper({ kaynak, yukleniyor = false, onIptal, onKay
 
         <div
           ref={cerceveRef}
-          className="relative w-full aspect-video overflow-hidden rounded-xl border border-[#26304A] bg-[#06080E] touch-none cursor-grab active:cursor-grabbing"
+          className="relative w-full aspect-video overflow-hidden rounded-xl border border-[#403830] bg-[#0B0A08] touch-none cursor-grab active:cursor-grabbing"
           onPointerDown={suruklemeyiBaslat}
           onPointerMove={surukle}
           onPointerUp={() => { suruklemeRef.current = null }}
@@ -250,12 +250,12 @@ export function ProductImageCropper({ kaynak, yukleniyor = false, onIptal, onKay
             />
           )}
           {!gorselBoyutu && !hazirlamaHatasi && <div className="absolute inset-0 grid place-items-center text-xs font-mono text-surface-400">Görsel hazırlanıyor…</div>}
-          {hazirlamaHatasi && <div role="alert" className="absolute inset-0 grid place-items-center bg-[#06080E]/90 px-6 text-center text-xs font-medium text-rose-300">{hazirlamaHatasi}</div>}
+          {hazirlamaHatasi && <div role="alert" className="absolute inset-0 grid place-items-center bg-[#0B0A08]/90 px-6 text-center text-xs font-medium text-rose-300">{hazirlamaHatasi}</div>}
           <div className="pointer-events-none absolute inset-0 border-[10px] border-black/25" />
           <div className="pointer-events-none absolute inset-4 border border-white/70 shadow-[0_0_0_1px_rgba(0,0,0,.45)]" />
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-[#1E2436] bg-[#090C15] px-3 py-2.5">
+        <div className="flex items-center gap-3 rounded-xl border border-[#322C26] bg-[#110F0C] px-3 py-2.5">
           <ZoomIn size={16} className="shrink-0 text-brand-400" aria-hidden="true" />
           <label htmlFor="urun-gorsel-zoom" className="shrink-0 text-xs font-semibold text-surface-300">Yakınlaştır</label>
           <input
@@ -269,12 +269,12 @@ export function ProductImageCropper({ kaynak, yukleniyor = false, onIptal, onKay
             disabled={!gorselBoyutu || kaynakHazirlaniyor || yukleniyor || kirpiliyor}
             className="min-w-0 flex-1 accent-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded"
           />
-          <button type="button" onClick={() => { setZoom(1); setKonum({ x: 0, y: 0 }) }} disabled={yukleniyor || kirpiliyor} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs text-surface-400 hover:bg-[#141826] hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50">
+          <button type="button" onClick={() => { setZoom(1); setKonum({ x: 0, y: 0 }) }} disabled={yukleniyor || kirpiliyor} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs text-surface-400 hover:bg-[#1e1a16] hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50">
             <RotateCcw size={14} /> Sıfırla
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-[#1A1F30] pt-4">
+        <div className="flex items-center justify-between gap-3 border-t border-[#322C26] pt-4">
           <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-surface-500"><Move size={13} /> Sürükle ve ölçekle</span>
           <div className="ml-auto flex gap-2">
             <Button type="button" variant="ghost" onClick={onIptal} disabled={yukleniyor || kirpiliyor}>İptal</Button>

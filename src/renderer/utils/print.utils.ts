@@ -586,7 +586,7 @@ export function generateStandardQRHtml(
           <div style="font-size: 15px; font-weight: 900; color: #090A0F; letter-spacing: 0.5px; text-transform: uppercase;">
             ${restoName}
           </div>
-          <div style="font-size: 11px; font-weight: 700; color: #2563EB; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px;">
+          <div style="font-size: 11px; font-weight: 700; color: #9A5F48; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px;">
             ${headerTag}
           </div>
         </div>
@@ -695,4 +695,56 @@ export async function yazdirQR(
     return false;
   }
 }
+
+export async function yazdirZRaporu(vardiya: any, yaziciAdi: string): Promise<boolean> {
+  if (!vardiya || !yaziciAdi) return false
+  const para = (n: number) => Number(n || 0).toFixed(2) + ' TL'
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; width: 300px; color: #000; }
+          h1 { font-size: 18px; text-align: center; margin: 0 0 8px 0; }
+          .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+          .row { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
+          .center { text-align: center; font-size: 11px; }
+          .big { font-size: 16px; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <h1>Z RAPORU</h1>
+        <div class="center">${vardiya.z_no || ''}</div>
+        <div class="center">${vardiya.acilis_zamani || ''} — ${vardiya.kapanis_zamani || ''}</div>
+        <div class="line"></div>
+        <div class="row"><span>Nakit</span><span>${para(vardiya.nakit_satis)}</span></div>
+        <div class="row"><span>Kart</span><span>${para(vardiya.kart_satis)}</span></div>
+        <div class="row"><span>Yemek karti</span><span>${para(vardiya.yemek_karti_satis)}</span></div>
+        <div class="row"><span>Diger</span><span>${para(vardiya.diger_satis)}</span></div>
+        <div class="row big"><span>TOPLAM CIRO</span><span>${para(vardiya.toplam_ciro || ((vardiya.nakit_satis||0)+(vardiya.kart_satis||0)+(vardiya.yemek_karti_satis||0)+(vardiya.diger_satis||0)))}</span></div>
+        <div class="line"></div>
+        <div class="row"><span>Gider</span><span>${para(vardiya.gider)}</span></div>
+        <div class="row"><span>Iptal</span><span>${para(vardiya.iptal_tutar)}</span></div>
+        <div class="row"><span>Ikram</span><span>${para(vardiya.ikram_tutar)}</span></div>
+        <div class="row"><span>Indirim</span><span>${para(vardiya.indirim_tutar)}</span></div>
+        <div class="row"><span>Hesap sayisi</span><span>${vardiya.hesap_sayisi || 0}</span></div>
+        <div class="line"></div>
+        <div class="row"><span>Acilis nakit</span><span>${para(vardiya.acilis_nakit)}</span></div>
+        <div class="row"><span>Beklenen</span><span>${para(vardiya.beklenen_nakit)}</span></div>
+        <div class="row"><span>Sayim</span><span>${para(vardiya.kapanis_nakit_sayim)}</span></div>
+        <div class="row big"><span>NAKIT FARK</span><span>${para(vardiya.nakit_fark)}</span></div>
+        <div class="line"></div>
+        <div class="center">Mali degeri yoktur</div>
+      </body>
+    </html>
+  `
+  try {
+    const res = await ipcInvoke<any>(YAZICI_KANALLARI.FISI_YAZDIR, html, yaziciAdi)
+    return res?.basarili || false
+  } catch (e) {
+    console.error('Z raporu yazdirma hatasi:', e)
+    return false
+  }
+}
+
 

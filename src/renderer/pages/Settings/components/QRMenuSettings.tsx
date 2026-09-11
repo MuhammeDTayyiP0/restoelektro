@@ -262,7 +262,7 @@ export default function QRMenuSettings() {
     <div className="space-y-6 pb-12 select-none text-surface-100 max-w-6xl animate-fade-in">
       
       {/* Üst Başlık & Kaydet */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#1E2436]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#322C26]">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <QrCode size={22} className="text-brand-500" />
@@ -294,14 +294,14 @@ export default function QRMenuSettings() {
           onClick={() => setActiveTab('musteri')}
           className={`flex items-center gap-3.5 p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden ${
             activeTab === 'musteri'
-              ? 'bg-[#121727] border-brand-500/80 shadow-xl shadow-brand-950/30 text-white'
-              : 'bg-[#0A0C14] border-[#1E2538] text-surface-400 hover:text-surface-200 hover:bg-[#0E121E]'
+              ? 'bg-[#1e1a16] border-brand-500/80 shadow-xl shadow-brand-950/30 text-white'
+              : 'bg-[#171410] border-[#322C26] text-surface-400 hover:text-surface-200 hover:bg-[#171410]'
           }`}
         >
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors shrink-0 ${
             activeTab === 'musteri'
               ? 'bg-brand-600 border-brand-400 text-white shadow-md'
-              : 'bg-[#141928] border-[#222A40] text-surface-400'
+              : 'bg-[#1e1a16] border-[#3A342C] text-surface-400'
           }`}>
             <Utensils size={20} />
           </div>
@@ -322,14 +322,14 @@ export default function QRMenuSettings() {
           onClick={() => setActiveTab('garson')}
           className={`flex items-center gap-3.5 p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden ${
             activeTab === 'garson'
-              ? 'bg-[#121727] border-blue-500/80 shadow-xl shadow-blue-950/30 text-white'
-              : 'bg-[#0A0C14] border-[#1E2538] text-surface-400 hover:text-surface-200 hover:bg-[#0E121E]'
+              ? 'bg-[#1e1a16] border-blue-500/80 shadow-xl shadow-blue-950/30 text-white'
+              : 'bg-[#171410] border-[#322C26] text-surface-400 hover:text-surface-200 hover:bg-[#171410]'
           }`}
         >
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors shrink-0 ${
             activeTab === 'garson'
               ? 'bg-blue-600 border-blue-400 text-white shadow-md'
-              : 'bg-[#141928] border-[#222A40] text-surface-400'
+              : 'bg-[#1e1a16] border-[#3A342C] text-surface-400'
           }`}>
             <Smartphone size={20} />
           </div>
@@ -350,14 +350,14 @@ export default function QRMenuSettings() {
           onClick={() => setActiveTab('patron')}
           className={`flex items-center gap-3.5 p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden ${
             activeTab === 'patron'
-              ? 'bg-[#121727] border-amber-500/80 shadow-xl shadow-amber-950/30 text-white'
-              : 'bg-[#0A0C14] border-[#1E2538] text-surface-400 hover:text-surface-200 hover:bg-[#0E121E]'
+              ? 'bg-[#1e1a16] border-amber-500/80 shadow-xl shadow-amber-950/30 text-white'
+              : 'bg-[#171410] border-[#322C26] text-surface-400 hover:text-surface-200 hover:bg-[#171410]'
           }`}
         >
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors shrink-0 ${
             activeTab === 'patron'
               ? 'bg-amber-600 border-amber-400 text-white shadow-md'
-              : 'bg-[#141928] border-[#222A40] text-surface-400'
+              : 'bg-[#1e1a16] border-[#3A342C] text-surface-400'
           }`}>
             <Crown size={20} />
           </div>
@@ -381,8 +381,8 @@ export default function QRMenuSettings() {
         <div className="space-y-6 animate-fade-in">
           
           {/* URL & Parametre Ayarları Kartı */}
-          <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-[#1A1F30]">
+          <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-[#322C26]">
               <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
                 <Globe size={16} className="text-brand-400" />
                 Müşteri Menü Bağlantı Yapısı
@@ -419,14 +419,14 @@ export default function QRMenuSettings() {
                     type="text"
                     value={menuBaseUrl}
                     onChange={e => handleMenuUrlChange(e.target.value)}
-                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
                     placeholder="https://etibol.geldesat.com"
                   />
                   <div className="absolute right-2 top-2 flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => panoyaKopyala(menuBaseUrl, 'Menü URL Kopyalandı')}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Kopyala"
                     >
                       <Copy size={13} />
@@ -434,7 +434,7 @@ export default function QRMenuSettings() {
                     <button
                       type="button"
                       onClick={() => tarayicidaAc(menuBaseUrl)}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Tarayıcıda Aç"
                     >
                       <ExternalLink size={13} />
@@ -445,7 +445,7 @@ export default function QRMenuSettings() {
 
               {/* Masa Parametresi Ekle Toggle */}
               <div className="lg:col-span-4 flex flex-col justify-end">
-                <label className="flex items-center justify-between p-3 rounded-xl bg-[#090B11] border border-[#1E2436] cursor-pointer hover:border-[#2A344C] transition-colors">
+                <label className="flex items-center justify-between p-3 rounded-xl bg-[#110F0C] border border-[#322C26] cursor-pointer hover:border-[#4A433A] transition-colors">
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold text-white">Masa Bazlı Parametre</span>
                     <span className="text-[10px] text-surface-500 font-mono">?masa=MasaNo ekle</span>
@@ -454,7 +454,7 @@ export default function QRMenuSettings() {
                     type="checkbox"
                     checked={isMasaParamEnabled}
                     onChange={e => setIsMasaParamEnabled(e.target.checked)}
-                    className="w-5 h-5 rounded border-[#1E2436] bg-[#141928] text-brand-500 focus:ring-0 cursor-pointer"
+                    className="w-5 h-5 rounded border-[#322C26] bg-[#1e1a16] text-brand-500 focus:ring-0 cursor-pointer"
                   />
                 </label>
               </div>
@@ -462,7 +462,7 @@ export default function QRMenuSettings() {
             </div>
 
             {/* Önizleme Bilgi Çubuğu */}
-            <div className="bg-[#07090F] p-3 rounded-xl border border-[#161B2C] flex items-center justify-between gap-2 text-xs font-mono">
+            <div className="bg-[#0B0A08] p-3 rounded-xl border border-[#1E1A16] flex items-center justify-between gap-2 text-xs font-mono">
               <span className="text-surface-500">Örnek Üretilen URL:</span>
               <code className="text-brand-400 truncate font-bold">
                 {getMasaUrl('S 12')}
@@ -472,9 +472,9 @@ export default function QRMenuSettings() {
           </div>
 
           {/* Masalar Listesi & Yazdırma Başlığı */}
-          <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-5 shadow-xl">
+          <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-5 shadow-xl">
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#1A1F30]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#322C26]">
               <div>
                 <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
                   <Layers size={16} className="text-brand-400" />
@@ -510,7 +510,7 @@ export default function QRMenuSettings() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     seciliBolum === null
                       ? 'bg-brand-600 text-white'
-                      : 'bg-[#121624] text-surface-400 hover:text-white border border-[#1E2538]'
+                      : 'bg-[#1e1a16] text-surface-400 hover:text-white border border-[#322C26]'
                   }`}
                 >
                   Tümü ({masalar.length})
@@ -525,7 +525,7 @@ export default function QRMenuSettings() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                         seciliBolum === b.id
                           ? 'bg-brand-600 text-white'
-                          : 'bg-[#121624] text-surface-400 hover:text-white border border-[#1E2538]'
+                          : 'bg-[#1e1a16] text-surface-400 hover:text-white border border-[#322C26]'
                       }`}
                     >
                       {b.ad} ({bolumMasaSayisi})
@@ -540,7 +540,7 @@ export default function QRMenuSettings() {
                 value={aramaMetni}
                 onChange={e => setAramaMetni(e.target.value)}
                 placeholder="Masa No ile ara..."
-                className="h-9 px-3 bg-[#090B11] border border-[#1E2436] rounded-lg text-xs text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 w-full sm:w-48"
+                className="h-9 px-3 bg-[#110F0C] border border-[#322C26] rounded-lg text-xs text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 w-full sm:w-48"
               />
 
             </div>
@@ -558,10 +558,10 @@ export default function QRMenuSettings() {
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`bg-[#0A0C14] border rounded-2xl p-4 flex flex-col items-center text-center transition-all relative group ${
+                    className={`bg-[#171410] border rounded-2xl p-4 flex flex-col items-center text-center transition-all relative group ${
                       isSelected 
-                        ? 'border-brand-500 shadow-md shadow-brand-950/40 bg-[#0E1220]'
-                        : 'border-[#1E2538] hover:border-[#2D3750] hover:bg-[#0D101A]'
+                        ? 'border-brand-500 shadow-md shadow-brand-950/40 bg-[#171410]'
+                        : 'border-[#322C26] hover:border-[#4A433A] hover:bg-[#171410]'
                     }`}
                   >
                     {/* Çoklu Seçim Checkbox */}
@@ -576,7 +576,7 @@ export default function QRMenuSettings() {
                             setSeciliMasaIdleri(p => p.filter(id => id !== masa.id))
                           }
                         }}
-                        className="w-4 h-4 rounded border-[#1E2538] bg-[#141928] text-brand-500 focus:ring-0 cursor-pointer"
+                        className="w-4 h-4 rounded border-[#322C26] bg-[#1e1a16] text-brand-500 focus:ring-0 cursor-pointer"
                       />
                     </div>
 
@@ -611,7 +611,7 @@ export default function QRMenuSettings() {
                         type="button"
                         whileTap={{ scale: 0.95 }}
                         onClick={() => tekliMasaYazdir(masa)}
-                        className="w-full h-8 px-2 rounded-lg bg-[#141928] hover:bg-brand-600 text-surface-300 hover:text-white border border-[#20273D] hover:border-brand-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full h-8 px-2 rounded-lg bg-[#1e1a16] hover:bg-brand-600 text-surface-300 hover:text-white border border-[#3A342C] hover:border-brand-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <Printer size={13} />
                         Yazdır
@@ -643,8 +643,8 @@ export default function QRMenuSettings() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Sol: Bilgi & URL Ayarı */}
-            <div className="lg:col-span-7 bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+            <div className="lg:col-span-7 bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+              <div className="flex items-center justify-between pb-3 border-b border-[#322C26]">
                 <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
                   <Smartphone size={16} className="text-blue-400" />
                   Garson El Terminali Giriş Parametreleri
@@ -676,7 +676,7 @@ export default function QRMenuSettings() {
                           setWaiterUrl(defaultLocalWaiterUrl)
                         }
                       }}
-                      className="rounded border-[#1E2538] bg-[#141928] text-brand-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                      className="rounded border-[#322C26] bg-[#1e1a16] text-brand-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                     />
                     <span>Özel Link / Domain Kullan</span>
                   </label>
@@ -688,14 +688,14 @@ export default function QRMenuSettings() {
                     value={isCustomWaiterUrl ? waiterUrl : defaultLocalWaiterUrl}
                     disabled={!isCustomWaiterUrl}
                     onChange={e => setWaiterUrl(e.target.value)}
-                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-80"
+                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-80"
                     placeholder={defaultLocalWaiterUrl}
                   />
                   <div className="absolute right-2 top-2 flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => panoyaKopyala(isCustomWaiterUrl ? waiterUrl : defaultLocalWaiterUrl, 'Garson Terminal Linki Kopyalandı')}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Kopyala"
                     >
                       <Copy size={13} />
@@ -703,7 +703,7 @@ export default function QRMenuSettings() {
                     <button
                       type="button"
                       onClick={() => tarayicidaAc(isCustomWaiterUrl ? waiterUrl : defaultLocalWaiterUrl)}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Tarayıcıda Aç"
                     >
                       <ExternalLink size={13} />
@@ -714,7 +714,7 @@ export default function QRMenuSettings() {
               </div>
 
               {/* Kurulum / Rehber Kutusu */}
-              <div className="bg-[#07090F] p-4 rounded-xl border border-[#161B2C] space-y-2">
+              <div className="bg-[#0B0A08] p-4 rounded-xl border border-[#1E1A16] space-y-2">
                 <div className="text-xs font-bold text-surface-300 flex items-center gap-2">
                   <Info size={14} className="text-blue-400" />
                   Garson Terminali Hızlı Kullanım Rehberi
@@ -729,7 +729,7 @@ export default function QRMenuSettings() {
             </div>
 
             {/* Sağ: Büyük Garson QR Kartı & Yazdır */}
-            <div className="lg:col-span-5 bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] flex flex-col items-center text-center justify-between shadow-xl">
+            <div className="lg:col-span-5 bg-[#171410] p-6 rounded-2xl border border-[#322C26] flex flex-col items-center text-center justify-between shadow-xl">
               
               <div>
                 <div className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1 font-mono">
@@ -780,8 +780,8 @@ export default function QRMenuSettings() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Sol: Bilgi & URL Ayarı */}
-            <div className="lg:col-span-7 bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-              <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+            <div className="lg:col-span-7 bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+              <div className="flex items-center justify-between pb-3 border-b border-[#322C26]">
                 <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
                   <Crown size={16} className="text-amber-400" />
                   Patron (Boss) Mobil Takip Ekranı
@@ -813,7 +813,7 @@ export default function QRMenuSettings() {
                           setBossUrl(defaultLocalBossUrl)
                         }
                       }}
-                      className="rounded border-[#1E2538] bg-[#141928] text-brand-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                      className="rounded border-[#322C26] bg-[#1e1a16] text-brand-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                     />
                     <span>Özel Bulut Linki Kullan</span>
                   </label>
@@ -825,14 +825,14 @@ export default function QRMenuSettings() {
                     value={isCustomBossUrl ? bossUrl : defaultLocalBossUrl}
                     disabled={!isCustomBossUrl}
                     onChange={e => setBossUrl(e.target.value)}
-                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-80"
+                    className="w-full h-11 px-3.5 pr-24 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-80"
                     placeholder={defaultLocalBossUrl}
                   />
                   <div className="absolute right-2 top-2 flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => panoyaKopyala(isCustomBossUrl ? bossUrl : defaultLocalBossUrl, 'Patron Takip Linki Kopyalandı')}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Kopyala"
                     >
                       <Copy size={13} />
@@ -840,7 +840,7 @@ export default function QRMenuSettings() {
                     <button
                       type="button"
                       onClick={() => tarayicidaAc(isCustomBossUrl ? bossUrl : defaultLocalBossUrl)}
-                      className="p-1.5 rounded-lg bg-[#141928] hover:bg-[#1E2538] text-surface-400 hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-400 hover:text-white transition-colors"
                       title="Tarayıcıda Aç"
                     >
                       <ExternalLink size={13} />
@@ -851,7 +851,7 @@ export default function QRMenuSettings() {
               </div>
 
               {/* Kurulum / Güvenlik Kutusu */}
-              <div className="bg-[#07090F] p-4 rounded-xl border border-[#161B2C] space-y-2">
+              <div className="bg-[#0B0A08] p-4 rounded-xl border border-[#1E1A16] space-y-2">
                 <div className="text-xs font-bold text-surface-300 flex items-center gap-2">
                   <ShieldCheck size={14} className="text-amber-400" />
                   Güvenli Patron Girişi & Özellikler
@@ -866,7 +866,7 @@ export default function QRMenuSettings() {
             </div>
 
             {/* Sağ: Büyük Patron QR Kartı & Yazdır */}
-            <div className="lg:col-span-5 bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] flex flex-col items-center text-center justify-between shadow-xl">
+            <div className="lg:col-span-5 bg-[#171410] p-6 rounded-2xl border border-[#322C26] flex flex-col items-center text-center justify-between shadow-xl">
               
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1 font-mono">

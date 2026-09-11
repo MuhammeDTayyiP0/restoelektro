@@ -3,8 +3,30 @@
 // Tarih, para, telefon ve miktar formatlama işlemleri
 // =====================================================
 
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+
+/**
+ * SQLite DATETIME / CURRENT_TIMESTAMP değerini doğru Date'e çevirir.
+ * SQLite CURRENT_TIMESTAMP UTC tutar ve 'YYYY-MM-DD HH:MM:SS' (offset yok) döner.
+ * Chromium bunu yerel saat sanır → Türkiye'de süre +3 saat görünür.
+ */
+export function parseSqliteZamani(isoTarih: string | undefined | null): Date | null {
+  if (!isoTarih) return null
+  const ham = String(isoTarih).trim()
+  if (!ham) return null
+  try {
+    if (/[zZ]$/.test(ham) || /[+-]\d{2}:?\d{2}$/.test(ham)) {
+      const d = new Date(ham)
+      return Number.isNaN(d.getTime()) ? null : d
+    }
+    const iso = ham.includes('T') ? ham : ham.replace(' ', 'T')
+    const d = new Date(`${iso}Z`)
+    return Number.isNaN(d.getTime()) ? null : d
+  } catch {
+    return null
+  }
+}
 
 /**
  * Tutarı Türk Lirası formatında biçimlendirir (Örn: 1.250,50 ₺)
@@ -168,13 +190,14 @@ export function formatMiktar(miktar: number | undefined | null, ondalik: number 
 }
 
 /**
- * ISO tarih stringini okunabilir formata dönüştürür
+ * ISO / SQLite tarih stringini okunabilir formata dönüştürür
  * @param formatStr date-fns format stringi (Varsayılan: dd.MM.yyyy HH:mm)
  */
 export function formatTarih(isoTarih: string | undefined | null, formatStr: string = 'dd.MM.yyyy HH:mm'): string {
   if (!isoTarih) return '-'
   try {
-    const tarih = parseISO(isoTarih)
+    const tarih = parseSqliteZamani(isoTarih)
+    if (!tarih) return isoTarih
     return format(tarih, formatStr, { locale: tr })
   } catch (error) {
     return isoTarih
@@ -210,17 +233,13 @@ export function formatTelefon(telefon: string | undefined | null): string {
 
 /**
  * İki tarih arasındaki farkı dakika olarak hesaplar (Sipariş bekleme süresi için)
+ * SQLite UTC kaydını yerel saat gibi okumamak için parseSqliteZamani kullanır.
  */
-export function gecenDakikaHesapla(baslangicIso: string | undefined | null): number {
-  if (!baslangicIso) return 0
-  
-  try {
-    const baslangic = parseISO(baslangicIso).getTime()
-    const simdi = new Date().getTime()
-    return Math.floor((simdi - baslangic) / 60000)
-  } catch (error) {
-    return 0
-  }
+export function gecenDakikaHesapla(baslangicIso: string | undefined | null, simdiMs?: number): number {
+  const baslangic = parseSqliteZamani(baslangicIso)
+  if (!baslangic) return 0
+  const simdi = simdiMs ?? Date.now()
+  return Math.max(0, Math.floor((simdi - baslangic.getTime()) / 60000))
 }
 
 /**
@@ -235,4 +254,3 @@ export function formatResimUrl(resimYolu: string | null | undefined, apiPort: nu
   const temizYol = resimYolu.startsWith('/') ? resimYolu : `/${resimYolu}`
   return `http://localhost:${apiPort}${temizYol}`
 }
-

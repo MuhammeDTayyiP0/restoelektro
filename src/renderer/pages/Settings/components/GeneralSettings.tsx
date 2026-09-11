@@ -283,12 +283,12 @@ export default function GeneralSettings() {
       </div>
 
       {/* 1. SIRADA: GARSON MOBİL EL TERMİNALİ & AKILLI IP KARTI (EN ÜSTTE) */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-5 shadow-2xl relative overflow-hidden">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-5 shadow-2xl relative overflow-hidden">
         {/* Dekoratif hafif ışıma */}
         <div className="absolute top-0 right-0 w-80 h-32 bg-brand-500/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Kart Başlığı & Durum Rozeti */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#1A1F30]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#322C26]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
               <Smartphone size={18} />
@@ -338,7 +338,7 @@ export default function GeneralSettings() {
               <select
                 value={seciliKartId}
                 onChange={e => handleKartSecimi(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-medium focus:outline-none focus:border-brand-500 transition-colors"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-medium focus:outline-none focus:border-brand-500 transition-colors"
               >
                 {agKartlari.map(kart => (
                   <option key={kart.id} value={kart.id}>
@@ -358,7 +358,7 @@ export default function GeneralSettings() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-[#090B12] p-3.5 rounded-xl border border-brand-500/40 space-y-2"
+                className="bg-[#110F0C] p-3.5 rounded-xl border border-brand-500/40 space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-brand-300 flex items-center gap-1.5">
@@ -371,7 +371,7 @@ export default function GeneralSettings() {
                   value={manuelIpInput}
                   onChange={e => handleManuelIpDegisim(e.target.value)}
                   placeholder="Örn: 192.168.1.50"
-                  className="w-full h-10 px-3 rounded-lg bg-[#0E111B] border border-[#262D42] text-white text-xs font-mono focus:outline-none focus:border-brand-400 transition-colors"
+                  className="w-full h-10 px-3 rounded-lg bg-[#171410] border border-[#403830] text-white text-xs font-mono focus:outline-none focus:border-brand-400 transition-colors"
                 />
                 <span className="text-[10px] text-surface-400 block font-mono">
                   İpucu: Sabit (statik) IP veya özel DNS adı kullanıyorsanız buraya giriniz.
@@ -380,7 +380,7 @@ export default function GeneralSettings() {
             )}
 
             {/* Canlı URL Gösterimi & Butonlar */}
-            <div className="bg-[#090B12] rounded-xl p-3.5 border border-[#181D2E] space-y-2.5">
+            <div className="bg-[#110F0C] rounded-xl p-3.5 border border-[#241F1A] space-y-2.5">
               <div className="text-[11px] font-semibold text-surface-400 flex items-center justify-between">
                 <span>Canlı Terminal Bağlantı Adresi:</span>
                 <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 font-semibold">
@@ -389,7 +389,7 @@ export default function GeneralSettings() {
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex-1 bg-[#05070A] border border-[#1E2538] rounded-lg px-3 py-2 text-xs font-mono font-bold text-brand-400 truncate select-all tracking-wide">
+                <div className="flex-1 bg-[#0B0A08] border border-[#322C26] rounded-lg px-3 py-2 text-xs font-mono font-bold text-brand-400 truncate select-all tracking-wide">
                   {garsonTerminalUrl}
                 </div>
                 <motion.button
@@ -400,7 +400,7 @@ export default function GeneralSettings() {
                     "h-9 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 border",
                     kopyalandi
                       ? "bg-emerald-600 text-white border-emerald-500"
-                      : "bg-[#141826] hover:bg-[#1C2236] text-surface-200 border-[#222B40]"
+                      : "bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border-[#3A342C]"
                   )}
                   title="Terminal Adresini Kopyala"
                 >
@@ -421,7 +421,7 @@ export default function GeneralSettings() {
                   type="button"
                   whileTap={{ scale: 0.95 }}
                   onClick={tarayicidaAc}
-                  className="h-9 px-3 rounded-lg bg-[#141826] hover:bg-[#1C2236] text-surface-200 border border-[#222B40] text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                  className="h-9 px-3 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border border-[#3A342C] text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
                   title="Varsayılan tarayıcıda açıp test et"
                 >
                   <ExternalLink size={13} className="text-blue-400" />
@@ -431,7 +431,7 @@ export default function GeneralSettings() {
             </div>
 
             {/* Bilgilendirme Notu */}
-            <div className="flex items-start gap-2.5 text-[11px] text-surface-400 bg-[#090B12]/60 p-3 rounded-xl border border-[#161B2B]">
+            <div className="flex items-start gap-2.5 text-[11px] text-surface-400 bg-[#110F0C]/60 p-3 rounded-xl border border-[#1E1A16]">
               <Info size={14} className="text-brand-400 shrink-0 mt-0.5" />
               <span>
                 Garson telefonlarının terminale erişebilmesi için bu ana bilgisayarla <strong>aynı Wi-Fi ağına</strong> bağlı olması gerekir.
@@ -441,7 +441,7 @@ export default function GeneralSettings() {
           </div>
 
           {/* Sağ Kolon: Yüksek Kontrastlı Canlı QR Kod Kartı */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-5 rounded-2xl bg-[#090B12] border border-[#181D2E] text-center space-y-3">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-5 rounded-2xl bg-[#110F0C] border border-[#241F1A] text-center space-y-3">
             <div className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-1.5">
               <span>Hızlı Bağlantı QR Kodu</span>
             </div>
@@ -470,8 +470,8 @@ export default function GeneralSettings() {
       </div>
 
       {/* 2. SIRADA: Sistem & Başlangıç Tercihleri Kartı (Auto-Launch & System Tray) */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-        <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#322C26]">
           <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center gap-2">
             <Power size={16} className="text-brand-400" />
             Sistem & Başlangıç Tercihleri
@@ -480,7 +480,7 @@ export default function GeneralSettings() {
             "text-[11px] font-mono px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 transition-colors",
             otomatikBaslat
               ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40"
-              : "bg-[#141826] text-surface-400 border-[#1E2436]"
+              : "bg-[#1e1a16] text-surface-400 border-[#322C26]"
           )}>
             <span className={clsx(
               "w-1.5 h-1.5 rounded-full",
@@ -491,7 +491,7 @@ export default function GeneralSettings() {
         </div>
 
         {/* Windows Başlangıcında Otomatik Başlat Switch */}
-        <div className="bg-[#090B12] rounded-xl p-4 border border-[#181D2E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-[#110F0C] rounded-xl p-4 border border-[#241F1A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="text-xs font-semibold text-white flex items-center gap-2">
               <span>Windows Başlangıcında Otomatik Başlat</span>
@@ -514,7 +514,7 @@ export default function GeneralSettings() {
             onClick={toggleOtomatikBaslat}
             className={clsx(
               "relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
-              otomatikBaslat ? "bg-brand-600" : "bg-[#1A2032]"
+              otomatikBaslat ? "bg-brand-600" : "bg-[#322C26]"
             )}
           >
             <motion.span
@@ -529,7 +529,7 @@ export default function GeneralSettings() {
         </div>
 
         {/* System Tray Bilgilendirme Kutusu */}
-        <div className="bg-[#090B12]/60 rounded-xl p-3.5 border border-[#161B2B] flex items-start gap-3">
+        <div className="bg-[#110F0C]/60 rounded-xl p-3.5 border border-[#1E1A16] flex items-start gap-3">
           <div className="w-6 h-6 rounded-lg bg-blue-950/40 border border-blue-800/40 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
             <Layers size={13} />
           </div>
@@ -540,8 +540,8 @@ export default function GeneralSettings() {
       </div>
 
       {/* 3. SIRADA: İşletme Bilgileri Kartı */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#1A1F30] flex items-center gap-2">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#322C26] flex items-center gap-2">
           <Building2 size={16} className="text-brand-400" />
           İşletme Kimlik Bilgileri
         </h3>
@@ -553,7 +553,7 @@ export default function GeneralSettings() {
               type="text"
               value={ayariGetir('restoran_adi')}
               onChange={e => ayarDegistir('restoran_adi', e.target.value)}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: ETİBOL RESTO & KEBAP"
             />
           </div>
@@ -563,7 +563,7 @@ export default function GeneralSettings() {
               type="text"
               value={ayariGetir('restoran_telefon')}
               onChange={e => ayarDegistir('restoran_telefon', e.target.value)}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: 0212 555 00 00"
             />
           </div>
@@ -573,7 +573,7 @@ export default function GeneralSettings() {
               rows={2}
               value={ayariGetir('restoran_adres')}
               onChange={e => ayarDegistir('restoran_adres', e.target.value)}
-              className="p-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors resize-none"
+              className="p-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors resize-none"
               placeholder="Restoran açık adresi..."
             />
           </div>
@@ -581,8 +581,8 @@ export default function GeneralSettings() {
       </div>
 
       {/* 4. SIRADA: Vergi ve Para Birimi Kartı */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#1A1F30] flex items-center gap-2">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#322C26] flex items-center gap-2">
           <Receipt size={16} className="text-emerald-400" />
           Vergi & Mali Parametreler
         </h3>
@@ -594,7 +594,7 @@ export default function GeneralSettings() {
               type="number"
               value={ayariGetir('varsayilan_kdv')}
               onChange={e => ayarDegistir('varsayilan_kdv', e.target.value)}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: 10"
             />
           </div>
@@ -603,7 +603,7 @@ export default function GeneralSettings() {
             <select
               value={ayariGetir('para_birimi') || 'TL'}
               onChange={e => ayarDegistir('para_birimi', e.target.value)}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
             >
               <option value="TL">Türk Lirası (₺)</option>
               <option value="USD">Amerikan Doları ($)</option>
@@ -614,8 +614,8 @@ export default function GeneralSettings() {
       </div>
 
       {/* 5. SIRADA: Yazıcı Port Yönlendirmeleri */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#1A1F30] flex items-center gap-2">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+        <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#322C26] flex items-center gap-2">
           <Printer size={16} className="text-blue-400" />
           Yazıcı Aygıt Yönlendirmeleri
         </h3>
@@ -627,7 +627,7 @@ export default function GeneralSettings() {
               <select
                 value={ayariGetir('kasa_yazici')}
                 onChange={e => ayarDegistir('kasa_yazici', e.target.value)}
-                className="flex-1 h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
+                className="flex-1 h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">-- Yazıcı Seçin --</option>
                 {yazicilar.map(p => (
@@ -644,7 +644,7 @@ export default function GeneralSettings() {
                   if (res?.basarili) success('Başarılı', 'Kasa yazıcısına test fişi gönderildi.')
                   else error('Hata', res?.hata || 'Yazdırma başarısız.')
                 }}
-                className="h-11 px-3.5 rounded-xl bg-[#141826] hover:bg-[#1C2236] text-surface-200 border border-[#222B40] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="h-11 px-3.5 rounded-xl bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border border-[#3A342C] text-xs font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <Play size={12} className="text-emerald-400" />
                 Sına
@@ -659,7 +659,7 @@ export default function GeneralSettings() {
               <select
                 value={ayariGetir('mutfak_yazici')}
                 onChange={e => ayarDegistir('mutfak_yazici', e.target.value)}
-                className="flex-1 h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
+                className="flex-1 h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="">-- Yazıcı Seçin --</option>
                 {yazicilar.map(p => (
@@ -676,7 +676,7 @@ export default function GeneralSettings() {
                   if (res?.basarili) success('Başarılı', 'Mutfak yazıcısına test fişi gönderildi.')
                   else error('Hata', res?.hata || 'Yazdırma başarısız.')
                 }}
-                className="h-11 px-3.5 rounded-xl bg-[#141826] hover:bg-[#1C2236] text-surface-200 border border-[#222B40] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="h-11 px-3.5 rounded-xl bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border border-[#3A342C] text-xs font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <Play size={12} className="text-emerald-400" />
                 Sına

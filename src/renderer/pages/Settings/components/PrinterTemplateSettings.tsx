@@ -148,13 +148,13 @@ export default function PrinterTemplateSettings() {
         <div className="lg:col-span-7 flex flex-col gap-5">
           
           {/* Fiş Tipi Seçimi */}
-          <div className="grid grid-cols-2 p-1 bg-[#090B12] rounded-xl border border-[#1A1F30]">
+          <div className="grid grid-cols-2 p-1 bg-[#110F0C] rounded-xl border border-[#322C26]">
             <button
               type="button"
               className={clsx(
                 "flex items-center justify-center gap-2 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all",
                 activeTab === 'kasa'
-                  ? "bg-[#161B2B] text-white border border-[#252E46] shadow-md"
+                  ? "bg-[#1E1A16] text-white border border-[#403830] shadow-md"
                   : "text-surface-400 hover:text-white"
               )}
               onClick={() => setActiveTab('kasa')}
@@ -167,7 +167,7 @@ export default function PrinterTemplateSettings() {
               className={clsx(
                 "flex items-center justify-center gap-2 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all",
                 activeTab === 'mutfak'
-                  ? "bg-[#161B2B] text-white border border-[#252E46] shadow-md"
+                  ? "bg-[#1E1A16] text-white border border-[#403830] shadow-md"
                   : "text-surface-400 hover:text-white"
               )}
               onClick={() => setActiveTab('mutfak')}
@@ -178,8 +178,8 @@ export default function PrinterTemplateSettings() {
           </div>
 
           {/* Ortak Parametreler Kartı */}
-          <div className="bg-[#0E111B] p-5 sm:p-6 rounded-2xl border border-[#1E2436] space-y-5 shadow-xl">
-            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+          <div className="bg-[#171410] p-5 sm:p-6 rounded-2xl border border-[#322C26] space-y-5 shadow-xl">
+            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider flex items-center justify-between pb-3 border-b border-[#322C26]">
               <span>Kağıt ve Tipografi Parametreleri</span>
               <span className="font-mono text-brand-400 text-[11px]">{currentPaperWidth} / {currentFontSize}</span>
             </h3>
@@ -198,7 +198,7 @@ export default function PrinterTemplateSettings() {
                         "h-11 rounded-xl font-mono text-xs font-semibold border flex items-center justify-center transition-all",
                         currentPaperWidth === w
                           ? "bg-brand-950/40 text-brand-300 border-brand-500/60 shadow-inner"
-                          : "bg-[#121624] text-surface-400 border-[#1E2538] hover:text-white"
+                          : "bg-[#1e1a16] text-surface-400 border-[#322C26] hover:text-white"
                       )}
                     >
                       {w} {w === '80mm' ? '(Standart)' : '(Dar)'}
@@ -224,7 +224,7 @@ export default function PrinterTemplateSettings() {
                         "h-11 rounded-xl text-xs font-semibold border flex items-center justify-center transition-all",
                         currentFontSize === s.id
                           ? "bg-brand-950/40 text-brand-300 border-brand-500/60 shadow-inner"
-                          : "bg-[#121624] text-surface-400 border-[#1E2538] hover:text-white"
+                          : "bg-[#1e1a16] text-surface-400 border-[#322C26] hover:text-white"
                       )}
                     >
                       {s.label}
@@ -236,8 +236,8 @@ export default function PrinterTemplateSettings() {
           </div>
 
           {/* Görünürlük Anahtarları Kartı */}
-          <div className="bg-[#0E111B] p-5 sm:p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#1A1F30]">
+          <div className="bg-[#171410] p-5 sm:p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+            <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider pb-3 border-b border-[#322C26]">
               {isKasa ? 'Kasa Fişi Alanları' : 'Mutfak Fişi Alanları'}
             </h3>
 
@@ -256,7 +256,7 @@ export default function PrinterTemplateSettings() {
                     <div
                       key={item.key}
                       onClick={() => handleKasaChange(item.key as any, !isChecked)}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] cursor-pointer transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#1e1a16] hover:bg-[#1E1A16] border border-[#322C26] cursor-pointer transition-colors"
                     >
                       <div>
                         <div className="text-xs font-semibold text-white">{item.label}</div>
@@ -266,7 +266,7 @@ export default function PrinterTemplateSettings() {
                         "w-6 h-6 rounded-lg flex items-center justify-center border transition-all",
                         isChecked
                           ? "bg-brand-600 border-brand-400 text-white"
-                          : "bg-[#090A10] border-[#222B40] text-transparent"
+                          : "bg-[#0B0A08] border-[#3A342C] text-transparent"
                       )}>
                         <Check size={14} />
                       </div>
@@ -275,13 +275,13 @@ export default function PrinterTemplateSettings() {
                 })}
 
                 {kasaConfig.showFooter && (
-                  <div className="mt-4 pt-4 border-t border-[#1A1F30] flex flex-col gap-2">
+                  <div className="mt-4 pt-4 border-t border-[#322C26] flex flex-col gap-2">
                     <label className="text-xs font-semibold text-surface-300">Özel Alt Bilgi Notu</label>
                     <textarea
                       rows={2}
                       value={kasaConfig.footerText || ''}
                       onChange={(e) => handleKasaChange('footerText', e.target.value)}
-                      className="w-full p-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors resize-none"
+                      className="w-full p-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors resize-none"
                       placeholder="Örn: Afiyet olsun, yine bekleriz!"
                     />
                   </div>
@@ -298,7 +298,7 @@ export default function PrinterTemplateSettings() {
                     <div
                       key={item.key}
                       onClick={() => handleMutfakChange(item.key as any, !isChecked)}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] cursor-pointer transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#1e1a16] hover:bg-[#1E1A16] border border-[#322C26] cursor-pointer transition-colors"
                     >
                       <div>
                         <div className="text-xs font-semibold text-white">{item.label}</div>
@@ -308,7 +308,7 @@ export default function PrinterTemplateSettings() {
                         "w-6 h-6 rounded-lg flex items-center justify-center border transition-all",
                         isChecked
                           ? "bg-brand-600 border-brand-400 text-white"
-                          : "bg-[#090A10] border-[#222B40] text-transparent"
+                          : "bg-[#0B0A08] border-[#3A342C] text-transparent"
                       )}>
                         <Check size={14} />
                       </div>
@@ -322,20 +322,20 @@ export default function PrinterTemplateSettings() {
 
         {/* Sağ Taraf: Canlı Termal Simülatör (5 cols) */}
         <div className="lg:col-span-5 flex flex-col items-center">
-          <div className="w-full bg-[#0E111B] p-5 rounded-2xl border border-[#1E2436] shadow-xl flex flex-col items-center">
+          <div className="w-full bg-[#171410] p-5 rounded-2xl border border-[#322C26] shadow-xl flex flex-col items-center">
             
-            <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-[#1A1F30]">
+            <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-[#322C26]">
               <div className="flex items-center gap-2 text-xs font-bold text-surface-300 uppercase tracking-wider">
                 <Eye size={16} className="text-brand-400" />
                 <span>Canlı Termal Kağıt</span>
               </div>
-              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#141928] text-surface-300 border border-[#222B40]">
+              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#1e1a16] text-surface-300 border border-[#3A342C]">
                 {currentPaperWidth} RULO
               </span>
             </div>
 
             {/* Termal Rulo Kağıt Çerçevesi */}
-            <div className="w-full py-6 px-4 bg-[#07090F] rounded-xl border border-[#161B2A] flex justify-center items-center overflow-x-auto">
+            <div className="w-full py-6 px-4 bg-[#0B0A08] rounded-xl border border-[#1E1A16] flex justify-center items-center overflow-x-auto">
               <div 
                 className="bg-white text-black shadow-2xl rounded-sm transition-all duration-200 overflow-hidden relative border-t-8 border-t-zinc-300 border-b-8 border-b-zinc-300"
                 style={{

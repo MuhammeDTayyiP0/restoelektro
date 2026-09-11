@@ -13,7 +13,7 @@ export const ProductGrid = React.memo(function ProductGrid({ urunler, aktifPorsi
   if (urunler.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-72 text-slate-400 text-center">
-        <div className="w-14 h-14 mb-3 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-400">
+        <div className="w-14 h-14 mb-3 rounded-2xl bg-[#171410] border border-[#322C26] flex items-center justify-center text-slate-400">
           <Search size={24} />
         </div>
         <p className="text-sm font-mono font-bold text-slate-300 uppercase tracking-wider">

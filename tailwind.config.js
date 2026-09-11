@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Tailwind CSS yapılandırması — Dokunmatik ekran POS için optimize edilmiş
+// Tailwind CSS — Dokunmatik POS, Windows 7 / Electron 22 uyumlu
 module.exports = {
   content: [
     './src/renderer/**/*.{js,jsx,ts,tsx}',
@@ -8,51 +8,56 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
-      // POS için özel renk paleti
       colors: {
-        // Ana marka renkleri
+        // Kil / terracotta marka paleti (restoran, sıcak)
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#0f1d44',
+          50: '#f7f1ed',
+          100: '#eadad2',
+          200: '#d4b5a6',
+          300: '#c08f7a',
+          400: '#b07860',
+          500: '#9a5f48',
+          600: '#824e3c',
+          700: '#6a4032',
+          800: '#533329',
+          900: '#3d261f',
+          950: '#241612',
         },
         // POS durum renkleri
         pos: {
-          bos: '#10b981',       // Boş masa — yeşil
-          dolu: '#f59e0b',      // Dolu masa — amber
-          rezerve: '#8b5cf6',   // Rezerve — mor
-          hesap: '#ef4444',     // Hesap istendi — kırmızı
+          bos: '#3d9a6e',
+          dolu: '#d4a017',
+          rezerve: '#8a8178',
+          hesap: '#c45c4a',
         },
-        // Uygulama yüzey renkleri (koyu tema)
+        // Sıcak espresso yüzeyler
         surface: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          50: '#f7f4ef',
+          100: '#ebe6dc',
+          200: '#d6cfc2',
+          300: '#bdb3a3',
+          400: '#9c9284',
+          500: '#7a7166',
+          600: '#5c554c',
+          700: '#3f3a34',
+          800: '#2a2622',
+          900: '#1c1915',
+          950: '#0b0a08',
         }
       },
-      // Dokunmatik ekran için minimum boyutlar
+      fontFamily: {
+        sans: ['"Segoe UI"', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+        mono: ['Consolas', '"Courier New"', 'ui-monospace', 'monospace'],
+      },
       spacing: {
-        'touch': '48px',       // Minimum dokunmatik hedef alanı
+        'touch': '48px',
         'touch-lg': '56px',
         'touch-xl': '64px',
+        '18': '4.5rem',
+        '26': '6.5rem',
+        '84': '21rem',
+        '92': '23rem',
       },
-      // Minimum buton boyutları
       minHeight: {
         'touch': '48px',
         'touch-lg': '56px',
@@ -63,7 +68,6 @@ module.exports = {
         'touch-lg': '56px',
         'touch-xl': '64px',
       },
-      // POS için özel font boyutları
       fontSize: {
         'pos-sm': ['0.875rem', { lineHeight: '1.25rem' }],
         'pos-base': ['1rem', { lineHeight: '1.5rem' }],
@@ -73,26 +77,22 @@ module.exports = {
         'pos-3xl': ['2rem', { lineHeight: '2.5rem' }],
         'pos-price': ['1.75rem', { lineHeight: '2.25rem', fontWeight: '700' }],
       },
-      // Animasyon geçişleri
       transitionDuration: {
         'fast': '150ms',
         'normal': '250ms',
         'slow': '400ms',
       },
-      // Özel gölgelendirmeler
       boxShadow: {
-        'pos': '0 2px 8px -2px rgba(0, 0, 0, 0.3)',
-        'pos-lg': '0 4px 16px -4px rgba(0, 0, 0, 0.4)',
-        'pos-glow': '0 0 8px rgba(59, 130, 246, 0.25)',
-        'pos-inset': 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+        'pos': '0 1px 0 0 rgba(255, 248, 238, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.45)',
+        'pos-lg': '0 1px 0 0 rgba(255, 248, 238, 0.05), 0 8px 24px -8px rgba(0, 0, 0, 0.55)',
+        'pos-glow': '0 0 0 1px rgba(154, 95, 72, 0.35)',
+        'pos-inset': 'inset 0 1px 0 rgba(255, 248, 238, 0.04), inset 0 2px 6px rgba(0, 0, 0, 0.28)',
       },
-      // Özel border radius değerleri
       borderRadius: {
-        'pos': '12px',
-        'pos-lg': '16px',
+        'pos': '10px',
+        'pos-lg': '14px',
         'pos-xl': '20px',
       },
-      // Animasyonlar
       keyframes: {
         'slide-up': {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
@@ -107,7 +107,7 @@ module.exports = {
           '100%': { opacity: '1' },
         },
         'scale-in': {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '0%': { transform: 'scale(0.96)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
         'pulse-soft': {
@@ -134,15 +134,14 @@ module.exports = {
         'shake': 'shake 0.2s ease-in-out 0s 2',
       },
     },
-    // Ekran kırılım noktaları (POS monitör boyutları)
     screens: {
       'sm': '640px',
       'md': '768px',
       'lg': '1024px',
       'xl': '1280px',
       '2xl': '1536px',
-      'pos': '1920px',      // Standart POS monitör
-      'pos-wide': '2560px', // Geniş POS monitör
+      'pos': '1920px',
+      'pos-wide': '2560px',
     },
   },
   plugins: [],

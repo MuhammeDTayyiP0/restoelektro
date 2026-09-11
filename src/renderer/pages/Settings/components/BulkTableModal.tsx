@@ -182,7 +182,7 @@ export default function BulkTableModal({
           <select
             value={seciliBolumId}
             onChange={e => setSeciliBolumId(parseInt(e.target.value, 10))}
-            className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
+            className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
           >
             {bolumler.map(b => (
               <option key={b.id} value={b.id}>
@@ -197,15 +197,15 @@ export default function BulkTableModal({
           <label className="text-xs font-mono font-bold text-surface-300 uppercase tracking-wider">
             Oluşturma Modu
           </label>
-          <div className="grid grid-cols-2 gap-2 bg-[#090B11] p-1 rounded-xl border border-[#1E2436]">
+          <div className="grid grid-cols-2 gap-2 bg-[#110F0C] p-1 rounded-xl border border-[#322C26]">
             <button
               type="button"
               onClick={() => setMode('auto_continue')}
               className={clsx(
                 "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-mono font-bold transition-all",
                 mode === 'auto_continue'
-                  ? "bg-[#161D2E] text-brand-400 shadow-md border border-brand-500/40"
-                  : "text-surface-400 hover:text-surface-200 hover:bg-[#121622]"
+                  ? "bg-[#1E1A16] text-brand-400 shadow-md border border-brand-500/40"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
               )}
             >
               <Sparkles size={14} className={mode === 'auto_continue' ? "text-brand-400" : "text-surface-500"} />
@@ -218,8 +218,8 @@ export default function BulkTableModal({
               className={clsx(
                 "flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-mono font-bold transition-all",
                 mode === 'range'
-                  ? "bg-[#161D2E] text-brand-400 shadow-md border border-brand-500/40"
-                  : "text-surface-400 hover:text-surface-200 hover:bg-[#121622]"
+                  ? "bg-[#1E1A16] text-brand-400 shadow-md border border-brand-500/40"
+                  : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
               )}
             >
               <Hash size={14} className={mode === 'range' ? "text-brand-400" : "text-surface-500"} />
@@ -229,7 +229,7 @@ export default function BulkTableModal({
         </div>
 
         {/* Form Alanları */}
-        <div className="bg-[#0A0D15] p-4 rounded-xl border border-[#182030] space-y-4">
+        <div className="bg-[#171410] p-4 rounded-xl border border-[#241f1a] space-y-4">
           
           {/* Önek Alanı (Her iki modda da ortak) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -242,7 +242,7 @@ export default function BulkTableModal({
                 value={onek}
                 onChange={e => setOnek(e.target.value)}
                 placeholder="Örn: S, A, Teras..."
-                className="h-10 px-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono uppercase focus:outline-none focus:border-brand-500 transition-colors"
+                className="h-10 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono uppercase focus:outline-none focus:border-brand-500 transition-colors"
               />
             </div>
 
@@ -256,7 +256,7 @@ export default function BulkTableModal({
                 max={50}
                 value={kapasite}
                 onChange={e => setKapasite(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                className="h-10 px-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+                className="h-10 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
                 placeholder="4"
               />
             </div>
@@ -275,7 +275,7 @@ export default function BulkTableModal({
                       Son Masa: {onek.trim() ? `${onek.trim()} ${mevcutEnYuksekNo}` : mevcutEnYuksekNo}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-mono text-surface-400 bg-[#121624] px-2 py-0.5 rounded border border-[#1E2538]">
+                    <span className="text-[11px] font-mono text-surface-400 bg-[#1e1a16] px-2 py-0.5 rounded border border-[#322C26]">
                       Mevcut masa yok (1'den başlar)
                     </span>
                   )}
@@ -287,7 +287,7 @@ export default function BulkTableModal({
                   value={adet}
                   onChange={e => setAdet(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                   placeholder="10"
-                  className="h-10 px-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+                  className="h-10 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
                 />
               </div>
             </div>
@@ -306,7 +306,7 @@ export default function BulkTableModal({
                   value={baslangicNo}
                   onChange={e => setBaslangicNo(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                   placeholder="10"
-                  className="h-10 px-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+                  className="h-10 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
                 />
               </div>
 
@@ -320,7 +320,7 @@ export default function BulkTableModal({
                   value={bitisNo}
                   onChange={e => setBitisNo(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                   placeholder="20"
-                  className="h-10 px-3 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+                  className="h-10 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
                 />
               </div>
             </div>
@@ -328,7 +328,7 @@ export default function BulkTableModal({
         </div>
 
         {/* Canlı Önizleme Kartı */}
-        <div className="bg-[#090B12] p-3.5 rounded-xl border border-[#1A2030] flex flex-col gap-2">
+        <div className="bg-[#110F0C] p-3.5 rounded-xl border border-[#322C26] flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
               <Layers size={13} className="text-brand-400" />
@@ -350,7 +350,7 @@ export default function BulkTableModal({
                       "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-colors",
                       cakisma
                         ? "bg-amber-950/40 text-amber-300 border-amber-500/40"
-                        : "bg-[#141926] text-white border-[#222C42]"
+                        : "bg-[#1e1a16] text-white border-[#3A342C]"
                     )}
                     title={cakisma ? "Bu masa adı zaten mevcut" : undefined}
                   >
@@ -374,7 +374,7 @@ export default function BulkTableModal({
         </div>
 
         {/* Butonlar */}
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#1A1F30]">
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#322C26]">
           <button
             type="button"
             onClick={onClose}
@@ -389,7 +389,7 @@ export default function BulkTableModal({
             whileTap={{ scale: 0.95 }}
             onClick={handleKaydet}
             disabled={yukleniyor || olusturulacakMasalar.length === 0}
-            className="h-10 px-5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:bg-[#1A2234] disabled:text-surface-500 disabled:border disabled:border-[#222C42] text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-brand-950/50 disabled:shadow-none transition-all"
+            className="h-10 px-5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:bg-[#322C26] disabled:text-surface-500 disabled:border disabled:border-[#3A342C] text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-brand-950/50 disabled:shadow-none transition-all"
           >
             {yukleniyor ? (
               <>

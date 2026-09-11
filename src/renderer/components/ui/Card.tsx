@@ -25,7 +25,7 @@ export function Card({
     'rounded-pos-lg overflow-hidden shadow-pos',
     glass 
       ? 'glass-panel' 
-      : 'bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800',
+      : 'bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-800',
     paddings[padding],
     className
   )

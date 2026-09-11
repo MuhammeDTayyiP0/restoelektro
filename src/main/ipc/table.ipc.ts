@@ -6,9 +6,69 @@
 import { IpcMain } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { MASA_KANALLARI } from '../../common/ipc-channels'
+import { terminalAyarYukle } from '../services/terminal.service'
 
 export function masaIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
+
+  function bugunYerel(): string {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  function rezervasyonlariEkle(masalar: any[]): any[] {
+    if (!Array.isArray(masalar) || masalar.length === 0) return masalar
+    let rezervasyonlar: any[] = []
+    try {
+      rezervasyonlar = db.prepare(`
+        SELECT r.id, r.masa_id, r.musteri_ad, r.saat, r.telefon, r.kisi_sayisi, r.notlar
+        FROM rezervasyon r
+        WHERE r.durum = 'bekliyor' AND r.tarih = ?
+        ORDER BY r.saat ASC, r.id ASC
+      `).all(bugunYerel()) as any[]
+    } catch {
+      rezervasyonlar = []
+    }
+
+    const rezByMasa = new Map<number, any>()
+    for (const rz of rezervasyonlar) {
+      const masaId = Number(rz?.masa_id)
+      if (!masaId || rezByMasa.has(masaId)) continue
+      rezByMasa.set(masaId, rz)
+    }
+
+    return masalar.map((m) => {
+      const rz = rezByMasa.get(Number(m.id))
+      const doluMu = m.durum === 'dolu' || !!m.aktif_hesap_id
+      if (rz && !doluMu && m.durum !== 'birlesti') {
+        if (m.durum !== 'rezerve') {
+          try {
+            db.prepare("UPDATE masa SET durum = 'rezerve' WHERE id = ? AND durum NOT IN ('dolu', 'birlesti')").run(m.id)
+          } catch { /* sessiz */ }
+          m.durum = 'rezerve'
+        }
+        return {
+          ...m,
+          durum: 'rezerve',
+          rezervasyon_id: rz.id,
+          rezervasyon_ad: rz.musteri_ad,
+          rezervasyon_saat: rz.saat,
+          rezervasyon_telefon: rz.telefon,
+          rezervasyon_kisi: rz.kisi_sayisi,
+          rezervasyon_not: rz.notlar,
+        }
+      }
+      return {
+        ...m,
+        rezervasyon_id: m.rezervasyon_id || null,
+        rezervasyon_ad: m.rezervasyon_ad || null,
+        rezervasyon_saat: m.rezervasyon_saat || null,
+        rezervasyon_telefon: m.rezervasyon_telefon || null,
+        rezervasyon_kisi: m.rezervasyon_kisi || null,
+        rezervasyon_not: m.rezervasyon_not || null,
+      }
+    })
+  }
 
   // Bölümleri listele
   ipcMain.handle(MASA_KANALLARI.BOLUMLER, async () => {
@@ -46,31 +106,74 @@ export function masaIPCKaydet(ipcMain: IpcMain): void {
 
   // Masaları listele (bölüm bazlı veya tümü)
   ipcMain.handle(MASA_KANALLARI.MASALAR, async (_event, bolumId?: number) => {
+    const sureSql = `CAST(MAX(0, ROUND((julianday('now') - julianday(h.acilis_zamani)) * 24 * 60)) AS INTEGER) as acik_sure`
     const sorgu = bolumId
       ? `SELECT m.*, b.ad as bolum_adi,
            h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
            p.ad || ' ' || p.soyad as garson_adi,
            h.acilis_zamani,
-           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi
+           ${sureSql},
+           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi,
+           mk.terminal_id as kilit_terminal, mk.personel_adi as kilit_personel, mk.kilit_zamani,
+           h.kisi_sayisi as hesap_kisi, h.notlar as hesap_notlar, h.hesap_no as aktif_hesap_no
          FROM masa m
          JOIN bolum b ON b.id = m.bolum_id
          LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
          LEFT JOIN personel p ON p.id = h.personel_id
+         LEFT JOIN masa_kilit mk ON mk.masa_id = m.id
          WHERE m.bolum_id = ? AND m.aktif = 1
          ORDER BY m.sira ASC, m.numara ASC`
       : `SELECT m.*, b.ad as bolum_adi,
            h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
            p.ad || ' ' || p.soyad as garson_adi,
            h.acilis_zamani,
-           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi
+           ${sureSql},
+           (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi,
+           mk.terminal_id as kilit_terminal, mk.personel_adi as kilit_personel, mk.kilit_zamani,
+           h.kisi_sayisi as hesap_kisi, h.notlar as hesap_notlar, h.hesap_no as aktif_hesap_no
          FROM masa m
          JOIN bolum b ON b.id = m.bolum_id
          LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
          LEFT JOIN personel p ON p.id = h.personel_id
+         LEFT JOIN masa_kilit mk ON mk.masa_id = m.id
          WHERE m.aktif = 1
          ORDER BY b.sira ASC, b.ad ASC, m.sira ASC, m.numara ASC`
 
-    return bolumId ? db.prepare(sorgu).all(bolumId) : db.prepare(sorgu).all()
+    let masalar: any[] = []
+    try {
+      masalar = bolumId ? db.prepare(sorgu).all(bolumId) as any[] : db.prepare(sorgu).all() as any[]
+    } catch {
+      const eski = bolumId
+        ? `SELECT m.*, b.ad as bolum_adi,
+             h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
+             p.ad || ' ' || p.soyad as garson_adi,
+             h.acilis_zamani,
+             (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi,
+             mk.terminal_id as kilit_terminal, mk.personel_adi as kilit_personel, mk.kilit_zamani
+           FROM masa m
+           JOIN bolum b ON b.id = m.bolum_id
+           LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
+           LEFT JOIN personel p ON p.id = h.personel_id
+           LEFT JOIN masa_kilit mk ON mk.masa_id = m.id
+           WHERE m.bolum_id = ? AND m.aktif = 1
+           ORDER BY m.sira ASC, m.numara ASC`
+        : `SELECT m.*, b.ad as bolum_adi,
+             h.id as aktif_hesap_id, h.toplam_tutar as aktif_hesap_tutari,
+             p.ad || ' ' || p.soyad as garson_adi,
+             h.acilis_zamani,
+             (SELECT COALESCE(SUM(s.miktar), 0) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as urun_sayisi,
+             mk.terminal_id as kilit_terminal, mk.personel_adi as kilit_personel, mk.kilit_zamani
+           FROM masa m
+           JOIN bolum b ON b.id = m.bolum_id
+           LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
+           LEFT JOIN personel p ON p.id = h.personel_id
+           LEFT JOIN masa_kilit mk ON mk.masa_id = m.id
+           WHERE m.aktif = 1
+           ORDER BY b.sira ASC, b.ad ASC, m.sira ASC, m.numara ASC`
+      masalar = bolumId ? db.prepare(eski).all(bolumId) as any[] : db.prepare(eski).all() as any[]
+    }
+
+    return rezervasyonlariEkle(masalar)
   })
 
   // Masa ekle
@@ -166,5 +269,45 @@ export function masaIPCKaydet(ipcMain: IpcMain): void {
     } catch (hata: any) {
       return { basarili: false, hata: hata.message }
     }
+  })
+
+  ipcMain.handle(MASA_KANALLARI.KILITLER, async () => {
+    db.prepare("DELETE FROM masa_kilit WHERE datetime(kilit_zamani) < datetime('now', '-20 minutes')").run()
+    return db.prepare('SELECT * FROM masa_kilit').all()
+  })
+
+  ipcMain.handle(MASA_KANALLARI.KILIT, async (_e, masaId: number, personelId?: number, personelAdi?: string, terminalId?: string) => {
+    if (!masaId) return { basarili: false, hata: 'Masa gerekli' }
+    db.prepare("DELETE FROM masa_kilit WHERE datetime(kilit_zamani) < datetime('now', '-20 minutes')").run()
+    const tid = terminalId || terminalAyarYukle().terminalId
+    const mevcut = db.prepare('SELECT * FROM masa_kilit WHERE masa_id = ?').get(masaId) as any
+    if (mevcut && mevcut.terminal_id !== tid) {
+      return {
+        basarili: false,
+        kilitli: true,
+        hata: `Masa başka terminalde açık (${mevcut.personel_adi || mevcut.terminal_id})`,
+        kilit: mevcut,
+      }
+    }
+    db.prepare(`
+      INSERT INTO masa_kilit (masa_id, terminal_id, personel_id, personel_adi, kilit_zamani)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(masa_id) DO UPDATE SET
+        terminal_id = excluded.terminal_id,
+        personel_id = excluded.personel_id,
+        personel_adi = excluded.personel_adi,
+        kilit_zamani = CURRENT_TIMESTAMP
+    `).run(masaId, tid, personelId || null, personelAdi || null)
+    return { basarili: true }
+  })
+
+  ipcMain.handle(MASA_KANALLARI.KILIT_AC, async (_e, masaId: number, terminalId?: string) => {
+    const tid = terminalId || terminalAyarYukle().terminalId
+    if (masaId) {
+      db.prepare('DELETE FROM masa_kilit WHERE masa_id = ? AND terminal_id = ?').run(masaId, tid)
+    } else {
+      db.prepare('DELETE FROM masa_kilit WHERE terminal_id = ?').run(tid)
+    }
+    return { basarili: true }
   })
 }

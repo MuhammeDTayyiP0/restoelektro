@@ -38,7 +38,7 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
       type="button"
       onClick={handleClick}
       style={{ transform: 'translateZ(0)' }}
-      className="pos-product-card relative z-0 w-full aspect-[4/3] rounded-xl border border-[#222634] hover:border-cyan-400/60 active:border-cyan-500/80 active:scale-[0.97] hover:-translate-y-0.5 text-left transition-all duration-100 ease-out touch-feedback group overflow-hidden shadow-sm bg-[#141414] select-none flex flex-col justify-between cursor-pointer"
+      className="pos-product-card relative z-0 w-full aspect-[4/3] rounded-xl border border-[#3a342c] hover:border-brand-400/70 active:border-brand-500/80 active:scale-[0.97] hover:-translate-y-0.5 text-left transition-all duration-100 ease-out touch-feedback group overflow-hidden shadow-sm bg-[#1a1814] select-none flex flex-col justify-between cursor-pointer"
     >
       {/* ── RESİMLİ KART İÇİN GÖRSEL (Üstten başlayıp kart zeminini kaplar) ── */}
       {hasImage && (
@@ -56,7 +56,7 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
         <div className="flex items-center justify-between w-full pointer-events-none min-h-[16px] sm:min-h-[18px]">
           <div>
             {(hasVaryant || hasOpsiyon) && (
-              <div className="flex items-center gap-1 bg-violet-950/90 text-violet-300 border border-violet-500/40 text-[8px] sm:text-[9px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-md shadow-sm">
+              <div className="flex items-center gap-1 bg-brand-950/90 text-brand-300 border border-brand-500/40 text-[8px] sm:text-[9px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-md shadow-sm">
                 <SlidersHorizontal size={9} />
                 <span>SEÇİM</span>
               </div>
@@ -65,7 +65,7 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
 
           <div className="flex items-center gap-1">
             {aktifPorsiyon !== 1 && (
-              <span className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 text-[8px] sm:text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+              <span className="bg-brand-950/90 text-brand-300 border border-brand-500/40 text-[8px] sm:text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md shadow-sm">
                 {aktifPorsiyon === 0.5 ? '0.5x' : aktifPorsiyon === 2 ? '2x' : `${aktifPorsiyon}x`}
               </span>
             )}
@@ -114,7 +114,7 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
                 borderTop: '1px solid rgba(255, 255, 255, 0.1)'
               }
             : {
-                background: '#141414',
+                background: '#1a1814',
                 borderTop: '1px solid rgba(255, 255, 255, 0.1)'
               }
         }
@@ -122,7 +122,7 @@ export const ProductCard = React.memo(function ProductCard({ urun, aktifPorsiyon
         {/* Çizginin Altında Sol Taraf: Kategori Adı / Ağırlık Birimi */}
         <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
           {isAgirlik ? (
-            <span className="flex items-center gap-0.5 text-[8px] sm:text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-1.5 py-0.5 rounded shadow-sm">
+            <span className="flex items-center gap-0.5 text-[8px] sm:text-[9px] font-mono font-bold text-brand-300 bg-brand-950/70 border border-brand-500/40 px-1.5 py-0.5 rounded shadow-sm">
               <Scale size={8} />
               {urun.birim || 'KG'}
             </span>

@@ -50,7 +50,7 @@ export function Tabs({
       <div 
         className={clsx(
           'flex overflow-x-auto pos-scrollbar no-select',
-          variant === 'line' ? 'border-b border-surface-200 dark:border-surface-700' : 'gap-2 p-1 bg-surface-100 dark:bg-surface-800 rounded-pos-lg'
+          variant === 'line' ? 'border-b border-surface-800' : 'gap-2 p-1 bg-surface-900 rounded-pos-lg'
         )}
       >
         {tabs.map((tab) => {

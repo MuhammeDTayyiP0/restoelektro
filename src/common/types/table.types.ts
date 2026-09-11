@@ -35,6 +35,17 @@ export interface Masa {
   acilis_zamani?: string
   garson_adi?: string
   urun_sayisi?: number
+  rezervasyon_id?: number | null
+  rezervasyon_ad?: string | null
+  rezervasyon_saat?: string | null
+  rezervasyon_telefon?: string | null
+  rezervasyon_kisi?: number | null
+  rezervasyon_not?: string | null
+  hesap_kisi?: number | null
+  hesap_notlar?: string | null
+  aktif_hesap_no?: string | null
+  kilit_terminal?: string | null
+  kilit_personel?: string | null
 }
 
 /** Masa birleştirme */

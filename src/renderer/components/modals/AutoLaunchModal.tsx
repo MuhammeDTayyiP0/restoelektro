@@ -56,7 +56,7 @@ export default function AutoLaunchModal({ isOpen, onClose }: AutoLaunchModalProp
             type="button"
             disabled={yukleniyor}
             onClick={() => handleKarar(false)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-surface-400 hover:text-white hover:bg-[#141926] border border-transparent hover:border-[#1E2436] transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-surface-400 hover:text-white hover:bg-[#1e1a16] border border-transparent hover:border-[#322C26] transition-colors"
           >
             Şimdilik Hayır / Daha Sonra
           </button>
@@ -77,7 +77,7 @@ export default function AutoLaunchModal({ isOpen, onClose }: AutoLaunchModalProp
       <div className="space-y-4 py-1">
         {/* Üst Vurgulu İkon ve Başlık */}
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#141A29] border border-brand-500/40 flex items-center justify-center text-brand-400 shrink-0 shadow-lg shadow-brand-950/60">
+          <div className="w-12 h-12 rounded-2xl bg-[#1E1A16] border border-brand-500/40 flex items-center justify-center text-brand-400 shrink-0 shadow-lg shadow-brand-950/60">
             <Power size={24} />
           </div>
           <div>
@@ -92,7 +92,7 @@ export default function AutoLaunchModal({ isOpen, onClose }: AutoLaunchModalProp
 
         {/* Avantajlar Kartları */}
         <div className="grid grid-cols-1 gap-2.5 pt-2">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#090B12] border border-[#1A1F30]">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#110F0C] border border-[#322C26]">
             <div className="w-7 h-7 rounded-lg bg-emerald-950/50 border border-emerald-800/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
               <Zap size={15} />
             </div>
@@ -104,7 +104,7 @@ export default function AutoLaunchModal({ isOpen, onClose }: AutoLaunchModalProp
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#090B12] border border-[#1A1F30]">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#110F0C] border border-[#322C26]">
             <div className="w-7 h-7 rounded-lg bg-blue-950/50 border border-blue-800/40 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
               <Wifi size={15} />
             </div>
@@ -116,7 +116,7 @@ export default function AutoLaunchModal({ isOpen, onClose }: AutoLaunchModalProp
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#090B12] border border-[#1A1F30]">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-[#110F0C] border border-[#322C26]">
             <div className="w-7 h-7 rounded-lg bg-amber-950/50 border border-amber-800/40 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
               <ShieldCheck size={15} />
             </div>

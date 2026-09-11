@@ -22,7 +22,7 @@ import {
   Filter, 
   Boxes, 
   ArrowRight,
-  TrendingDown
+  Truck
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -34,9 +34,10 @@ import { Badge } from '../../components/ui/Badge'
 import { formatPara, formatTarih, formatMiktar } from '../../utils/formatters'
 import { useToast } from '../../components/ui/Toast'
 import { useAuthStore } from '../../stores/useAuthStore'
+import SatinalmaPanel from './SatinalmaPanel'
 
 export default function InventoryPage() {
-  const [activeTab, setActiveTab] = useState<'hammaddeler' | 'receteler' | 'maliyet' | 'hareketler'>('hammaddeler')
+  const [activeTab, setActiveTab] = useState<'hammaddeler' | 'receteler' | 'maliyet' | 'hareketler' | 'satinalma'>('hammaddeler')
   const [aramaMetni, setAramaMetni] = useState('')
   const [durumFiltresi, setDurumFiltresi] = useState<'tum' | 'kritik' | 'dusuk' | 'normal'>('tum')
   const [gorunumTipi, setGorunumTipi] = useState<'grid' | 'liste'>('grid')
@@ -170,15 +171,15 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#090A0F] text-surface-100 p-4 sm:p-6 overflow-hidden select-none">
+    <div className="flex flex-col h-full w-full bg-[#0B0A08] text-surface-100 p-4 sm:p-6 overflow-hidden select-none">
       
       {/* 1. Üst Başlık ve KPI Paneli */}
-      <div className="shrink-0 mb-5 pb-4 border-b border-[#1A1F30]">
+      <div className="shrink-0 mb-5 pb-4 border-b border-[#322C26]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Başlık */}
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#121624] border border-brand-500/30 flex items-center justify-center text-brand-400 shadow-md shadow-brand-950/40">
+            <div className="w-11 h-11 rounded-xl bg-[#1e1a16] border border-brand-500/30 flex items-center justify-center text-brand-400 shadow-md shadow-brand-950/40">
               <Boxes size={22} />
             </div>
             <div>
@@ -202,7 +203,7 @@ export default function InventoryPage() {
                 else harYenile()
                 info('Yenilendi', 'Veriler güncellendi.')
               }}
-              className="p-2.5 rounded-xl bg-[#121624] border border-[#1E2538] text-surface-400 hover:text-white hover:bg-[#1A2035] transition-all touch-feedback"
+              className="p-2.5 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-400 hover:text-white hover:bg-[#322C26] transition-all touch-feedback"
               title="Yenile"
             >
               <RefreshCw size={18} />
@@ -234,12 +235,12 @@ export default function InventoryPage() {
 
         {/* KPI Şeridi */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-          <div className="bg-[#0E121E] border border-[#1E2436] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-[#171410] border border-[#322C26] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-mono text-surface-400 uppercase">Toplam Hammadde</div>
               <div className="text-lg font-bold text-white mt-0.5">{istatistikler.toplamHammadde} <span className="text-xs font-normal text-surface-500">Kalem</span></div>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-[#141826] border border-[#1E2538] flex items-center justify-center text-brand-400">
+            <div className="w-9 h-9 rounded-lg bg-[#1e1a16] border border-[#322C26] flex items-center justify-center text-brand-400">
               <Package size={18} />
             </div>
           </div>
@@ -248,7 +249,7 @@ export default function InventoryPage() {
             "rounded-xl p-3.5 flex items-center justify-between border transition-colors",
             istatistikler.kritikSayisi > 0 
               ? "bg-rose-950/20 border-rose-900/50" 
-              : "bg-[#0E121E] border-[#1E2436]"
+              : "bg-[#171410] border-[#322C26]"
           )}>
             <div>
               <div className="text-[11px] font-mono text-rose-400 uppercase">Kritik / Tükendi</div>
@@ -266,7 +267,7 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="bg-[#0E121E] border border-[#1E2436] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-[#171410] border border-[#322C26] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-mono text-surface-400 uppercase">Toplam Depo Değeri</div>
               <div className="text-lg font-bold text-emerald-400 mt-0.5 font-mono">
@@ -278,7 +279,7 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="bg-[#0E121E] border border-[#1E2436] rounded-xl p-3.5 flex items-center justify-between">
+          <div className="bg-[#171410] border border-[#322C26] rounded-xl p-3.5 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-mono text-surface-400 uppercase">Ort. Reçete Kâr Marjı</div>
               <div className="text-lg font-bold text-cyan-400 mt-0.5 font-mono">
@@ -296,7 +297,7 @@ export default function InventoryPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 shrink-0">
         
         {/* Sekmeler */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#0E111B] border border-[#1E2436] rounded-xl overflow-x-auto pos-scrollbar">
+        <div className="flex items-center gap-1.5 p-1 bg-[#171410] border border-[#322C26] rounded-xl overflow-x-auto pos-scrollbar">
           <button
             type="button"
             onClick={() => { setActiveTab('hammaddeler'); setAramaMetni('') }}
@@ -304,7 +305,7 @@ export default function InventoryPage() {
               "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap touch-feedback",
               activeTab === 'hammaddeler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#151928]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <Package size={15} />
@@ -321,7 +322,7 @@ export default function InventoryPage() {
               "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap touch-feedback",
               activeTab === 'receteler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#151928]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <ChefHat size={15} />
@@ -338,7 +339,7 @@ export default function InventoryPage() {
               "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap touch-feedback",
               activeTab === 'maliyet'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#151928]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <Calculator size={15} />
@@ -352,11 +353,25 @@ export default function InventoryPage() {
               "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap touch-feedback",
               activeTab === 'hareketler'
                 ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
-                : "text-surface-400 hover:text-surface-200 hover:bg-[#151928]"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
             )}
           >
             <History size={15} />
             <span>Hareket Geçmişi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveTab('satinalma'); setAramaMetni('') }}
+            className={clsx(
+              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap touch-feedback",
+              activeTab === 'satinalma'
+                ? "bg-brand-600 text-white shadow-md shadow-brand-950/50 border border-brand-400/40"
+                : "text-surface-400 hover:text-surface-200 hover:bg-[#1e1a16]"
+            )}
+          >
+            <Truck size={15} />
+            <span>Satın Alma</span>
           </button>
         </div>
 
@@ -372,7 +387,7 @@ export default function InventoryPage() {
               }
               value={aramaMetni}
               onChange={e => setAramaMetni(e.target.value)}
-              className="w-full h-9 pl-9 pr-8 text-xs rounded-xl bg-[#0E121E] border border-[#1E2436] text-white placeholder:text-surface-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="w-full h-9 pl-9 pr-8 text-xs rounded-xl bg-[#171410] border border-[#322C26] text-white placeholder:text-surface-500 focus:outline-none focus:border-brand-500 transition-colors"
             />
             {aramaMetni && (
               <button
@@ -386,7 +401,7 @@ export default function InventoryPage() {
           </div>
 
           {activeTab === 'hammaddeler' && (
-            <div className="flex items-center gap-1 bg-[#0E121E] border border-[#1E2436] p-0.5 rounded-xl">
+            <div className="flex items-center gap-1 bg-[#171410] border border-[#322C26] p-0.5 rounded-xl">
               {(['tum', 'kritik', 'dusuk', 'normal'] as const).map(d => (
                 <button
                   key={d}
@@ -398,7 +413,7 @@ export default function InventoryPage() {
                       ? d === 'kritik' ? "bg-rose-900/60 text-rose-200 border border-rose-700/60"
                       : d === 'dusuk' ? "bg-amber-900/60 text-amber-200 border border-amber-700/60"
                       : d === 'normal' ? "bg-emerald-900/60 text-emerald-200 border border-emerald-700/60"
-                      : "bg-[#1C2237] text-white border border-[#2B3553]"
+                      : "bg-[#322C26] text-white border border-[#4A433A]"
                       : "text-surface-400 hover:text-surface-200"
                   )}
                 >
@@ -411,7 +426,7 @@ export default function InventoryPage() {
       </div>
 
       {/* 3. Ana İçerik Alanı */}
-      <div className="flex-1 min-h-0 bg-[#0B0E17] rounded-2xl border border-[#1E2436] overflow-hidden p-4">
+      <div className="flex-1 min-h-0 bg-[#12110E] rounded-2xl border border-[#322C26] overflow-hidden p-4">
         
         {/* TAB 1: HAMMADDELER & STOK */}
         {activeTab === 'hammaddeler' && (
@@ -422,7 +437,7 @@ export default function InventoryPage() {
                   <RefreshCw className="animate-spin mr-2" size={18} /> Hammaddeler yükleniyor...
                 </div>
               ) : filtrelenmisHammaddeler.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#1E2538] rounded-xl my-4">
+                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#322C26] rounded-xl my-4">
                   <Package size={36} className="text-surface-600 mb-2" />
                   <p className="font-semibold text-sm">Eşleşen hammadde bulunamadı</p>
                   <p className="text-xs text-surface-500 mt-1">Arama kriterlerinizi değiştirebilir veya yeni hammadde ekleyebilirsiniz.</p>
@@ -444,12 +459,12 @@ export default function InventoryPage() {
                         className={clsx(
                           "relative rounded-xl border p-4 transition-all duration-150 flex flex-col justify-between group",
                           ham.stok_durumu === 'tukendi'
-                            ? "bg-[#160D12] border-rose-900/60 shadow-lg shadow-rose-950/30"
+                            ? "bg-[#1E1A16] border-rose-900/60 shadow-lg shadow-rose-950/30"
                             : ham.stok_durumu === 'kritik'
                             ? "bg-[#140E14] border-red-900/50 shadow-md shadow-red-950/20"
                             : ham.stok_durumu === 'dusuk'
                             ? "bg-[#14120D] border-amber-900/40"
-                            : "bg-[#0E121E] border-[#1E2436] hover:border-brand-500/40"
+                            : "bg-[#171410] border-[#322C26] hover:border-brand-500/40"
                         )}
                       >
                         <div>
@@ -474,7 +489,7 @@ export default function InventoryPage() {
                           </div>
 
                           {/* Stok Miktar Göstergesi */}
-                          <div className="bg-[#090C15] border border-[#1A1F30] rounded-lg p-3 mb-3">
+                          <div className="bg-[#110F0C] border border-[#322C26] rounded-lg p-3 mb-3">
                             <div className="flex items-end justify-between mb-1.5">
                               <div>
                                 <span className="text-[10px] uppercase font-mono text-surface-400 block">Mevcut Stok</span>
@@ -497,7 +512,7 @@ export default function InventoryPage() {
                             </div>
 
                             {/* Stok Seviye İlerleme Çubuğu */}
-                            <div className="w-full bg-[#141826] h-2 rounded-full overflow-hidden border border-[#1E2538]">
+                            <div className="w-full bg-[#1e1a16] h-2 rounded-full overflow-hidden border border-[#322C26]">
                               <div
                                 className={clsx(
                                   "h-full rounded-full transition-all duration-300",
@@ -510,7 +525,7 @@ export default function InventoryPage() {
                           </div>
 
                           {/* Finansal Bilgiler */}
-                          <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-4 pt-1 border-t border-[#161B2C]">
+                          <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-4 pt-1 border-t border-[#1E1A16]">
                             <div>
                               <span className="text-[10px] text-surface-500 block uppercase">Birim Maliyet</span>
                               <span className="font-bold text-surface-200">{formatPara(ham.maliyet_birim)}</span>
@@ -523,7 +538,7 @@ export default function InventoryPage() {
                         </div>
 
                         {/* Aksiyon Butonları */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-[#1A1F30]">
+                        <div className="flex items-center gap-2 pt-2 border-t border-[#322C26]">
                           <button
                             type="button"
                             onClick={() => setStokIslemModal({ acik: true, hammadde: ham, islemTipi: 'giris' })}
@@ -545,7 +560,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => setHammaddeModal({ acik: true, hammadde: ham })}
-                            className="p-2 rounded-lg bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-surface-400 hover:text-white transition-all touch-feedback"
+                            className="p-2 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] border border-[#322C26] text-surface-400 hover:text-white transition-all touch-feedback"
                             title="Düzenle"
                           >
                             <Edit2 size={15} />
@@ -569,7 +584,7 @@ export default function InventoryPage() {
                   <RefreshCw className="animate-spin mr-2" size={18} /> Reçeteler yükleniyor...
                 </div>
               ) : filtrelenmisReceteler.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#1E2538] rounded-xl my-4">
+                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#322C26] rounded-xl my-4">
                   <ChefHat size={36} className="text-surface-600 mb-2" />
                   <p className="font-semibold text-sm">Reçete bulunamadı</p>
                   <p className="text-xs text-surface-500 mt-1">Ürünlerinize hammadde reçetesi (BOM) tanımlayarak porsiyon maliyetlerini otomatik hesaplayabilirsiniz.</p>
@@ -596,14 +611,14 @@ export default function InventoryPage() {
                         layout
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-[#0E121E] border border-[#1E2436] hover:border-brand-500/40 rounded-xl p-4 flex flex-col justify-between transition-all group"
+                        className="bg-[#171410] border border-[#322C26] hover:border-brand-500/40 rounded-xl p-4 flex flex-col justify-between transition-all group"
                       >
                         <div>
                           {/* Başlık ve Kategori */}
-                          <div className="flex items-start justify-between gap-2 mb-3 pb-2.5 border-b border-[#1A1F30]">
+                          <div className="flex items-start justify-between gap-2 mb-3 pb-2.5 border-b border-[#322C26]">
                             <div>
                               <h3 className="font-bold text-white text-base tracking-tight">{rec.urun_adi}</h3>
-                              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#141826] text-surface-400 border border-[#1E2538] inline-block mt-1">
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#1e1a16] text-surface-400 border border-[#322C26] inline-block mt-1">
                                 {rec.kategori_adi}
                               </span>
                             </div>
@@ -615,7 +630,7 @@ export default function InventoryPage() {
                           </div>
 
                           {/* Finansal & Maliyet Metrikleri */}
-                          <div className="grid grid-cols-3 gap-2 bg-[#090C15] border border-[#1A1F30] rounded-lg p-3 mb-3 text-center">
+                          <div className="grid grid-cols-3 gap-2 bg-[#110F0C] border border-[#322C26] rounded-lg p-3 mb-3 text-center">
                             <div>
                               <span className="text-[10px] uppercase font-mono text-surface-400 block">BOM Maliyet</span>
                               <span className="text-sm font-bold text-rose-400 font-mono mt-0.5 block">
@@ -623,7 +638,7 @@ export default function InventoryPage() {
                               </span>
                             </div>
 
-                            <div className="border-x border-[#1A1F30]">
+                            <div className="border-x border-[#322C26]">
                               <span className="text-[10px] uppercase font-mono text-surface-400 block">Net Kâr</span>
                               <span className="text-sm font-bold text-emerald-400 font-mono mt-0.5 block">
                                 {formatPara(netKar)}
@@ -648,7 +663,7 @@ export default function InventoryPage() {
                               <span>Maliyet Oranı</span>
                               <span>%{satisFiyati > 0 ? Math.round((toplamMaliyet / satisFiyati) * 100) : 0}</span>
                             </div>
-                            <div className="w-full bg-[#141826] h-1.5 rounded-full overflow-hidden border border-[#1E2538]">
+                            <div className="w-full bg-[#1e1a16] h-1.5 rounded-full overflow-hidden border border-[#322C26]">
                               <div
                                 className={clsx(
                                   "h-full rounded-full transition-all",
@@ -662,7 +677,7 @@ export default function InventoryPage() {
                         </div>
 
                         {/* Düzenleme Butonu */}
-                        <div className="pt-2 border-t border-[#1A1F30]">
+                        <div className="pt-2 border-t border-[#322C26]">
                           <Button
                             size="sm"
                             variant="outline"
@@ -698,7 +713,7 @@ export default function InventoryPage() {
                 <div className="overflow-x-auto pos-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#1E2436] bg-[#0E111B] text-[11px] font-mono text-surface-400 uppercase">
+                      <tr className="border-b border-[#322C26] bg-[#171410] text-[11px] font-mono text-surface-400 uppercase">
                         <th className="py-3 px-4">Ürün Adı & Kategori</th>
                         <th className="py-3 px-4 text-right">Satış Fiyatı</th>
                         <th className="py-3 px-4 text-right">BOM Hammadde Maliyeti</th>
@@ -708,7 +723,7 @@ export default function InventoryPage() {
                         <th className="py-3 px-4 text-right">Toplam Kâr</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1A1F30] text-xs">
+                    <tbody className="divide-y divide-[#322C26] text-xs">
                       {filtrelenmisMaliyetler.map(mal => {
                         const karMarji = Number(mal.kar_marji || 0)
                         const satisFiyati = Number(mal.satis_fiyati || 0)
@@ -717,7 +732,7 @@ export default function InventoryPage() {
                         const toplamKar = Number(mal.toplam_kar || 0)
 
                         return (
-                          <tr key={mal.urun_id} className="hover:bg-[#121626] transition-colors">
+                          <tr key={mal.urun_id} className="hover:bg-[#1e1a16] transition-colors">
                             <td className="py-3 px-4 font-semibold text-white">
                               <div>{mal.urun_adi}</div>
                               <span className="text-[10px] text-surface-400 font-normal">{mal.kategori_adi}</span>
@@ -758,7 +773,7 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* TAB 4: STOK HAREKET GEÇMİŞİ */}
+      {/* REÇETE DÜZENLEME MODALI (BOM BUILDER) */}
         {activeTab === 'hareketler' && (
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto pos-scrollbar pr-1 pb-4">
@@ -767,7 +782,7 @@ export default function InventoryPage() {
                   <RefreshCw className="animate-spin mr-2" size={18} /> Hareketler yükleniyor...
                 </div>
               ) : hareketler.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#1E2538] rounded-xl my-4">
+                <div className="flex flex-col items-center justify-center h-56 text-surface-400 border border-dashed border-[#322C26] rounded-xl my-4">
                   <History size={36} className="text-surface-600 mb-2" />
                   <p className="font-semibold text-sm">Henüz stok hareketi kaydedilmemiş</p>
                 </div>
@@ -775,7 +790,7 @@ export default function InventoryPage() {
                 <div className="overflow-x-auto pos-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#1E2436] bg-[#0E111B] text-[11px] font-mono text-surface-400 uppercase">
+                      <tr className="border-b border-[#322C26] bg-[#171410] text-[11px] font-mono text-surface-400 uppercase">
                         <th className="py-3 px-4">Tarih</th>
                         <th className="py-3 px-4">Hammadde</th>
                         <th className="py-3 px-4 text-center">İşlem Tipi</th>
@@ -785,11 +800,11 @@ export default function InventoryPage() {
                         <th className="py-3 px-4">Açıklama</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1A1F30] text-xs">
+                    <tbody className="divide-y divide-[#322C26] text-xs">
                       {hareketler.map(har => {
                         const islemTipi = har.islem_tipi
                         return (
-                          <tr key={har.id} className="hover:bg-[#121626] transition-colors">
+                          <tr key={har.id} className="hover:bg-[#1e1a16] transition-colors">
                             <td className="py-3 px-4 font-mono text-surface-400 whitespace-nowrap">
                               {formatTarih(har.created_at)}
                             </td>
@@ -831,6 +846,12 @@ export default function InventoryPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'satinalma' && (
+          <div className="h-full">
+            <SatinalmaPanel />
           </div>
         )}
       </div>
@@ -961,7 +982,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
                     : tip.id === 'cikis' ? "bg-rose-950/80 text-rose-300 border-rose-500 shadow-md shadow-rose-950/40"
                     : tip.id === 'fire' ? "bg-amber-950/80 text-amber-300 border-amber-500 shadow-md shadow-amber-950/40"
                     : "bg-brand-950/80 text-brand-300 border-brand-500 shadow-md shadow-brand-950/40"
-                    : "bg-[#090C15] border-[#1E2436] text-surface-400 hover:text-surface-200"
+                    : "bg-[#110F0C] border-[#322C26] text-surface-400 hover:text-surface-200"
                 )}
               >
                 {tip.label}
@@ -971,7 +992,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
         </div>
 
         {/* Mevcut Durum Bilgisi */}
-        <div className="bg-[#090C15] border border-[#1E2436] rounded-xl p-3 flex items-center justify-between text-xs font-mono">
+        <div className="bg-[#110F0C] border border-[#322C26] rounded-xl p-3 flex items-center justify-between text-xs font-mono">
           <div>
             <span className="text-surface-500 block uppercase text-[10px]">Mevcut Depo Stoğu</span>
             <span className="text-base font-bold text-white">{formatMiktar(hammadde?.mevcut_stok)} {hammadde?.birim}</span>
@@ -996,7 +1017,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
               placeholder="0.00"
               value={miktar}
               onChange={e => setMiktar(e.target.value)}
-              className="flex-1 h-12 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-lg font-bold focus:border-brand-500 focus:outline-none"
+              className="flex-1 h-12 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-lg font-bold focus:border-brand-500 focus:outline-none"
             />
           </div>
           
@@ -1007,7 +1028,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
                 key={val}
                 type="button"
                 onClick={() => setMiktar(String(val))}
-                className="px-2.5 py-1 rounded-lg bg-[#141826] hover:bg-[#1E2538] border border-[#1E2538] text-[11px] font-mono text-surface-300"
+                className="px-2.5 py-1 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] border border-[#322C26] text-[11px] font-mono text-surface-300"
               >
                 +{val}
               </button>
@@ -1027,7 +1048,7 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
               placeholder={`Örn: ${hammadde?.maliyet_birim || '0.00'}`}
               value={birimMaliyet}
               onChange={e => setBirimMaliyet(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
         )}
@@ -1040,12 +1061,12 @@ function StokIslemModal({ isOpen, hammadde, islemTipi: baslangicIslemTipi, perso
             placeholder="Örn: Fatura No, Sayım farkı, Tarihi geçmiş ürün vb."
             value={aciklama}
             onChange={e => setAciklama(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+            className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
 
         {/* Footer Butonları */}
-        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#1A1F30]">
+        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#322C26]">
           <Button type="button" variant="ghost" onClick={onClose}>
             İptal
           </Button>
@@ -1152,7 +1173,7 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
               placeholder="Örn: Dana Kıyma, Süt, Domates vb."
               value={ad}
               onChange={e => setAd(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -1161,7 +1182,7 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
             <select
               value={birim}
               onChange={e => setBirim(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
             >
               <option value="KG">KG (Kilogram)</option>
               <option value="Gram">Gram</option>
@@ -1187,7 +1208,7 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
                 required
                 value={mevcutStok}
                 onChange={e => setMevcutStok(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
               />
             </div>
           )}
@@ -1200,7 +1221,7 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
               required
               value={minStok}
               onChange={e => setMinStok(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -1212,7 +1233,7 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
               required
               value={maliyetBirim}
               onChange={e => setMaliyetBirim(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl border border-[#1E2436] bg-[#090C15] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full h-11 px-3 rounded-xl border border-[#322C26] bg-[#110F0C] text-white font-mono text-sm focus:border-brand-500 focus:outline-none"
             />
           </div>
         </div>
@@ -1225,12 +1246,12 @@ function HammaddeModal({ isOpen, hammadde, onClose, onSuccess }: any) {
             placeholder="Örn: Metro Grossmarket, Özlem Et vb."
             value={tedarikci}
             onChange={e => setTedarikci(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm focus:border-brand-500 focus:outline-none"
+            className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#1A1F30]">
+        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-[#322C26]">
           <Button type="button" variant="ghost" onClick={onClose}>
             İptal
           </Button>
@@ -1394,7 +1415,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
           <select
             value={urunId}
             onChange={e => handleUrunDegistir(Number(e.target.value))}
-            className="w-full h-11 px-4 rounded-xl border border-[#1E2436] bg-[#090C15] text-white text-sm font-semibold focus:border-brand-500 focus:outline-none"
+            className="w-full h-11 px-4 rounded-xl border border-[#322C26] bg-[#110F0C] text-white text-sm font-semibold focus:border-brand-500 focus:outline-none"
           >
             {urunler.map((u: any) => (
               <option key={u.id} value={u.id}>
@@ -1417,7 +1438,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
             </button>
           </div>
 
-          <div className="bg-[#090C15] border border-[#1E2436] rounded-xl p-3 min-h-[140px] max-h-64 overflow-y-auto pos-scrollbar flex flex-col gap-2">
+          <div className="bg-[#110F0C] border border-[#322C26] rounded-xl p-3 min-h-[140px] max-h-64 overflow-y-auto pos-scrollbar flex flex-col gap-2">
             {kalemler.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-28 text-surface-500 text-xs">
                 <ChefHat size={24} className="text-surface-600 mb-1" />
@@ -1430,12 +1451,12 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
                 const kalemMaliyet = donusenMiktar * Number(seciliHam?.maliyet_birim || 0)
 
                 return (
-                  <div key={idx} className="flex items-center gap-2 bg-[#0E121E] border border-[#1A1F30] p-2.5 rounded-xl">
+                  <div key={idx} className="flex items-center gap-2 bg-[#171410] border border-[#322C26] p-2.5 rounded-xl">
                     <div className="flex-1">
                       <select
                         value={kalem.hammadde_id}
                         onChange={e => handleKalemGuncelle(idx, 'hammadde_id', Number(e.target.value))}
-                        className="w-full h-9 px-3 rounded-lg border border-[#1E2538] bg-[#090C15] text-white text-xs font-semibold focus:outline-none"
+                        className="w-full h-9 px-3 rounded-lg border border-[#322C26] bg-[#110F0C] text-white text-xs font-semibold focus:outline-none"
                       >
                         {hammaddeler.map((h: any) => (
                           <option key={h.id} value={h.id}>
@@ -1452,7 +1473,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
                         placeholder="Miktar"
                         value={kalem.miktar}
                         onChange={e => handleKalemGuncelle(idx, 'miktar', Number(e.target.value))}
-                        className="w-full h-9 px-2.5 text-center rounded-lg border border-[#1E2538] bg-[#090C15] text-white font-mono text-xs focus:outline-none"
+                        className="w-full h-9 px-2.5 text-center rounded-lg border border-[#322C26] bg-[#110F0C] text-white font-mono text-xs focus:outline-none"
                       />
                     </div>
 
@@ -1460,7 +1481,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
                       <select
                         value={kalem.birim || seciliHam?.birim || 'Gram'}
                         onChange={e => handleKalemGuncelle(idx, 'birim', e.target.value)}
-                        className="w-full h-9 px-2 rounded-lg border border-[#1E2538] bg-[#090C15] text-white font-mono text-xs focus:outline-none"
+                        className="w-full h-9 px-2 rounded-lg border border-[#322C26] bg-[#110F0C] text-white font-mono text-xs focus:outline-none"
                       >
                         <option value="Gram">Gram (gr)</option>
                         <option value="KG">Kilogram (kg)</option>
@@ -1492,7 +1513,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
         </div>
 
         {/* Canlı Maliyet & Kâr Özeti */}
-        <div className="grid grid-cols-4 gap-2 bg-[#0E121E] border border-[#1E2436] rounded-xl p-3.5 text-center font-mono">
+        <div className="grid grid-cols-4 gap-2 bg-[#171410] border border-[#322C26] rounded-xl p-3.5 text-center font-mono">
           <div>
             <span className="text-[10px] text-surface-500 uppercase block">Satış Fiyatı</span>
             <span className="text-base font-bold text-white mt-0.5 block">{formatPara(satisFiyati)}</span>
@@ -1521,7 +1542,7 @@ function ReceteModal({ isOpen, seciliUrun, urunler, hammaddeler, onClose, onSucc
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 mt-2 pt-3 border-t border-[#1A1F30]">
+        <div className="flex justify-end gap-3 mt-2 pt-3 border-t border-[#322C26]">
           <Button type="button" variant="ghost" onClick={onClose}>
             İptal
           </Button>

@@ -188,4 +188,118 @@ export function stokIPCKaydet(ipcMain: IpcMain): void {
       }
     })
   })
+
+  ipcMain.handle(STOK_KANALLARI.TEDARIKCI_LISTELE, async () => {
+    return db.prepare('SELECT * FROM tedarikci WHERE aktif = 1 ORDER BY ad').all()
+  })
+
+  ipcMain.handle(STOK_KANALLARI.TEDARIKCI_EKLE, async (_e, veri: any) => {
+    if (!veri?.ad) return { basarili: false, hata: 'Tedarikçi adı gerekli' }
+    const sonuc = db.prepare(`
+      INSERT INTO tedarikci (ad, telefon, adres, vergi_no, yetkili)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(veri.ad, veri.telefon || null, veri.adres || null, veri.vergi_no || null, veri.yetkili || null)
+    return { basarili: true, id: sonuc.lastInsertRowid }
+  })
+
+  ipcMain.handle(STOK_KANALLARI.TEDARIKCI_GUNCELLE, async (_e, id: number, veri: any) => {
+    const alanlar: string[] = []
+    const degerler: any[] = []
+    for (const k of ['ad', 'telefon', 'adres', 'vergi_no', 'yetkili', 'aktif']) {
+      if (veri && veri[k] !== undefined) {
+        alanlar.push(`${k} = ?`)
+        degerler.push(veri[k])
+      }
+    }
+    if (!alanlar.length) return { basarili: false, hata: 'Güncellenecek alan yok' }
+    degerler.push(id)
+    db.prepare(`UPDATE tedarikci SET ${alanlar.join(', ')} WHERE id = ?`).run(...degerler)
+    return { basarili: true }
+  })
+
+  ipcMain.handle(STOK_KANALLARI.ALIS_LISTELE, async (_e, limit = 100) => {
+    const faturalar = db.prepare(`
+      SELECT a.*, t.ad as tedarikci_adi, p.ad || ' ' || p.soyad as personel_adi
+      FROM stok_alis a
+      LEFT JOIN tedarikci t ON t.id = a.tedarikci_id
+      LEFT JOIN personel p ON p.id = a.personel_id
+      ORDER BY a.id DESC
+      LIMIT ?
+    `).all(Number(limit) || 100) as any[]
+
+    return faturalar.map((f) => {
+      const kalemler = db.prepare(`
+        SELECT k.*, h.ad as hammadde_adi, h.birim as hammadde_birim
+        FROM stok_alis_kalem k
+        JOIN hammadde h ON h.id = k.hammadde_id
+        WHERE k.alis_id = ?
+      `).all(f.id)
+      return { ...f, kalemler }
+    })
+  })
+
+  ipcMain.handle(STOK_KANALLARI.ALIS_KAYDET, async (_e, veri: any) => {
+    const kalemler = Array.isArray(veri?.kalemler) ? veri.kalemler : []
+    if (!kalemler.length) return { basarili: false, hata: 'En az bir kalem gerekli' }
+
+    try {
+      const islem = db.transaction(() => {
+        let toplam = 0
+        const temiz = kalemler.map((k: any) => {
+          const miktar = Number(Number(k.miktar || 0).toFixed(4))
+          const maliyet = Number(k.birim_maliyet || 0)
+          const satir = miktar * maliyet
+          toplam += satir
+          return { ...k, miktar, maliyet, satir }
+        }).filter((k: any) => k.hammadde_id && k.miktar > 0)
+
+        if (!temiz.length) throw new Error('Geçerli kalem yok')
+
+        const fatura = db.prepare(`
+          INSERT INTO stok_alis (tedarikci_id, fatura_no, toplam, notlar, personel_id)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(
+          veri.tedarikci_id || null,
+          veri.fatura_no || null,
+          Number(toplam.toFixed(2)),
+          veri.notlar || null,
+          veri.personel_id || null
+        )
+        const alisId = Number(fatura.lastInsertRowid)
+
+        for (const k of temiz) {
+          db.prepare(`
+            INSERT INTO stok_alis_kalem (alis_id, hammadde_id, miktar, birim_maliyet, toplam)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(alisId, k.hammadde_id, k.miktar, k.maliyet, k.satir)
+
+          db.prepare(`
+            INSERT INTO stok_hareket (hammadde_id, islem_tipi, miktar, birim_maliyet, aciklama, personel_id)
+            VALUES (?, 'giris', ?, ?, ?, ?)
+          `).run(
+            k.hammadde_id,
+            k.miktar,
+            k.maliyet,
+            `Alış faturası #${alisId}${veri.fatura_no ? ' / ' + veri.fatura_no : ''}`,
+            veri.personel_id || null
+          )
+
+          db.prepare(`
+            UPDATE hammadde SET
+              mevcut_stok = ROUND(mevcut_stok + ?, 4),
+              maliyet_birim = CASE WHEN ? > 0 THEN ? ELSE maliyet_birim END,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).run(k.miktar, k.maliyet, k.maliyet, k.hammadde_id)
+        }
+
+        return alisId
+      })
+
+      const id = islem()
+      return { basarili: true, id }
+    } catch (err: any) {
+      return { basarili: false, hata: err.message }
+    }
+  })
 }

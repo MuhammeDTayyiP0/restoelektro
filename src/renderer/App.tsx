@@ -18,6 +18,11 @@ import InventoryPage from './pages/Inventory/InventoryPage'
 import CustomerPage from './pages/Customers/CustomerPage'
 import ReportsPage from './pages/Reports/ReportsPage'
 import SettingsPage from './pages/Settings/SettingsPage'
+import DeliveryPage from './pages/Delivery/DeliveryPage'
+import ReservationsPage from './pages/Reservations/ReservationsPage'
+import CashClosePage from './pages/Cash/CashClosePage'
+import AuditPage from './pages/Audit/AuditPage'
+import { useTerminalStore } from './stores/useTerminalStore'
 
 /**
  * Ana Uygulama Bileşeni
@@ -29,6 +34,7 @@ export default function App() {
   // Uygulama başlarken temayı yükle ve ilk açılışta otomatik başlatma tercihini kontrol et
   useEffect(() => {
     initTema()
+    useTerminalStore.getState().yukle()
 
     const sorulduMu = localStorage.getItem('etibol_auto_launch_prompted')
     if (!sorulduMu) {
@@ -54,7 +60,7 @@ export default function App() {
   return (
     <ToastProvider>
       <HashRouter>
-        <div className="w-screen h-screen overflow-hidden select-none bg-[#090A0F] font-sans text-surface-100 selection:bg-brand-500/30">
+        <div className="w-screen h-screen overflow-hidden select-none bg-[#0B0A08] font-sans text-surface-100 selection:bg-brand-500/30">
           <Routes>
             {/* Kök dizin kontrolü */}
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -75,6 +81,10 @@ export default function App() {
               <Route path="/customers" element={<CustomerPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/delivery" element={<DeliveryPage />} />
+              <Route path="/reservations" element={<ReservationsPage />} />
+              <Route path="/cash" element={<CashClosePage />} />
+              <Route path="/audit" element={<AuditPage />} />
             </Route>
             
             {/* Bulunamayan rotalar */}

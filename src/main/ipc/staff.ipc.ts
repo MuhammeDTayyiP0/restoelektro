@@ -9,6 +9,7 @@ import { PERSONEL_KANALLARI } from '../../common/ipc-channels'
 import { compareSync, hashSync } from 'bcryptjs'
 import { sign } from 'jsonwebtoken'
 import type { Personel, GirisBilgileri, GirisYaniti, YeniPersonel } from '../../common/types/staff.types'
+import { denetimYaz } from '../services/audit.service'
 
 // JWT gizli anahtar (üretimde çevresel değişkenden alınmalı)
 const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
@@ -48,6 +49,16 @@ export function personelIPCKaydet(ipcMain: IpcMain): void {
       // Hassas verileri çıkar
       const { sifre_hash, ...guvenliPersonel } = personel
 
+      denetimYaz(db, {
+        personel_id: personel.id,
+        personel_adi: `${personel.ad} ${personel.soyad}`,
+        islem: 'giris',
+        modul: 'personel',
+        hedef_tip: 'personel',
+        hedef_id: personel.id,
+        ozet: `${personel.kullanici_adi} giriş yaptı`,
+      })
+
       return {
         basarili: true,
         personel: { ...guvenliPersonel, tam_adi: `${personel.ad} ${personel.soyad}` },
@@ -59,17 +70,38 @@ export function personelIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // PIN ile hızlı giriş
-  ipcMain.handle(PERSONEL_KANALLARI.PIN_GIRIS, async (_event, pin: string): Promise<GirisYaniti> => {
+  ipcMain.handle(PERSONEL_KANALLARI.PIN_GIRIS, async (_event, pinVeyaVeri: string | { pin?: string; personel_id?: number }): Promise<GirisYaniti> => {
     try {
-      const personel = db.prepare(
-        'SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1'
-      ).get(pin) as any
+      const pin = typeof pinVeyaVeri === 'string'
+        ? pinVeyaVeri
+        : String(pinVeyaVeri?.pin || '')
+      const personelId = typeof pinVeyaVeri === 'object'
+        ? Number(pinVeyaVeri?.personel_id || 0)
+        : 0
 
-      if (!personel) {
-        return { basarili: false, hata: 'Geçersiz PIN kodu' }
+      if (!pin || pin.length !== 4) {
+        return { basarili: false, hata: '4 haneli PIN gerekli' }
       }
 
-      const yetkiler = db.prepare('SELECT * FROM yetki WHERE rol = ?').all(personel.rol)
+      let personel: any
+      if (personelId) {
+        personel = db.prepare(
+          'SELECT * FROM personel WHERE id = ? AND aktif = 1'
+        ).get(personelId) as any
+        if (!personel) {
+          return { basarili: false, hata: 'Personel bulunamadı' }
+        }
+        if (String(personel.pin_kodu || '') !== pin) {
+          return { basarili: false, hata: `Geçersiz PIN — ${personel.ad} ${personel.soyad} için doğru değil` }
+        }
+      } else {
+        personel = db.prepare(
+          'SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1'
+        ).get(pin) as any
+        if (!personel) {
+          return { basarili: false, hata: 'Geçersiz PIN kodu' }
+        }
+      }
 
       const token = sign(
         { id: personel.id, rol: personel.rol },
@@ -78,6 +110,16 @@ export function personelIPCKaydet(ipcMain: IpcMain): void {
       )
 
       const { sifre_hash, ...guvenliPersonel } = personel
+
+      denetimYaz(db, {
+        personel_id: personel.id,
+        personel_adi: `${personel.ad} ${personel.soyad}`,
+        islem: 'pin_giris',
+        modul: 'personel',
+        hedef_tip: 'personel',
+        hedef_id: personel.id,
+        ozet: `${personel.kullanici_adi} PIN ile giriş yaptı`,
+      })
 
       return {
         basarili: true,

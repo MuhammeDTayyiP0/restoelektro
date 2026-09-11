@@ -70,7 +70,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed inset-0 bg-[#0A0A0A]/90 z-0 pointer-events-auto"
+            className="fixed inset-0 bg-[#0B0A08]/88 z-0 pointer-events-auto"
             onClick={() => closeOnOverlayClick && onClose()}
           />
           
@@ -83,20 +83,20 @@ export function Modal({
             transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{ transform: 'translateZ(0)', willChange: 'opacity, transform' }}
             className={clsx(
-              'relative z-50 isolate w-full max-h-[94vh] sm:max-h-[90vh] bg-[#0D101A] rounded-2xl shadow-xl flex flex-col overflow-hidden border border-[#1E2436] my-auto pointer-events-auto',
+              'relative z-50 isolate w-full max-h-[94vh] sm:max-h-[90vh] bg-[#171410] rounded-2xl shadow-pos-lg flex flex-col overflow-hidden border border-[#322C26] my-auto pointer-events-auto',
               sizes[size]
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#1A1F30] bg-[#090B12] flex-shrink-0 shrink-0">
-              <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-brand-500" />
+            <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#322C26] bg-[#12110E] flex-shrink-0 shrink-0">
+              <h2 className="text-sm sm:text-base font-semibold text-surface-50 tracking-tight flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
                 {title}
               </h2>
               <button 
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:text-white hover:bg-[#1A1F30] transition-colors focus:outline-none"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:text-white hover:bg-[#241F1A] transition-colors focus:outline-none"
                 aria-label="Kapat"
               >
                 <X size={18} />
@@ -115,7 +115,7 @@ export function Modal({
             
             {/* Footer */}
             {footer && (
-              <div className="px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-t border-[#1A1F30] bg-[#090B12] flex items-center justify-end gap-2.5 sm:gap-3 rounded-b-2xl flex-shrink-0 shrink-0">
+              <div className="px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-t border-[#322C26] bg-[#12110E] flex items-center justify-end gap-2.5 sm:gap-3 rounded-b-2xl flex-shrink-0 shrink-0">
                 {footer}
               </div>
             )}

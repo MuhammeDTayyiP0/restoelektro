@@ -151,11 +151,11 @@ export default function StaffSettings() {
           personeller.map(p => (
             <div 
               key={p.id} 
-              className="bg-[#0E111B] rounded-2xl p-5 border border-[#1E2436] flex flex-col justify-between gap-4 shadow-xl hover:border-brand-500/40 transition-colors group"
+              className="bg-[#171410] rounded-2xl p-5 border border-[#322C26] flex flex-col justify-between gap-4 shadow-xl hover:border-brand-500/40 transition-colors group"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-[#141826] border border-[#222B40] flex items-center justify-center text-brand-400 font-bold text-sm">
+                  <div className="w-11 h-11 rounded-xl bg-[#1e1a16] border border-[#3A342C] flex items-center justify-center text-brand-400 font-bold text-sm">
                     {p.ad?.charAt(0)}{p.soyad?.charAt(0)}
                   </div>
                   <div>
@@ -173,7 +173,7 @@ export default function StaffSettings() {
                 </div>
               </div>
               
-              <div className="flex justify-between items-center pt-3 border-t border-[#1A1F30]">
+              <div className="flex justify-between items-center pt-3 border-t border-[#322C26]">
                 <div>
                   {p.pin_kodu ? (
                     <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 bg-emerald-950/30 px-2 py-1 rounded-lg border border-emerald-800/30">
@@ -187,7 +187,7 @@ export default function StaffSettings() {
                   <button 
                     type="button"
                     onClick={() => modalAc(p)} 
-                    className="p-2 rounded-lg bg-[#141826] hover:bg-[#1C2236] text-surface-300 hover:text-white border border-[#222B40] transition-colors"
+                    className="p-2 rounded-lg bg-[#1e1a16] hover:bg-[#322C26] text-surface-300 hover:text-white border border-[#3A342C] transition-colors"
                     title="Düzenle"
                   >
                     <Edit2 size={14} />
@@ -223,7 +223,7 @@ export default function StaffSettings() {
                 type="text" 
                 value={ad} 
                 onChange={e => setAd(e.target.value)} 
-                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -233,7 +233,7 @@ export default function StaffSettings() {
                 type="text" 
                 value={soyad} 
                 onChange={e => setSoyad(e.target.value)} 
-                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
               />
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function StaffSettings() {
               value={kullaniciAdi} 
               onChange={e => setKullaniciAdi(e.target.value)} 
               disabled={!!duzenlenenPersonel} 
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50 font-mono" 
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50 font-mono" 
             />
           </div>
 
@@ -256,7 +256,7 @@ export default function StaffSettings() {
               <select 
                 value={rol} 
                 onChange={e => setRol(e.target.value)} 
-                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
               >
                 <option value="admin">Admin / Yönetici</option>
                 <option value="mudur">Müdür</option>
@@ -272,13 +272,13 @@ export default function StaffSettings() {
                 maxLength={4} 
                 value={pinKodu} 
                 onChange={e => setPinKodu(e.target.value.replace(/\D/g, ''))} 
-                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono tracking-widest focus:outline-none focus:border-brand-500 transition-colors" 
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono tracking-widest focus:outline-none focus:border-brand-500 transition-colors" 
                 placeholder="1234" 
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 pt-2 border-t border-[#1A1F30]">
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-[#322C26]">
             <label className="text-xs font-semibold text-surface-400">
               Giriş Şifresi {duzenlenenPersonel && '(Değiştirmeyecekseniz boş bırakın)'}
             </label>
@@ -286,12 +286,12 @@ export default function StaffSettings() {
               type="password" 
               value={sifre} 
               onChange={e => setSifre(e.target.value)} 
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors" 
               placeholder="••••••••" 
             />
           </div>
 
-          <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#1A1F30]">
+          <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#322C26]">
             <button 
               type="button" 
               onClick={() => setModalAcik(false)}

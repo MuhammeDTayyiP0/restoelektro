@@ -16,11 +16,11 @@ export function Badge({
 }: BadgeProps) {
   
   const variants = {
-    default: 'bg-surface-200 text-surface-800 dark:bg-surface-700 dark:text-surface-200',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800/50',
-    warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50',
-    danger: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/50',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50',
+    default: 'bg-surface-200 text-surface-800 dark:bg-surface-800 dark:text-surface-200',
+    success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50',
+    warning: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50',
+    danger: 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-800/50',
+    info: 'bg-brand-100 text-brand-800 dark:bg-brand-950/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800/50',
     outline: 'bg-transparent text-surface-600 dark:text-surface-400 border border-surface-300 dark:border-surface-600',
   }
   

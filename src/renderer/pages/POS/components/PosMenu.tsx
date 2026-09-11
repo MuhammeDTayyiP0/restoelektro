@@ -169,10 +169,10 @@ export default function PosMenu() {
   // Grid: Tüm ürünler aynı boyutta, tek bir ızgara
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-[#090A0F] text-slate-100 select-none">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-[#0B0A08] text-slate-100 select-none">
 
       {/* 1. ÜST KOMUTA ÇUBUĞU: ARAMA, PORSIYON & HIZLI FİLTRELER */}
-      <div className="p-2 sm:p-2.5 2xl:p-3 bg-[#0C1017] border-b border-[#1E2436] flex-shrink-0 shrink-0 flex flex-col md:flex-row items-stretch md:items-center gap-2 sm:gap-2.5">
+      <div className="p-2 sm:p-2.5 2xl:p-3 bg-[#171410] border-b border-[#322C26] flex-shrink-0 shrink-0 flex flex-col md:flex-row items-stretch md:items-center gap-2 sm:gap-2.5">
 
         {/* Arama & Barkod Inputu */}
         <div className="relative flex-1">
@@ -185,7 +185,7 @@ export default function PosMenu() {
               if (e.target.value && seciliKategoriId) kategoriSec(null)
             }}
             placeholder="Ürün adı, kod veya barkod ara..."
-            className="w-full h-10 sm:h-11 2xl:h-12 pl-9 pr-8 bg-[#090D15] border border-[#1F293D] focus:border-cyan-400 rounded-xl font-mono text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none transition-colors shadow-inner"
+            className="w-full h-10 sm:h-11 2xl:h-12 pl-9 pr-8 bg-[#110F0C] border border-[#3A342C] focus:border-cyan-400 rounded-xl font-mono text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none transition-colors shadow-inner"
           />
           {aramaMetni && (
             <button
@@ -198,7 +198,7 @@ export default function PosMenu() {
         </div>
 
         {/* Porsiyon Seçici Segmented Toggle */}
-        <div className="flex items-center bg-[#090D15] p-0.5 sm:p-1 rounded-xl border border-[#1F293D] h-10 sm:h-11 2xl:h-12 w-full md:w-auto shrink-0 shadow-inner">
+        <div className="flex items-center bg-[#110F0C] p-0.5 sm:p-1 rounded-xl border border-[#3A342C] h-10 sm:h-11 2xl:h-12 w-full md:w-auto shrink-0 shadow-inner">
           {[
             { p: 0.5, label: '0.5x Yarım', short: '0.5x' },
             { p: 1, label: '1x Porsiyon', short: '1x' },
@@ -213,7 +213,7 @@ export default function PosMenu() {
                 'flex-1 md:flex-initial px-2 sm:px-3 h-8 sm:h-9 2xl:h-10 flex items-center justify-center font-mono font-bold text-[11px] sm:text-xs rounded-lg transition-all',
                 aktifPorsiyon === p
                   ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)] border border-cyan-300'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#141B29]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#1E1A16]'
               )}
             >
               <span className="hidden lg:inline">{label}</span>
@@ -230,7 +230,7 @@ export default function PosMenu() {
             'h-10 sm:h-11 2xl:h-12 px-3 sm:px-3.5 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-1.5 border transition-all shrink-0',
             hizliFiltre === 'populer'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
-              : 'bg-[#090D15] text-slate-400 border-[#1F293D] hover:text-slate-200 hover:bg-[#141B29]'
+              : 'bg-[#110F0C] text-slate-400 border-[#3A342C] hover:text-slate-200 hover:bg-[#1E1A16]'
           )}
         >
           <Flame size={14} className={hizliFiltre === 'populer' ? 'text-amber-400 fill-amber-400' : ''} />
@@ -240,12 +240,12 @@ export default function PosMenu() {
 
       {/* 2. KATEGORİ SEÇİCİ (ERGONOMIC HIGH-SPEED CAROUSEL BAR) */}
       {!aramaMetni && (
-        <div className="relative flex items-center bg-[#0C1017] border-b border-[#1E2436] px-2 py-1.5 flex-shrink-0 shrink-0">
+        <div className="relative flex items-center bg-[#171410] border-b border-[#322C26] px-2 py-1.5 flex-shrink-0 shrink-0">
 
           {/* Sol Kaydırma Butonu */}
           <button
             onClick={() => scrollKategori('left')}
-            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 mr-1.5 transition-colors"
+            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#1e1a16] border border-[#3A342C] text-slate-400 hover:text-white items-center justify-center shrink-0 mr-1.5 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
@@ -262,13 +262,13 @@ export default function PosMenu() {
               className={clsx(
                 'flex-shrink-0 h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center gap-1.5 sm:gap-2 border transition-all shadow-sm',
                 seciliKategoriId === null
-                  ? 'bg-[#1E293B] text-white border-slate-500 shadow-[0_0_12px_rgba(255,255,255,0.1)]'
-                  : 'bg-[#0E131E] text-slate-400 border-[#1E2638] hover:bg-[#151D2C] hover:text-slate-200'
+                  ? 'bg-[#322C26] text-white border-slate-500 shadow-[0_0_12px_rgba(255,255,255,0.1)]'
+                  : 'bg-[#171410] text-slate-400 border-[#322C26] hover:bg-[#241F1A] hover:text-slate-200'
               )}
             >
               <Layers size={14} />
               <span>TÜM MENÜ</span>
-              <span className="bg-[#090A0F] text-slate-400 px-1.5 py-0.5 rounded text-[10px]">
+              <span className="bg-[#0B0A08] text-slate-400 px-1.5 py-0.5 rounded text-[10px]">
                 {tumUrunler.length}
               </span>
             </motion.button>
@@ -277,7 +277,7 @@ export default function PosMenu() {
             {siraliKategoriler.map(kat => {
               const isActive = seciliKategoriId === kat.id
               const count = kategoriUrunSayilari[kat.id] || 0
-              const katColor = kat.renk || '#3b82f6'
+              const katColor = kat.renk || '#9a5f48'
 
               return (
                 <motion.button
@@ -287,8 +287,8 @@ export default function PosMenu() {
                   className={clsx(
                     'flex-shrink-0 h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-tight flex items-center gap-1.5 sm:gap-2 border transition-all shadow-sm relative overflow-hidden',
                     isActive
-                      ? 'border-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-[#121B2A]'
-                      : 'bg-[#0E131E] text-slate-300 border-[#1E2638] hover:bg-[#151D2C] hover:text-white'
+                      ? 'border-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-[#1E1A16]'
+                      : 'bg-[#171410] text-slate-300 border-[#322C26] hover:bg-[#241F1A] hover:text-white'
                   )}
                 >
                   {/* Renk Çizgisi */}
@@ -299,7 +299,7 @@ export default function PosMenu() {
                   <span>{kat.ad}</span>
                   <span className={clsx(
                     "px-1.5 py-0.5 rounded text-[10px]",
-                    isActive ? "bg-cyan-950 text-cyan-300 border border-cyan-500/30" : "bg-[#090A0F] text-slate-400"
+                    isActive ? "bg-cyan-950 text-cyan-300 border border-cyan-500/30" : "bg-[#0B0A08] text-slate-400"
                   )}>
                     {count}
                   </span>
@@ -311,7 +311,7 @@ export default function PosMenu() {
           {/* Sağ Kaydırma Butonu */}
           <button
             onClick={() => scrollKategori('right')}
-            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#121724] border border-[#222C42] text-slate-400 hover:text-white items-center justify-center shrink-0 ml-1.5 transition-colors"
+            className="hidden md:flex w-7 h-9 sm:w-8 sm:h-10 rounded-lg bg-[#1e1a16] border border-[#3A342C] text-slate-400 hover:text-white items-center justify-center shrink-0 ml-1.5 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
@@ -336,16 +336,16 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
+            className="flex flex-col gap-2.5 sm:gap-3.5 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
             {/* Ürün Bilgi Kartı */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141926] border border-[#222C42]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1e1a16] border border-[#3A342C]">
               {satisTuruModalUrun.resim_yolu && (
                 <img
                   src={formatResimUrl(satisTuruModalUrun.resim_yolu)}
                   alt={satisTuruModalUrun.ad}
-                  className="w-14 h-14 rounded-xl object-cover border border-[#222C42] shrink-0"
+                  className="w-14 h-14 rounded-xl object-cover border border-[#3A342C] shrink-0"
                 />
               )}
               <div className="flex flex-col min-w-0">
@@ -376,7 +376,7 @@ export default function PosMenu() {
                     sepeteEkle(u, 1, aktifPorsiyon, undefined, undefined, '', 'porsiyon')
                   }
                 }}
-                className="flex flex-col justify-between p-4 rounded-xl bg-[#121B2A] border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-[#162338] transition-all text-left group shadow-lg cursor-pointer"
+                className="flex flex-col justify-between p-4 rounded-xl bg-[#1E1A16] border-2 border-cyan-500/40 hover:border-cyan-400 hover:bg-[#241f1a] transition-all text-left group shadow-lg cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full mb-3">
                   <div className="w-10 h-10 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center">
@@ -406,7 +406,7 @@ export default function PosMenu() {
                   setGramajModalUrun(u)
                   setSecilenSatisTuru('kg')
                 }}
-                className="flex flex-col justify-between p-4 rounded-xl bg-[#171D1B] border-2 border-emerald-500/40 hover:border-emerald-400 hover:bg-[#1C2623] transition-all text-left group shadow-lg cursor-pointer"
+                className="flex flex-col justify-between p-4 rounded-xl bg-[#1E1A16] border-2 border-emerald-500/40 hover:border-emerald-400 hover:bg-[#322C26] transition-all text-left group shadow-lg cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full mb-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center">
@@ -427,7 +427,7 @@ export default function PosMenu() {
             </div>
 
             {/* İptal Butonu */}
-            <div className="flex justify-end pt-2 border-t border-[#1E2436]">
+            <div className="flex justify-end pt-2 border-t border-[#322C26]">
               <Button
                 variant="ghost"
                 size="md"
@@ -450,11 +450,11 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-2 sm:gap-3 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
+            className="flex flex-col gap-2 sm:gap-3 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
             {/* Ürün & Fiyat Bilgisi */}
-            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
+            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#1e1a16] border border-[#3A342C] flex-shrink-0 shrink-0">
               <div className="flex items-center gap-2">
                 <Scale size={18} className="text-emerald-400" />
                 <span className="font-mono text-xs sm:text-sm font-bold text-white truncate max-w-[200px]">
@@ -504,7 +504,7 @@ export default function PosMenu() {
                       }
                     }
                   }}
-                  className="w-full h-12 sm:h-14 px-4 border rounded-xl sm:rounded-2xl bg-[#090D15] border-[#222C42] focus:border-emerald-400 text-2xl sm:text-3xl font-black font-mono text-emerald-400 text-center outline-none shadow-inner"
+                  className="w-full h-12 sm:h-14 px-4 border rounded-xl sm:rounded-2xl bg-[#110F0C] border-[#3A342C] focus:border-emerald-400 text-2xl sm:text-3xl font-black font-mono text-emerald-400 text-center outline-none shadow-inner"
                 />
                 <span className="absolute right-4 font-mono font-black text-emerald-400 text-sm sm:text-base">
                   KG
@@ -517,7 +517,7 @@ export default function PosMenu() {
                 const kiloFiyati = getUrunKiloFiyati(gramajModalUrun)
                 const hesaplananTutar = kiloFiyati * parsed
                 return (
-                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#090D15] border border-[#1E2436] font-mono text-xs">
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#110F0C] border border-[#322C26] font-mono text-xs">
                     <span className="text-slate-400">Hesaplanan Tutar:</span>
                     <span className="text-emerald-400 font-bold tabular-nums">
                       {parsed > 0 ? (
@@ -554,7 +554,7 @@ export default function PosMenu() {
                     "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95",
                     girilenGramaj === item.val
                       ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
-                      : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
+                      : "bg-[#1e1a16] text-slate-300 border-[#3A342C] hover:bg-[#322C26]"
                   )}
                 >
                   {item.label}
@@ -588,7 +588,7 @@ export default function PosMenu() {
             </div>
 
             {/* Aksiyon Butonları */}
-            <div className="flex gap-2.5 justify-end mt-1 pt-2.5 sm:pt-3 border-t border-[#1E2436] flex-shrink-0 shrink-0">
+            <div className="flex gap-2.5 justify-end mt-1 pt-2.5 sm:pt-3 border-t border-[#322C26] flex-shrink-0 shrink-0">
               <Button
                 variant="ghost"
                 size="md"
@@ -640,17 +640,17 @@ export default function PosMenu() {
           size="md"
         >
           <div 
-            className="flex flex-col gap-3 sm:gap-4 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
+            className="flex flex-col gap-3 sm:gap-4 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
             style={{ transform: 'translateZ(0)' }}
           >
 
             {/* Ürün Özet Başlığı */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141926] border border-[#222C42]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1e1a16] border border-[#3A342C]">
               {varyantModalUrun.resim_yolu && (
                 <img
                   src={formatResimUrl(varyantModalUrun.resim_yolu)}
                   alt={varyantModalUrun.ad}
-                  className="w-14 h-14 rounded-xl object-cover border border-[#222C42]"
+                  className="w-14 h-14 rounded-xl object-cover border border-[#3A342C]"
                 />
               )}
               <div className="flex flex-col min-w-0">
@@ -691,7 +691,7 @@ export default function PosMenu() {
                           'relative flex items-center justify-between h-14 px-3.5 rounded-xl border font-mono text-sm font-bold transition-all active:scale-95 duration-100',
                           isSelected
                             ? 'bg-violet-500/15 border-violet-400 text-violet-200'
-                            : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
+                            : 'bg-[#171410] border-[#322C26] text-slate-300 hover:border-slate-500 hover:bg-[#1e1a16]'
                         )}
                       >
                         <span className="truncate">{varyant.ad}</span>
@@ -737,7 +737,7 @@ export default function PosMenu() {
                           'relative flex items-center justify-between h-12 px-3 rounded-xl border font-mono text-sm font-bold transition-all active:scale-95 duration-100',
                           isSelected
                             ? 'bg-cyan-500/15 border-cyan-400 text-cyan-200'
-                            : 'bg-[#0C1017] border-[#1E2638] text-slate-300 hover:border-slate-500 hover:bg-[#121824]'
+                            : 'bg-[#171410] border-[#322C26] text-slate-300 hover:border-slate-500 hover:bg-[#1e1a16]'
                         )}
                       >
                         <span className="truncate">{opsiyon.ad}</span>
@@ -759,7 +759,7 @@ export default function PosMenu() {
             )}
 
             {/* Toplam Fiyat Önizleme */}
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#090D15] border border-[#1E2638]">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#110F0C] border border-[#322C26]">
               <span className="text-xs font-mono text-slate-400 uppercase">Toplam Tutar</span>
               <span className="text-lg font-black font-mono text-emerald-400 tabular-nums">
                 {formatPara(
@@ -771,7 +771,7 @@ export default function PosMenu() {
             </div>
 
             {/* Aksiyon Butonları */}
-            <div className="flex gap-2.5 justify-end pt-3 border-t border-[#1E2436]">
+            <div className="flex gap-2.5 justify-end pt-3 border-t border-[#322C26]">
               <Button
                 variant="ghost"
                 size="md"

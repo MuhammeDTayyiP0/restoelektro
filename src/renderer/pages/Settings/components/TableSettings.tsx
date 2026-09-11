@@ -220,8 +220,8 @@ export default function TableSettings() {
       </div>
 
       {/* Bölüm Yönetimi */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-        <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#322C26]">
           <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider">
             Restoran Bölümleri
           </h3>
@@ -249,12 +249,12 @@ export default function TableSettings() {
                     'flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-xs font-semibold pr-9 transition-all',
                     seciliBolumId === bolum.id
                       ? 'bg-brand-950/50 border-brand-500/60 text-white shadow-md shadow-brand-950/40'
-                      : 'bg-[#121624] hover:bg-[#181D2E] border-[#1E2538] text-surface-300'
+                      : 'bg-[#1e1a16] hover:bg-[#241F1A] border-[#322C26] text-surface-300'
                   )}
                 >
                   <LayoutGrid size={15} className={seciliBolumId === bolum.id ? 'text-brand-400' : 'text-surface-400'} />
                   <span>{bolum.ad}</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#181E30] text-surface-400 border border-[#252E46] ml-1">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#241F1A] text-surface-400 border border-[#403830] ml-1">
                     {bolum.masa_sayisi || 0}
                   </span>
                 </button>
@@ -286,8 +286,8 @@ export default function TableSettings() {
 
       {/* Masa Listesi */}
       {seciliBolumId && (
-        <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1A1F30]">
+        <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#322C26]">
             <h3 className="text-xs font-bold text-surface-300 uppercase tracking-wider">
               {bolumler.find(b => b.id === seciliBolumId)?.ad} — Masa Listesi
             </h3>
@@ -296,7 +296,7 @@ export default function TableSettings() {
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setTopluMasaModalAcik(true)}
-                className="h-9 px-3.5 rounded-xl bg-[#141926] hover:bg-[#1E2538] border border-[#222C42] hover:border-brand-500/50 text-brand-400 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                className="h-9 px-3.5 rounded-xl bg-[#1e1a16] hover:bg-[#322C26] border border-[#3A342C] hover:border-brand-500/50 text-brand-400 font-semibold text-xs flex items-center gap-1.5 transition-colors"
                 title="Toplu Masa Oluştur"
               >
                 <Layers size={14} />
@@ -321,7 +321,7 @@ export default function TableSettings() {
               {filtrelenmisMasalar.map(masa => (
                 <div
                   key={masa.id}
-                  className="relative flex flex-col items-center justify-center bg-[#121624] hover:bg-[#161B2B] border border-[#1E2538] rounded-xl p-4 h-24 shadow-md transition-colors group"
+                  className="relative flex flex-col items-center justify-center bg-[#1e1a16] hover:bg-[#1E1A16] border border-[#322C26] rounded-xl p-4 h-24 shadow-md transition-colors group"
                 >
                   <span className="text-xl font-bold font-mono text-white mb-0.5">
                     {masa.numara}
@@ -368,7 +368,7 @@ export default function TableSettings() {
                 const val = e.target.value
                 setBolumForm(prev => ({ ...prev, ad: val }))
               }}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: Salon, Bahçe, Teras..."
               autoFocus
               onKeyDown={e => { if (e.key === 'Enter') bolumKaydet() }}
@@ -383,11 +383,11 @@ export default function TableSettings() {
                 const val = e.target.value === '' ? '' : parseInt(e.target.value)
                 setBolumForm(prev => ({ ...prev, sira: val }))
               }}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="0"
             />
           </div>
-          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#1A1F30]">
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#322C26]">
             <button 
               type="button" 
               onClick={() => setBolumModalAcik(false)}
@@ -425,7 +425,7 @@ export default function TableSettings() {
                 const val = e.target.value
                 setMasaForm(prev => ({ ...prev, numara: val }))
               }}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
               placeholder="Örn: 1, A1, VIP-1..."
               autoFocus
             />
@@ -441,7 +441,7 @@ export default function TableSettings() {
                 const val = e.target.value === '' ? '' : parseInt(e.target.value)
                 setMasaForm(prev => ({ ...prev, kapasite: val }))
               }}
-              className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono focus:outline-none focus:border-brand-500 transition-colors"
             />
           </div>
           {!duzenlenecekMasa && (
@@ -453,7 +453,7 @@ export default function TableSettings() {
                   const val = parseInt(e.target.value)
                   setMasaForm(prev => ({ ...prev, bolum_id: val }))
                 }}
-                className="h-11 px-3.5 rounded-xl bg-[#090B11] border border-[#1E2436] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-semibold focus:outline-none focus:border-brand-500 transition-colors"
               >
                 {bolumler.map(b => (
                   <option key={b.id} value={b.id}>{b.ad}</option>
@@ -461,7 +461,7 @@ export default function TableSettings() {
               </select>
             </div>
           )}
-          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#1A1F30]">
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[#322C26]">
             <button 
               type="button" 
               onClick={() => { setMasaModalAcik(false); setDuzenlenecekMasa(null) }}

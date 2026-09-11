@@ -27,7 +27,7 @@ import { useAuthStore } from '../../../stores/useAuthStore'
 import { ipcInvoke } from '../../../hooks/useIPC'
 import { HESAP_KANALLARI, AYAR_KANALLARI } from '../../../../common/ipc-channels'
 import { useToast } from '../../../components/ui/Toast'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import OdemeModal from './OdemeModal'
 import IndirimModal from './IndirimModal'
 import { yazdirMutfak, yazdirAdisyon } from '../../../utils/print.utils'
@@ -66,91 +66,60 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
     <div 
       onClick={() => onSelect('siparis-' + siparis.id)}
       className={clsx(
-        'flex flex-col p-2 sm:p-2.5 transition-all cursor-pointer select-none',
-        isSelected ? 'bg-[#151C2C] border-l-2 border-l-amber-400' : 'bg-[#0E121B] hover:bg-[#121724]'
+        'flex gap-2.5 px-3 py-2.5 transition-all cursor-pointer select-none',
+        isSelected ? 'bg-[#241F1A]' : 'hover:bg-[#1e1a16]/80',
+        isIptal && 'opacity-50'
       )}
     >
-      <div className="flex justify-between items-start gap-1.5 sm:gap-2">
-        <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-nowrap">
+      <div className="w-8 h-8 rounded-full bg-[#1A1612] border border-[#322C26] flex items-center justify-center font-mono text-[13px] font-semibold tabular-nums text-surface-300 shrink-0 mt-0.5">
+        {siparis.miktar}
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex flex-col flex-1 min-w-0">
             <span className={clsx(
-              "text-xs sm:text-sm font-bold tracking-tight truncate",
-              isIptal ? "line-through text-slate-400" : "text-white"
+              "text-sm font-medium tracking-tight truncate",
+              isIptal ? "line-through text-surface-400" : "text-surface-50"
             )} title={siparis.urun_adi}>
               {siparis.urun_adi}
             </span>
-            {isKgSiparis ? (
-              <span className="shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {siparis.gramaj ? `${siparis.gramaj} KG` : 'KG'}
-              </span>
-            ) : (
-              siparis.porsiyon && siparis.porsiyon !== 1 && (
-                <span className="shrink-0 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                  ({siparis.porsiyon === 2 ? 'Double' : `${siparis.porsiyon}P`})
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              {isKgSiparis ? (
+                <span className="text-[11px] font-mono text-surface-400">
+                  {siparis.gramaj ? `${siparis.gramaj} kg` : 'kg'}
                 </span>
-              )
-            )}
-
-            {/* Status Badge */}
-            {isIptalBekliyor && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 px-1 py-0.5 rounded uppercase">
-                İptal Bekliyor
+              ) : (
+                siparis.porsiyon && siparis.porsiyon !== 1 && (
+                  <span className="text-[11px] text-surface-400">
+                    {siparis.porsiyon === 2 ? 'duble' : `${siparis.porsiyon}p`}
+                  </span>
+                )
+              )}
+              {isIptalBekliyor && <span className="text-[11px] text-rose-300">iptal bekliyor</span>}
+              {!isIptalBekliyor && siparis.durum === 'bekliyor' && <span className="text-[11px] text-amber-300/90">bekliyor</span>}
+              {!isIptalBekliyor && siparis.durum === 'hazirlaniyor' && <span className="text-[11px] text-brand-300">hazırlanıyor</span>}
+              {!isIptalBekliyor && siparis.durum === 'hazir' && <span className="text-[11px] text-emerald-400">hazır</span>}
+              {siparis.durum === 'iptal' && <span className="text-[11px] text-surface-500">iptal</span>}
+              {siparis.ikram === 1 && <span className="text-[11px] text-brand-300">ikram</span>}
+            </div>
+            {siparis.varyant_adi && (
+              <span className={clsx("text-[11px] text-surface-400 mt-0.5 truncate", isIptal && "line-through")}>
+                {siparis.varyant_adi}
               </span>
             )}
-            {!isIptalBekliyor && siparis.durum === 'bekliyor' && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/40 px-1 py-0.5 rounded uppercase flex items-center gap-0.5">
-                <Clock size={9} /> Bekliyor
-              </span>
-            )}
-            {!isIptalBekliyor && siparis.durum === 'hazirlaniyor' && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-blue-500/15 text-blue-300 border border-blue-500/40 px-1 py-0.5 rounded uppercase flex items-center gap-0.5">
-                <Flame size={9} /> Hazırlanıyor
-              </span>
-            )}
-            {!isIptalBekliyor && siparis.durum === 'hazir' && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 px-1 py-0.5 rounded uppercase flex items-center gap-0.5">
-                <Check size={9} /> Hazır
-              </span>
-            )}
-            {siparis.durum === 'iptal' && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.5 rounded uppercase">
-                İptal
-              </span>
-            )}
-            {siparis.ikram === 1 && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1 py-0.5 rounded uppercase flex items-center gap-0.5">
-                <Gift size={9} /> İkram
+            {siparis.notlar && (
+              <span className={clsx("text-[11px] italic mt-0.5 flex items-center gap-1 truncate", isIptal ? "text-surface-500 line-through" : "text-amber-400")}>
+                <AlertCircle size={9} className="shrink-0" /> {siparis.notlar}
               </span>
             )}
           </div>
-
-          {siparis.varyant_adi && (
-            <span className={clsx("text-[11px] text-slate-400 font-mono mt-0.5 truncate", isIptal && "line-through")}>
-              [{siparis.varyant_adi}]
-            </span>
-          )}
-          {siparis.notlar && (
-            <span className={clsx("text-[11px] italic mt-0.5 font-mono flex items-center gap-1 truncate", isIptal ? "text-slate-400 line-through" : "text-amber-400")}>
-              <AlertCircle size={9} className="shrink-0" /> Not: {siparis.notlar}
-            </span>
-          )}
-        </div>
-
-        {/* Fiyat ve Miktar */}
-        <div className="flex flex-col items-end shrink-0 whitespace-nowrap pl-1">
           <span className={clsx(
-            "text-xs sm:text-sm font-mono font-black tabular-nums",
-            (isIptal || siparis.ikram === 1) ? "text-slate-400 line-through" : "text-white"
+            "text-sm font-mono font-semibold tabular-nums shrink-0",
+            (isIptal || siparis.ikram === 1) ? "text-surface-500 line-through" : "text-surface-50"
           )}>
             {formatPara(siparis.toplam_fiyat)}
           </span>
-          <span className={clsx("text-[10px] sm:text-xs font-mono text-slate-400 tabular-nums", isIptal && "line-through")}>
-            {isKgSiparis && siparis.gramaj 
-              ? `${siparis.miktar > 1 ? `${siparis.miktar}x ` : ''}${siparis.gramaj} KG`
-              : `${siparis.miktar} ${siparis.urun_birim || 'Adet'}`} × {formatPara(siparis.birim_fiyat)}
-          </span>
         </div>
-      </div>
 
       {/* Sipariş Aksiyon Çekmecesi */}
       <AnimatePresence>
@@ -159,7 +128,7 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center justify-end mt-2.5 pt-2.5 border-t border-[#1E273A] gap-2"
+            className="flex items-center justify-end mt-2.5 pt-2.5 border-t border-[#322C26] gap-2"
           >
             <motion.button 
               whileTap={{ scale: 0.95 }}
@@ -167,7 +136,7 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
                 "h-9 px-3 rounded-lg font-mono text-xs font-bold border flex items-center gap-1.5 transition-colors",
                 siparis.ikram === 1 
                   ? "bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30" 
-                  : "bg-[#161D2B] text-slate-300 border-[#25324A] hover:border-purple-500/40 hover:text-purple-300"
+                  : "bg-[#1E1A16] text-slate-300 border-[#403830] hover:border-purple-500/40 hover:text-purple-300"
               )}
               onClick={(e) => {
                 e.stopPropagation()
@@ -183,7 +152,7 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
               className={clsx(
                 "h-9 px-3 rounded-lg font-mono text-xs font-bold border flex items-center gap-1.5 transition-colors",
                 isIptalBekliyor 
-                  ? "bg-[#161D2B] text-amber-300 border-amber-500/40 hover:bg-amber-500/10" 
+                  ? "bg-[#1E1A16] text-amber-300 border-amber-500/40 hover:bg-amber-500/10" 
                   : "bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25"
               )}
               onClick={(e) => { 
@@ -198,11 +167,9 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
         )}
       </AnimatePresence>
     </div>
+    </div>
   )
 })
-
-// =====================================================
-// 2. YENİ EKLENECEK TASLAK SEPET KALEMİ (MEMOIZED)
 // =====================================================
 interface SepetItemProps {
   kalem: SepetKalemi
@@ -235,74 +202,55 @@ const SepetItem = React.memo(function SepetItem({
     setLocalNote(kalem.notlar || '')
   }, [kalem.notlar])
 
-  const { birimHesapliFiyat, toplamKalemFiyat, isKg } = hesaplaKalemTutari(kalem)
+  const { toplamKalemFiyat, isKg } = hesaplaKalemTutari(kalem)
 
   return (
     <div 
       onClick={() => onSelect(kalem.id)}
       className={clsx(
-        'flex flex-col p-2 sm:p-2.5 transition-all cursor-pointer select-none',
-        isSelected ? 'bg-[#142136] border-l-2 border-l-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.06)]' : 'bg-[#0E1522] hover:bg-[#111B2C]'
+        'flex flex-col px-3 py-2.5 transition-all cursor-pointer select-none border-l-[3px] border-l-brand-500/80',
+        isSelected ? 'bg-[#241F1A]' : 'bg-[#1A1612] hover:bg-[#1e1a16]'
       )}
     >
-      <div className="flex justify-between items-start gap-1.5 sm:gap-2">
-        <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-nowrap">
-            <span className="text-xs sm:text-sm font-bold tracking-tight text-white truncate" title={kalem.urun.ad}>
-              {isKg && kalem.gramaj ? `${kalem.gramaj} KG ` : ''}{kalem.urun.ad}
-            </span>
-            {kalem.miktar > 1 && (
-              <span className="shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                {kalem.miktar}x
-              </span>
-            )}
-            {isKg ? (
-              <span className="shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {kalem.gramaj ? `${kalem.gramaj} KG` : 'KG'}
-              </span>
-            ) : (
-              kalem.porsiyon && kalem.porsiyon !== 1 && (
-                <span className="shrink-0 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                  ({kalem.porsiyon === 2 ? 'Double' : `${kalem.porsiyon}P`})
-                </span>
-              )
-            )}
-
-            {kalem.ikram && (
-              <span className="shrink-0 text-[9px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1 py-0.5 rounded uppercase flex items-center gap-0.5">
-                <Gift size={9} /> İkram
-              </span>
-            )}
-          </div>
-
-          {kalem.varyant && (
-            <span className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">[{kalem.varyant.ad}]</span>
-          )}
-          {kalem.opsiyonlar.map(opt => (
-            <span key={opt.id} className="text-[11px] text-slate-400 font-mono truncate">+ {opt.ad}</span>
-          ))}
-          {kalem.notlar && (
-            <span className="text-[11px] italic text-amber-400 font-mono mt-0.5 flex items-center gap-1 truncate">
-              <AlertCircle size={9} className="shrink-0" /> Not: {kalem.notlar}
-            </span>
-          )}
+      <div className="flex gap-2.5">
+        <div className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center font-mono text-[13px] font-semibold tabular-nums text-brand-200 shrink-0 mt-0.5">
+          {kalem.miktar}
         </div>
-        
-        {/* Fiyat ve Miktar */}
-        <div className="flex flex-col items-end shrink-0 whitespace-nowrap pl-1">
-          <span className={clsx(
-            "text-xs sm:text-sm font-mono font-black tabular-nums",
-            kalem.ikram ? "line-through text-slate-400" : "text-cyan-300"
-          )}>
-            {formatPara(toplamKalemFiyat)}
-          </span>
-          <span className="text-[10px] sm:text-xs font-mono text-slate-400 tabular-nums">
-            {isKg ? (
-              `${kalem.miktar} Adet × ${formatPara(birimHesapliFiyat)}`
-            ) : (
-              `${kalem.miktar} ${kalem.urun.birim || 'Adet'} × ${formatPara(birimHesapliFiyat)}`
-            )}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-sm font-medium tracking-tight text-surface-50 truncate" title={kalem.urun.ad}>
+                {isKg && kalem.gramaj ? `${kalem.gramaj} kg ` : ''}{kalem.urun.ad}
+              </span>
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                {isKg ? (
+                  <span className="text-[11px] font-mono text-surface-400">{kalem.gramaj ? `${kalem.gramaj} kg` : 'kg'}</span>
+                ) : (
+                  kalem.porsiyon && kalem.porsiyon !== 1 && (
+                    <span className="text-[11px] text-surface-400">{kalem.porsiyon === 2 ? 'duble' : `${kalem.porsiyon}p`}</span>
+                  )
+                )}
+                {kalem.ikram && <span className="text-[11px] text-brand-300">ikram</span>}
+              </div>
+              {kalem.varyant && (
+                <span className="text-[11px] text-surface-400 mt-0.5 truncate">{kalem.varyant.ad}</span>
+              )}
+              {kalem.opsiyonlar.map(opt => (
+                <span key={opt.id} className="text-[11px] text-surface-400 truncate">+ {opt.ad}</span>
+              ))}
+              {kalem.notlar && (
+                <span className="text-[11px] italic text-amber-400 mt-0.5 flex items-center gap-1 truncate">
+                  <AlertCircle size={9} className="shrink-0" /> {kalem.notlar}
+                </span>
+              )}
+            </div>
+            <span className={clsx(
+              "text-sm font-mono font-semibold tabular-nums shrink-0",
+              kalem.ikram ? "line-through text-surface-500" : "text-brand-200"
+            )}>
+              {formatPara(toplamKalemFiyat)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -313,20 +261,20 @@ const SepetItem = React.memo(function SepetItem({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#1C2C45] gap-2"
+            className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#3A342C] gap-2"
           >
             {/* Miktar Arttır / Azalt / Doğrudan Gir Butonları */}
-            <div className="flex items-center bg-[#0C121D] border border-[#22334F] rounded-lg p-0.5 shadow-inner">
+            <div className="flex items-center bg-[#171410] border border-[#403830] rounded-lg p-0.5 shadow-inner">
               <motion.button 
                 whileTap={{ scale: 0.9 }}
-                className="w-9 h-9 flex items-center justify-center rounded-md bg-[#162133] hover:bg-[#1E2E47] text-slate-200"
+                className="w-9 h-9 flex items-center justify-center rounded-md bg-[#241f1a] hover:bg-[#3A342C] text-slate-200"
                 onClick={(e) => { e.stopPropagation(); onMiktarDegistir(kalem.id, kalem.miktar - 1) }}
               >
                 <Minus size={16} />
               </motion.button>
 
               <button 
-                className="w-12 h-9 text-center font-mono font-black text-cyan-400 text-sm hover:bg-[#162133] rounded px-1 transition-colors"
+                className="w-12 h-9 text-center font-mono font-bold text-brand-300 text-sm hover:bg-[#241f1a] rounded px-1 transition-colors"
                 onClick={(e) => { 
                   e.stopPropagation(); 
                   onOpenMiktarModal(kalem)
@@ -338,7 +286,7 @@ const SepetItem = React.memo(function SepetItem({
 
               <motion.button 
                 whileTap={{ scale: 0.9 }}
-                className="w-9 h-9 flex items-center justify-center rounded-md bg-[#162133] hover:bg-[#1E2E47] text-cyan-400"
+                className="w-9 h-9 flex items-center justify-center rounded-md bg-[#241f1a] hover:bg-[#3A342C] text-brand-300"
                 onClick={(e) => { e.stopPropagation(); onMiktarDegistir(kalem.id, kalem.miktar + 1) }}
               >
                 <Plus size={16} />
@@ -354,7 +302,7 @@ const SepetItem = React.memo(function SepetItem({
                   "w-9 h-9 rounded-lg border flex items-center justify-center transition-colors",
                   isEditingNote 
                     ? "bg-amber-500/20 text-amber-300 border-amber-500/50" 
-                    : "bg-[#121B2A] text-slate-300 border-[#22334F] hover:border-amber-500/40 hover:text-amber-300"
+                    : "bg-[#1E1A16] text-slate-300 border-[#403830] hover:border-amber-500/40 hover:text-amber-300"
                 )}
                 onClick={(e) => { 
                   e.stopPropagation()
@@ -372,7 +320,7 @@ const SepetItem = React.memo(function SepetItem({
                   "w-9 h-9 rounded-lg border flex items-center justify-center transition-colors",
                   kalem.ikram 
                     ? "bg-purple-500/20 text-purple-300 border-purple-500/50" 
-                    : "bg-[#121B2A] text-slate-300 border-[#22334F] hover:border-purple-500/40 hover:text-purple-300"
+                    : "bg-[#1E1A16] text-slate-300 border-[#403830] hover:border-purple-500/40 hover:text-purple-300"
                 )}
                 onClick={(e) => { e.stopPropagation(); onIkramToggle(kalem.id) }}
                 title="İkram Olarak İşaretle"
@@ -401,12 +349,12 @@ const SepetItem = React.memo(function SepetItem({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-2.5 flex gap-2 pt-2 border-t border-[#1C2C45]" 
+            className="mt-2.5 flex gap-2 pt-2 border-t border-[#3A342C]" 
             onClick={e => e.stopPropagation()}
           >
             <input 
               type="text" 
-              className="flex-1 bg-[#090E17] border border-[#243754] rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-400 placeholder:text-slate-400"
+              className="h-8 px-2.5 rounded-lg bg-[#0B0A08] border border-[#322C26] text-xs text-surface-50 placeholder:text-surface-500 focus:outline-none focus:border-brand-500/60"
               placeholder="Sipariş notu (ör: Az pişmiş, buzsuz)..."
               value={localNote}
               onChange={e => setLocalNote(e.target.value)}
@@ -494,10 +442,10 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
       title="Miktar Belirle"
     >
       <div 
-        className="relative z-50 isolate flex flex-col gap-2 sm:gap-3 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
+        className="relative z-50 isolate flex flex-col gap-2 sm:gap-3 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
         style={{ transform: 'translateZ(0)' }}
       >
-        <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-[#141926] border border-[#222C42] flex-shrink-0 shrink-0">
+        <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-[#1e1a16] border border-[#3A342C] flex-shrink-0 shrink-0">
           <span className="font-mono text-xs sm:text-sm font-bold text-slate-300 truncate max-w-[200px]">
             {kalem.urun.ad}
           </span>
@@ -528,7 +476,7 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
               handleApply()
             }
           }}
-          className="px-4 py-1.5 sm:py-2 border rounded-xl bg-[#090D15] border-[#222C42] focus:border-cyan-400 text-xl sm:text-2xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner flex-shrink-0 shrink-0 h-10 sm:h-12" 
+          className="px-4 py-1.5 sm:py-2 border rounded-xl bg-[#110F0C] border-[#3A342C] focus:border-cyan-400 text-xl sm:text-2xl font-black font-mono text-cyan-400 text-center outline-none shadow-inner flex-shrink-0 shrink-0 h-10 sm:h-12" 
         />
 
         <div className="flex justify-center w-full my-0.5 flex-shrink-0 shrink-0">
@@ -555,7 +503,7 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
           />
         </div>
 
-        <div className="flex gap-2 justify-end mt-0.5 pt-2 sm:pt-2.5 border-t border-[#1E2436] flex-shrink-0 shrink-0">
+        <div className="flex gap-2 justify-end mt-0.5 pt-2 sm:pt-2.5 border-t border-[#322C26] flex-shrink-0 shrink-0">
           <Button 
             variant="ghost" 
             size="md" 
@@ -599,13 +547,31 @@ export const PosCart = React.memo(function PosCart() {
   const { personel } = useAuthStore()
   const { success, error } = useToast()
   const navigate = useNavigate()
-  
+  const [searchParams] = useSearchParams()
+  const siparisTipi = (aktifHesap?.hesap_tipi || searchParams.get('tip') || (aktifMasaId ? 'masa' : 'gel_al')) as string
+
   const [seciliKalemId, setSeciliKalemId] = useState<string | null>(null)
   const [odemeModalAcik, setOdemeModalAcik] = useState(false)
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
   const [miktarSoranKalem, setMiktarSoranKalem] = useState<SepetKalemi | null>(null)
   const [siparisGonderiliyor, setSiparisGonderiliyor] = useState(false)
   const [notDuzenlenenKalemId, setNotDuzenlenenKalemId] = useState<string | null>(null)
+  const [teslimat, setTeslimat] = useState({
+    teslimat_musteri: '',
+    teslimat_telefon: '',
+    teslimat_adres: '',
+    kurye: '',
+  })
+
+  useEffect(() => {
+    if (!aktifHesap) return
+    setTeslimat({
+      teslimat_musteri: (aktifHesap as any).teslimat_musteri || '',
+      teslimat_telefon: (aktifHesap as any).teslimat_telefon || '',
+      teslimat_adres: (aktifHesap as any).teslimat_adres || '',
+      kurye: (aktifHesap as any).kurye || '',
+    })
+  }, [aktifHesap?.id])
 
   const handleAdisyonYazdir = useCallback(async () => {
     if (!aktifHesap) return
@@ -698,17 +664,23 @@ export const PosCart = React.memo(function PosCart() {
     try {
       let mevcutHesapId = aktifHesap?.id
 
-      if (!mevcutHesapId && aktifMasaId) {
-        const hesapAcRes = await ipcInvoke<any>(HESAP_KANALLARI.AC, aktifMasaId, personel?.id || 1)
+      if (!mevcutHesapId) {
+        const tip = siparisTipi === 'masa' && !aktifMasaId ? 'gel_al' : siparisTipi
+        const ekstra = (tip === 'paket' || tip === 'gel_al') ? teslimat : null
+        const hesapAcRes = await ipcInvoke<any>(
+          HESAP_KANALLARI.AC,
+          aktifMasaId || null,
+          personel?.id || 1,
+          tip,
+          1,
+          ekstra
+        )
         if (hesapAcRes && hesapAcRes.basarili) {
           mevcutHesapId = hesapAcRes.hesap_id
+          window.history.replaceState(null, '', `#/pos/${mevcutHesapId}`)
         } else {
           throw new Error(hesapAcRes?.hata || 'Hesap açılamadı')
         }
-      }
-
-      if (!mevcutHesapId) {
-        throw new Error('Sipariş göndermek için masa veya açık hesap gerekli.')
       }
 
       // 1. İptalleri Gönder
@@ -754,7 +726,7 @@ export const PosCart = React.memo(function PosCart() {
       try {
         const mutfakYazici = await ipcInvoke<string>(AYAR_KANALLARI.GETIR, 'mutfak_yazici')
         if (mutfakYazici && (sepet.length > 0 || iptalEdilenSiparislerDetay.length > 0)) {
-          yazdirMutfak(sepet, aktifMasaId ? aktifMasaId.toString() : null, mutfakYazici, iptalEdilenSiparislerDetay)
+          yazdirMutfak(sepet, aktifMasaId ? aktifMasaId.toString() : (siparisTipi === 'paket' ? 'PAKET' : 'GEL-AL'), mutfakYazici, iptalEdilenSiparislerDetay)
         }
       } catch (printErr) {
         console.error("Mutfak yazdırma hatası:", printErr)
@@ -777,6 +749,8 @@ export const PosCart = React.memo(function PosCart() {
     aktifHesap, 
     aktifMasaId, 
     personel?.id, 
+    siparisTipi,
+    teslimat,
     success, 
     error, 
     sepetiTemizle, 
@@ -791,46 +765,38 @@ export const PosCart = React.memo(function PosCart() {
   }, [aktifHesap?.siparisler])
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0C1017] text-slate-100 relative overflow-hidden select-none">
-      
-      {/* Industrial Sepet Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-3 2xl:p-3.5 border-b border-[#1E2436] bg-[#0E131E] flex-shrink-0 shrink-0 shadow-sm">
-        <div className="flex items-center gap-3">
-          {/* Active Status Badge */}
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#141926] border border-[#222C42]">
-            <span className={clsx(
-              "h-2.5 w-2.5 rounded-full shrink-0",
-              aktifHesap ? "bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
-            )} />
-            <div className="flex flex-col">
-              <span className="text-sm sm:text-base font-black tracking-tight text-white font-mono leading-none">
-                {aktifMasaId ? `MASA ${aktifMasaId}` : 'HIZLI SATIŞ'}
-              </span>
-              <span className="text-[10px] font-mono text-slate-400 tracking-tight mt-0.5">
-                {aktifHesap ? `ADİSYON #${aktifHesap.hesap_no}` : 'YENİ HESAP'}
-              </span>
-            </div>
+    <div className="flex flex-col h-full w-full bg-[#171410] text-surface-100 relative overflow-hidden select-none">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#322C26] shrink-0">
+        <div className="min-w-0">
+          <div className="text-lg font-semibold tracking-tight text-surface-50 leading-tight truncate">
+            {aktifMasaId
+              ? `Masa ${aktifMasaId}`
+              : siparisTipi === 'paket'
+                ? 'Paket'
+                : siparisTipi === 'gel_al'
+                  ? 'Gel-al'
+                  : 'Hızlı satış'}
+          </div>
+          <div className="text-[12px] text-surface-400 mt-0.5">
+            {aktifHesap ? aktifHesap.hesap_no : 'Yeni adisyon'}
           </div>
         </div>
-
-        {/* Quick Action Tools */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {aktifHesap && (
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-blue-500/50 hover:bg-blue-500/10 text-slate-300 hover:text-blue-400 flex items-center justify-center transition-colors" 
-              title="Adisyon Yazdır"
+            <button
+              type="button"
+              className="w-10 h-10 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-300 hover:text-surface-50 flex items-center justify-center"
+              title="Adisyon yazdır"
               onClick={handleAdisyonYazdir}
             >
-              <Printer size={15} />
-            </motion.button>
+              <Printer size={16} />
+            </button>
           )}
-
           {aktifHesap && (
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-rose-500/50 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 flex items-center justify-center transition-colors" 
-              title="Hesabı İptal Et / Masayı Boşalt"
+            <button
+              type="button"
+              className="w-10 h-10 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-300 hover:text-rose-300 flex items-center justify-center"
+              title="Hesabı iptal et"
               onClick={async () => {
                 if (window.confirm('Bu hesabı tamamen iptal edip masayı boşaltmak istediğinize emin misiniz?')) {
                   try {
@@ -838,7 +804,7 @@ export const PosCart = React.memo(function PosCart() {
                     if (res && res.basarili) {
                       success('Hesap İptal Edildi', 'Masa boşaltıldı.')
                       hesapAyarla(null, null)
-                      navigate('/tables')
+                      navigate(siparisTipi === 'paket' || siparisTipi === 'gel_al' ? '/delivery' : '/tables')
                     } else {
                       error('Hata', 'Hesap iptal edilemedi.')
                     }
@@ -849,14 +815,13 @@ export const PosCart = React.memo(function PosCart() {
               }}
             >
               <Ban size={16} />
-            </motion.button>
+            </button>
           )}
-
           {sepet.length > 0 && (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#141926] border border-[#222C42] hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-300 hover:text-amber-400 flex items-center justify-center transition-colors"
-              title="Taslak Sepeti Temizle"
+            <button
+              type="button"
+              className="w-10 h-10 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-300 hover:text-amber-300 flex items-center justify-center"
+              title="Taslağı temizle"
               onClick={() => {
                 if (window.confirm('Taslaktaki tüm ürünleri silmek istiyor musunuz?')) {
                   sepetiTemizle()
@@ -864,195 +829,164 @@ export const PosCart = React.memo(function PosCart() {
               }}
             >
               <Trash2 size={16} />
-            </motion.button>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Sepet Listesi — High Contrast Terminal List */}
-      <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar bg-[#090A0F] p-2 space-y-2">
+      {(siparisTipi === 'paket' || siparisTipi === 'gel_al') && (
+        <div className="px-3 py-2 border-b border-[#322C26] bg-[#110F0C] space-y-1.5 shrink-0">
+          <input
+            placeholder="Müşteri adı"
+            value={teslimat.teslimat_musteri}
+            onChange={(e) => setTeslimat({ ...teslimat, teslimat_musteri: e.target.value })}
+            onBlur={() => aktifHesap?.id && ipcInvoke(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aktifHesap.id, teslimat)}
+            className="w-full h-9 px-2.5 rounded-lg bg-[#0B0A08] border border-[#322C26] text-sm text-surface-50"
+          />
+          <div className="grid grid-cols-2 gap-1.5">
+            <input
+              placeholder="Telefon"
+              value={teslimat.teslimat_telefon}
+              onChange={(e) => setTeslimat({ ...teslimat, teslimat_telefon: e.target.value })}
+              onBlur={() => aktifHesap?.id && ipcInvoke(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aktifHesap.id, teslimat)}
+              className="h-9 px-2.5 rounded-lg bg-[#0B0A08] border border-[#322C26] text-sm text-surface-50"
+            />
+            {siparisTipi === 'paket' && (
+              <input
+                placeholder="Kurye"
+                value={teslimat.kurye}
+                onChange={(e) => setTeslimat({ ...teslimat, kurye: e.target.value })}
+                onBlur={() => aktifHesap?.id && ipcInvoke(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aktifHesap.id, teslimat)}
+                className="h-9 px-2.5 rounded-lg bg-[#0B0A08] border border-[#322C26] text-sm text-surface-50"
+              />
+            )}
+          </div>
+          {siparisTipi === 'paket' && (
+            <input
+              placeholder="Teslimat adresi"
+              value={teslimat.teslimat_adres}
+              onChange={(e) => setTeslimat({ ...teslimat, teslimat_adres: e.target.value })}
+              onBlur={() => aktifHesap?.id && ipcInvoke(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aktifHesap.id, teslimat)}
+              className="w-full h-9 px-2.5 rounded-lg bg-[#0B0A08] border border-[#322C26] text-sm text-surface-50"
+            />
+          )}
+        </div>
+      )}
+
+      <div className="flex-1 min-h-0 overflow-y-auto pos-scrollbar bg-[#110F0C]">
         {sepet.length === 0 && (!aktifHesap?.siparisler || aktifHesap.siparisler.length === 0) ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500 p-8 text-center">
-            <div className="w-16 h-16 mb-3 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-600">
-              <ShoppingBag size={28} />
-            </div>
-            <p className="text-sm font-mono font-bold text-slate-400 uppercase tracking-wider">Adisyon Boş</p>
-            <p className="text-xs text-slate-400 mt-1 font-mono max-w-xs">
-              Sağ taraftaki menüden ürün seçerek siparişe başlayabilirsiniz.
+          <div className="flex flex-col items-center justify-center h-full text-surface-400 p-8 text-center">
+            <ShoppingBag size={28} className="text-surface-600 mb-3" />
+            <p className="text-sm text-surface-300">Adisyon boş</p>
+            <p className="text-xs text-surface-500 mt-1 max-w-[220px]">
+              Sağdaki menüden ürün ekleyin.
             </p>
           </div>
-        ) : null}
-        
-        {/* 1. GÖNDERİLMİŞ SİPARİŞLER (MUTFAK İLETİLDİ) */}
-        {siraliMutfakSiparisleri.length > 0 && (
-          <div className="flex flex-col rounded-xl overflow-hidden border border-[#1E2436] bg-[#0C1017]">
-            {/* Section Banner */}
-            <div className="bg-[#121724] px-3.5 py-2 border-b border-[#1E2436] flex items-center justify-between text-[11px] font-mono font-bold tracking-wider text-slate-400 uppercase">
-              <span className="flex items-center gap-1.5">
-                <Check size={12} className="text-emerald-400" />
-                Mutfaktaki Siparişler
-              </span>
-              <span className="bg-[#1A2133] text-slate-300 px-2 py-0.5 rounded text-[10px]">
-                {siraliMutfakSiparisleri.length} KALEM
-              </span>
-            </div>
+        ) : (
+          <div className="py-1">
+            {sepet.length > 0 && (
+              <div className="px-3 pt-2 pb-1 text-[11px] text-brand-300">
+                Gönderilmedi · {sepet.length}
+              </div>
+            )}
+            {sepet.map((kalem) => (
+              <SepetItem
+                key={kalem.id}
+                kalem={kalem}
+                isSelected={seciliKalemId === kalem.id}
+                isEditingNote={notDuzenlenenKalemId === kalem.id}
+                onSelect={handleToggleSelect}
+                onMiktarDegistir={handleMiktarDegistir}
+                onOpenMiktarModal={setMiktarSoranKalem}
+                onToggleNoteEdit={handleToggleNoteEdit}
+                onSaveNote={handleSaveNote}
+                onIkramToggle={sepetIkramTogle}
+                onDelete={sepettenCikar}
+              />
+            ))}
 
-            {/* List */}
-            <div className="divide-y divide-[#161D2B]">
-              {siraliMutfakSiparisleri.map((siparis: any) => (
-                <MutfakSiparisItem
-                  key={siparis.id}
-                  siparis={siparis}
-                  isSelected={seciliKalemId === 'siparis-' + siparis.id}
-                  isIptalBekliyor={iptalEdilecekSiparisler.includes(siparis.id)}
-                  onSelect={handleToggleSelect}
-                  onIkramToggle={handleMutfakIkramToggle}
-                  onIptalToggle={handleMutfakIptalToggle}
-                />
-              ))}
-            </div>
+            {sepet.length > 0 && siraliMutfakSiparisleri.length > 0 && (
+              <div className="mx-3 my-2 border-t border-dashed border-[#322C26]" />
+            )}
+
+            {siraliMutfakSiparisleri.length > 0 && (
+              <div className="px-3 pt-1 pb-1 text-[11px] text-surface-500">
+                Mutfağa gitti · {siraliMutfakSiparisleri.length}
+              </div>
+            )}
+            {siraliMutfakSiparisleri.map((siparis: any) => (
+              <MutfakSiparisItem
+                key={siparis.id}
+                siparis={siparis}
+                isSelected={seciliKalemId === 'siparis-' + siparis.id}
+                isIptalBekliyor={iptalEdilecekSiparisler.includes(siparis.id)}
+                onSelect={handleToggleSelect}
+                onIkramToggle={handleMutfakIkramToggle}
+                onIptalToggle={handleMutfakIptalToggle}
+              />
+            ))}
           </div>
         )}
-
-        {/* 2. YENİ EKLENECEK SİPARİŞLER (TASLAK SEPET) */}
-        {sepet.length > 0 && (
-          <div className="flex flex-col rounded-xl overflow-hidden border border-[#1D324E] bg-[#0B111A]">
-            {/* Section Banner */}
-            <div className="bg-[#0E1A2C] px-3.5 py-2 border-b border-[#1D324E] flex items-center justify-between text-[11px] font-mono font-bold tracking-wider text-cyan-400 uppercase">
-              <span className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
-                Yeni Eklenecekler
-              </span>
-              <span className="bg-[#152740] text-cyan-300 px-2 py-0.5 rounded text-[10px]">
-                {sepet.length} ÜRÜN
-              </span>
-            </div>
-
-            {/* Cart List */}
-            <div className="divide-y divide-[#152338]">
-              {sepet.map((kalem) => (
-                <SepetItem
-                  key={kalem.id}
-                  kalem={kalem}
-                  isSelected={seciliKalemId === kalem.id}
-                  isEditingNote={notDuzenlenenKalemId === kalem.id}
-                  onSelect={handleToggleSelect}
-                  onMiktarDegistir={handleMiktarDegistir}
-                  onOpenMiktarModal={setMiktarSoranKalem}
-                  onToggleNoteEdit={handleToggleNoteEdit}
-                  onSaveNote={handleSaveNote}
-                  onIkramToggle={sepetIkramTogle}
-                  onDelete={sepettenCikar}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
       </div>
 
-      {/* POS CASHIER COMMAND DECK (ALT HESAP & AKSİYON PANELİ) */}
-      <div className="p-2 sm:p-2.5 2xl:p-3 bg-[#0E131F] border-t border-[#1E2436] shadow-[0_-8px_24px_rgba(0,0,0,0.4)] flex-shrink-0 shrink-0 flex flex-col gap-1.5 sm:gap-2">
-        
-        {/* Finansal Ledger Dökümü */}
-        <div className="bg-[#090D15] rounded-xl p-2 sm:p-2.5 border border-[#1A2234] flex flex-col gap-0.5 sm:gap-1 flex-shrink-0 shrink-0">
-          {aktifHesap && aktifHesap.toplam_tutar > 0 && (
-            <div className="flex justify-between items-center text-[11px] sm:text-xs font-mono text-slate-400">
-              <span>Mevcut Adisyon</span>
-              <span className="font-bold text-slate-200 tabular-nums">{formatPara(aktifHesap.toplam_tutar)}</span>
-            </div>
-          )}
-
-          {sepet.length > 0 && (
-            <div className="flex justify-between items-center text-[11px] sm:text-xs font-mono text-cyan-400">
-              <span>Yeni Eklenecek</span>
-              <span className="font-bold tabular-nums">+{formatPara(toplamTutar)}</span>
-            </div>
-          )}
-
-          {aktifHesap?.indirim_tutar ? (
-            <div className="flex justify-between items-center text-[11px] sm:text-xs font-mono text-rose-400">
-              <span>Uygulanan İndirim</span>
-              <span className="font-bold tabular-nums">-{formatPara(aktifHesap.indirim_tutar)}</span>
-            </div>
-          ) : null}
-
-          {/* Genel Toplam Digital Readout */}
-          <div className="pt-1 mt-0.5 border-t border-[#1A2234] flex justify-between items-baseline">
-            <div className="flex flex-col">
-              <span className="text-[9px] sm:text-[10px] font-mono font-black tracking-widest text-slate-400 uppercase">
-                GENEL TOPLAM
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-mono text-slate-400">
-                {sepet.length + (aktifHesap?.siparisler?.length || 0)} Kalem Sipariş
-              </span>
-            </div>
-            
-            <span className="text-lg sm:text-xl 2xl:text-2xl font-black font-mono text-emerald-400 tabular-nums tracking-tight">
-              {formatPara(genelToplamTutar)}
-            </span>
+      <div className="p-3 bg-[#171410] border-t border-[#322C26] shrink-0 flex flex-col gap-2">
+        <div className="flex items-end justify-between px-0.5">
+          <div className="text-[13px] text-surface-400">
+            {(sepet.length + (aktifHesap?.siparisler?.filter((s: any) => s.durum !== 'iptal').length || 0))} kalem
+            {aktifHesap?.indirim_tutar ? ` · indirim ${formatPara(aktifHesap.indirim_tutar)}` : ''}
+          </div>
+          <div className="font-mono text-2xl font-bold tabular-nums text-surface-50 leading-none">
+            {formatPara(genelToplamTutar)}
           </div>
         </div>
-        
-        {/* Endüstriyel Dokunmatik Butonlar: Düşük ekranlarda 2x2 grid */}
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 flex-shrink-0 shrink-0">
-          {/* İkincil Araç Butonları (Yazdır & İndirim) */}
-          {aktifHesap && (
-            <>
-              <button
-                type="button"
-                onClick={handleAdisyonYazdir}
-                className="h-8 sm:h-9 rounded-lg font-mono font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 bg-[#141926] hover:bg-[#1C2336] text-slate-300 hover:text-white border border-[#222C42] active:scale-[0.97] transition-all"
-                title="Adisyon Yazdır"
-              >
-                <Printer size={13} className="text-blue-400" />
-                <span>Yazdır</span>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => setIndirimModalAcik(true)}
-                className="h-8 sm:h-9 rounded-lg font-mono font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 bg-[#141926] hover:bg-[#1C2336] text-slate-300 hover:text-amber-300 border border-[#222C42] active:scale-[0.97] transition-all"
-                title="İndirim Uygula"
-              >
-                <Tag size={13} className="text-amber-400" />
-                <span>{aktifHesap.indirim_tutar ? 'İndirim' : 'İndirim'}</span>
-              </button>
-            </>
-          )}
+        {aktifHesap && (
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={handleAdisyonYazdir}
+              className="h-10 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 bg-[#1e1a16] text-surface-200 border border-[#322C26] active:scale-[0.98]"
+            >
+              <Printer size={14} /> Yazdır
+            </button>
+            <button
+              type="button"
+              onClick={() => setIndirimModalAcik(true)}
+              className="h-10 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 bg-[#1e1a16] text-surface-200 border border-[#322C26] active:scale-[0.98]"
+            >
+              <Tag size={14} /> İndirim
+            </button>
+          </div>
+        )}
 
-          {/* Sipariş Gönder (Mutfak) */}
-          <button 
+        <div className="grid grid-cols-2 gap-2">
+          <button
             type="button"
             disabled={(sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor}
             onClick={handleSiparisGonder}
             className={clsx(
-              "pos-action-deck-btn h-10 sm:h-12 2xl:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
-              (!aktifHesap && sepet.length > 0) ? "col-span-1" : "col-span-1",
+              "h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-colors",
               ((sepet.length === 0 && iptalEdilecekSiparisler.length === 0) || siparisGonderiliyor)
-                ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 active:bg-emerald-700"
+                ? "bg-[#1E1A16] border border-[#322C26] text-surface-600 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
             )}
           >
-            <Send size={15} className={clsx(siparisGonderiliyor && "animate-spin")} />
-            <span>{siparisGonderiliyor ? 'İletiliyor...' : 'Siparişi İlet'}</span>
+            <Send size={18} className={clsx(siparisGonderiliyor && "animate-spin")} />
+            {siparisGonderiliyor ? 'İletiliyor' : 'İlet'}
           </button>
-
-          {/* Ödeme Al (Kasa) */}
-          <button 
+          <button
             type="button"
             disabled={(!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0}
             onClick={() => setOdemeModalAcik(true)}
             className={clsx(
-              "pos-action-deck-btn h-10 sm:h-12 2xl:h-14 rounded-xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 border transition-all active:scale-[0.97] shadow-md flex-shrink-0 shrink-0",
-              (!aktifHesap && sepet.length > 0) ? "col-span-1" : "col-span-1",
+              "h-14 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-colors",
               ((!aktifHesap || aktifHesap.toplam_tutar === 0) && sepet.length === 0)
-                ? "bg-[#141A26] border-[#1E2638] text-slate-600 opacity-60 cursor-not-allowed"
-                : "bg-amber-500 hover:bg-amber-400 text-black border-amber-300/40 active:bg-amber-600"
+                ? "bg-[#1E1A16] border border-[#322C26] text-surface-600 cursor-not-allowed"
+                : "bg-brand-500 hover:bg-brand-400 text-white"
             )}
           >
-            <CreditCard size={15} />
-            <span>Ödeme Al</span>
+            <CreditCard size={18} />
+            Öde
           </button>
         </div>
       </div>

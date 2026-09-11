@@ -113,19 +113,19 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
       size="lg"
     >
       <div 
-        className="flex flex-col gap-2 sm:gap-3 bg-[#0E121B] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
+        className="flex flex-col gap-2 sm:gap-3 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
         style={{ transform: 'translateZ(0)' }}
       >
         
         {/* İndirim Tipi Seçici (Segmented Switcher) */}
-        <div className="flex bg-[#090D15] p-1 rounded-xl sm:rounded-2xl border border-[#1E2638] flex-shrink-0 shrink-0">
+        <div className="flex bg-[#110F0C] p-1 rounded-xl sm:rounded-2xl border border-[#322C26] flex-shrink-0 shrink-0">
           <button
             type="button"
             className={clsx(
               "flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl font-mono font-bold text-xs transition-all",
               indirimTipi === 'yuzde' 
                 ? "bg-amber-500 text-black border border-amber-300" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
+                : "text-slate-400 hover:text-slate-200 hover:bg-[#1e1a16]"
             )}
             onClick={() => { setIndirimTipi('yuzde'); setGirilenDeger('') }}
           >
@@ -137,7 +137,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
               "flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl font-mono font-bold text-xs transition-all",
               indirimTipi === 'tutar' 
                 ? "bg-amber-500 text-black border border-amber-300" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
+                : "text-slate-400 hover:text-slate-200 hover:bg-[#1e1a16]"
             )}
             onClick={() => { setIndirimTipi('tutar'); setGirilenDeger('') }}
           >
@@ -157,7 +157,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
                   "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
                   girilenDeger === val 
                     ? "bg-amber-500/20 text-amber-300 border-amber-500/50" 
-                    : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
+                    : "bg-[#1e1a16] text-slate-300 border-[#3A342C] hover:bg-[#322C26]"
                 )}
               >
                 %{val}
@@ -173,7 +173,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
                   "h-8 sm:h-9 rounded-lg sm:rounded-xl font-mono text-xs font-bold border transition-colors active:scale-95 duration-100",
                   girilenDeger === val 
                     ? "bg-amber-500/20 text-amber-300 border-amber-500/50" 
-                    : "bg-[#141926] text-slate-300 border-[#222C42] hover:bg-[#1C2336]"
+                    : "bg-[#1e1a16] text-slate-300 border-[#3A342C] hover:bg-[#322C26]"
                 )}
               >
                 {val}₺
@@ -186,7 +186,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
         <div className="flex flex-col md:flex-row gap-2.5 sm:gap-3.5 flex-shrink-0 shrink-0">
           
           {/* Sol Kolon: Finansal Göstergeler */}
-          <div className="flex-1 flex flex-col justify-between bg-[#090D15] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#1E2638] gap-2.5 flex-shrink-0 shrink-0">
+          <div className="flex-1 flex flex-col justify-between bg-[#110F0C] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#322C26] gap-2.5 flex-shrink-0 shrink-0">
             
             <div className="flex justify-between items-center text-xs font-mono text-slate-400">
               <span>Mevcut Adisyon Tutarı</span>
@@ -217,7 +217,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
           </div>
 
           {/* Sağ Kolon: Giriş Kutusu & Numpad */}
-          <div className="w-full md:w-72 flex-shrink-0 bg-[#090D15] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#1E2638] flex flex-col items-center">
+          <div className="w-full md:w-72 flex-shrink-0 bg-[#110F0C] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#322C26] flex flex-col items-center">
             <div className="mb-2 text-center w-full">
                <span className="text-slate-400 text-[10px] font-mono font-bold uppercase tracking-wider block mb-1">
                  {indirimTipi === 'yuzde' ? 'Yüzde Oranı' : 'İndirim Tutarı'}
@@ -258,7 +258,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
                        indirimUygula()
                      }
                    }}
-                   className="w-full h-11 sm:h-12 bg-[#0E131E] rounded-xl border border-[#222C42] text-center font-mono font-black text-2xl sm:text-3xl text-amber-400 shadow-inner px-8 focus:outline-none focus:border-amber-500 transition-colors"
+                   className="w-full h-11 sm:h-12 bg-[#171410] rounded-xl border border-[#3A342C] text-center font-mono font-black text-2xl sm:text-3xl text-amber-400 shadow-inner px-8 focus:outline-none focus:border-amber-500 transition-colors"
                  />
                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-slate-400 font-mono font-bold pointer-events-none">
                    {indirimTipi === 'yuzde' ? '%' : '₺'}
@@ -271,7 +271,7 @@ export const IndirimModal = React.memo(function IndirimModal({ isOpen, onClose, 
         </div>
 
         {/* Alt Aksiyon Butonları */}
-        <div className="flex justify-end gap-2.5 sm:gap-3 mt-1 pt-2.5 sm:pt-3 border-t border-[#1E2436] flex-shrink-0 shrink-0">
+        <div className="flex justify-end gap-2.5 sm:gap-3 mt-1 pt-2.5 sm:pt-3 border-t border-[#322C26] flex-shrink-0 shrink-0">
           <Button 
             variant="ghost" 
             size="md" 

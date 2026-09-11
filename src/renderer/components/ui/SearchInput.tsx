@@ -31,7 +31,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={clsx(
-          'w-full h-12 pl-10 pr-10 rounded-pos bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-surface-900 dark:text-white transition-colors placeholder:text-surface-400',
+          'w-full h-12 pl-10 pr-10 rounded-pos bg-surface-50 dark:bg-surface-900 border border-surface-300 dark:border-surface-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/40 text-surface-900 dark:text-surface-50 transition-colors placeholder:text-surface-400',
           className
         )}
         {...props}

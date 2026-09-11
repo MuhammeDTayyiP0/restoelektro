@@ -96,8 +96,8 @@ export default function KitchenScreen() {
 
   if (yukleniyor && siparisler.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#090A0F] text-slate-100 min-h-screen">
-        <div className="w-14 h-14 rounded-2xl bg-[#121724] border border-[#222C42] flex items-center justify-center mb-4">
+      <div className="flex flex-col items-center justify-center h-full bg-[#0B0A08] text-slate-100 min-h-screen">
+        <div className="w-14 h-14 rounded-2xl bg-[#1e1a16] border border-[#3A342C] flex items-center justify-center mb-4">
           <RefreshCw className="w-7 h-7 text-amber-400 animate-spin" />
         </div>
         <p className="text-sm font-mono tracking-widest uppercase text-slate-400 animate-pulse">
@@ -108,15 +108,15 @@ export default function KitchenScreen() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#090A0F] text-slate-100 min-h-screen select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#0B0A08] text-slate-100 min-h-screen select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4 overflow-hidden">
       
       {/* 1. KDS ÜST KOMUTA VE DURUM ÇUBUĞU */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-[#1A2234] shrink-0">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-[#322C26] shrink-0">
         
         {/* Sol: Başlık & Canlı İstatistik Sayaçları */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#121724] border border-[#232F47] flex items-center justify-center text-amber-400 shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-[#1e1a16] border border-[#403830] flex items-center justify-center text-amber-400 shadow-sm">
               <ChefHat size={24} />
             </div>
             <div>
@@ -138,15 +138,15 @@ export default function KitchenScreen() {
           </div>
 
           {/* Hızlı KDS KPI Sayaçları */}
-          <div className="hidden sm:flex items-center gap-2 bg-[#0C1017] p-1.5 rounded-xl border border-[#1A2234]">
+          <div className="hidden sm:flex items-center gap-2 bg-[#171410] p-1.5 rounded-xl border border-[#322C26]">
             {/* Toplam Fiş */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#141926] border border-[#222C42] text-slate-200 text-xs font-mono font-bold">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1e1a16] border border-[#3A342C] text-slate-200 text-xs font-mono font-bold">
               <Utensils size={14} className="text-sky-400" />
               <span>{siparisler.length > 0 ? fisler.length : 0} Aktif Fiş</span>
             </div>
 
             {/* Toplam Kalem */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#141926] border border-[#222C42] text-slate-200 text-xs font-mono font-bold">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1e1a16] border border-[#3A342C] text-slate-200 text-xs font-mono font-bold">
               <span className="text-amber-400 font-black">{siparisler.length}</span>
               <span>Kalem</span>
             </div>
@@ -169,13 +169,13 @@ export default function KitchenScreen() {
         <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
           
           {/* Segmented Filter */}
-          <div className="flex items-center gap-1 bg-[#0C1017] p-1 rounded-xl border border-[#1A2234]">
+          <div className="flex items-center gap-1 bg-[#171410] p-1 rounded-xl border border-[#322C26]">
             <button
               onClick={() => setFiltreModu('tum')}
               className={clsx(
                 "px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all",
                 filtreModu === 'tum' 
-                  ? "bg-[#1E293B] text-white shadow-sm border border-slate-600/50" 
+                  ? "bg-[#322C26] text-white shadow-sm border border-slate-600/50" 
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -210,7 +210,7 @@ export default function KitchenScreen() {
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={() => yenile()}
-            className="h-10 w-10 rounded-xl bg-[#121724] border border-[#222C42] hover:border-slate-500 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+            className="h-10 w-10 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-slate-500 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
             title="Listeyi Yenile"
           >
             <RefreshCw size={16} />
@@ -239,10 +239,10 @@ export default function KitchenScreen() {
                   className={clsx(
                     'flex-shrink-0 w-84 sm:w-92 max-h-full flex flex-col rounded-2xl overflow-hidden border shadow-2xl transition-all duration-300',
                     acilMi 
-                      ? 'bg-[#0E121E] border-rose-500/80 shadow-[0_0_25px_rgba(244,63,94,0.25)]' 
+                      ? 'bg-[#171410] border-rose-500/80 shadow-[0_0_25px_rgba(244,63,94,0.25)]' 
                       : tumKalemlerHazirlaniyor
-                        ? 'bg-[#0E121E] border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)]'
-                        : 'bg-[#0E121E] border-[#1E2538]'
+                        ? 'bg-[#171410] border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)]'
+                        : 'bg-[#171410] border-[#322C26]'
                   )}
                 >
                   {/* Fiş Başlığı (Header) */}
@@ -251,8 +251,8 @@ export default function KitchenScreen() {
                     acilMi 
                       ? 'bg-gradient-to-r from-rose-950 via-rose-900/90 to-rose-950 border-rose-700/60 text-white' 
                       : tumKalemlerHazirlaniyor
-                        ? 'bg-gradient-to-r from-amber-950/80 via-[#181F30] to-[#121724] border-amber-500/30 text-white'
-                        : 'bg-[#121724] border-[#1E2538] text-white'
+                        ? 'bg-gradient-to-r from-amber-950/80 via-[#241F1A] to-[#1e1a16] border-amber-500/30 text-white'
+                        : 'bg-[#1e1a16] border-[#322C26] text-white'
                   )}>
                     {/* Üst Satır: Masa Adı & Geçen Süre */}
                     <div className="flex justify-between items-center">
@@ -261,7 +261,7 @@ export default function KitchenScreen() {
                           "px-2.5 py-1 rounded-xl text-sm font-mono font-black uppercase tracking-wider border",
                           acilMi 
                             ? "bg-rose-600 text-white border-rose-400" 
-                            : "bg-[#1E293B] text-sky-300 border-sky-500/30"
+                            : "bg-[#322C26] text-sky-300 border-sky-500/30"
                         )}>
                           {(ilkSiparis as any).masa_numara ? `MASA ${(ilkSiparis as any).masa_numara}` : 'PAKET SİPARİŞ'}
                         </span>
@@ -320,8 +320,8 @@ export default function KitchenScreen() {
                           className={clsx(
                             'p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between gap-2.5',
                             hazirlaniyorMu 
-                              ? 'bg-[#151D30] border-amber-500/50 shadow-sm' 
-                              : 'bg-[#090D16] border-[#1A2234] hover:border-slate-600/40'
+                              ? 'bg-[#241F1A] border-amber-500/50 shadow-sm' 
+                              : 'bg-[#110F0C] border-[#322C26] hover:border-slate-600/40'
                           )}
                         >
                           {/* Kalem Üst Bilgi (Miktar + Ürün Adı + Gramaj Rozeti + Varyant) */}
@@ -377,12 +377,12 @@ export default function KitchenScreen() {
                           )}
 
                           {/* Kalem Bazlı Aksiyon Butonu */}
-                          <div className="pt-2 border-t border-[#1C2538] flex gap-2">
+                          <div className="pt-2 border-t border-[#322C26] flex gap-2">
                             {kalem.durum === 'bekliyor' ? (
                               <motion.button 
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => durumGuncelle(kalem.id!, 'hazirlaniyor')}
-                                className="w-full h-9 rounded-xl bg-[#141A28] hover:bg-[#1E273D] border border-sky-500/40 text-sky-300 font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                                className="w-full h-9 rounded-xl bg-[#1E1A16] hover:bg-[#322C26] border border-sky-500/40 text-sky-300 font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                               >
                                 <Flame size={14} className="text-sky-400" />
                                 <span>Hazırlamaya Başla</span>
@@ -404,7 +404,7 @@ export default function KitchenScreen() {
                   </div>
                   
                   {/* Toplu Fiş Tamamlama Footer */}
-                  <div className="p-3 bg-[#0A0E18] border-t border-[#1A2234]">
+                  <div className="p-3 bg-[#171410] border-t border-[#322C26]">
                     <motion.button 
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
@@ -426,7 +426,7 @@ export default function KitchenScreen() {
           {/* Sipariş Yokken Boş Durum */}
           {fisler.length === 0 && (
             <div className="flex flex-col items-center justify-center w-full h-[65vh] text-slate-500 select-none">
-              <div className="w-20 h-20 rounded-3xl bg-[#0E131F] border border-[#1A2336] flex items-center justify-center mb-4 text-emerald-400 shadow-xl">
+              <div className="w-20 h-20 rounded-3xl bg-[#171410] border border-[#322C26] flex items-center justify-center mb-4 text-emerald-400 shadow-xl">
                 <ChefHat size={40} />
               </div>
               <h3 className="text-xl font-bold text-slate-300 font-mono uppercase tracking-wide">

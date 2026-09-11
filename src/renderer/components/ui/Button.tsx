@@ -25,15 +25,15 @@ export function Button({
   ...props
 }: ButtonProps) {
   
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-pos touch-feedback'
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none rounded-pos touch-feedback'
   
   const variants = {
-    primary: 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500 border border-transparent shadow-pos',
-    secondary: 'bg-surface-200 text-surface-900 hover:bg-surface-300 dark:bg-surface-800 dark:text-surface-100 dark:hover:bg-surface-700 focus:ring-surface-500 border border-transparent',
-    danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 border border-transparent shadow-pos',
-    success: 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 border border-transparent shadow-pos',
-    outline: 'bg-transparent text-brand-500 border-2 border-brand-500 hover:bg-brand-50 focus:ring-brand-500 dark:text-brand-400 dark:border-brand-400 dark:hover:bg-brand-950',
-    ghost: 'bg-transparent text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800 focus:ring-surface-500',
+    primary: 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-400/60 border border-brand-400/20 shadow-pos',
+    secondary: 'bg-surface-800 text-surface-100 hover:bg-surface-700 focus:ring-surface-500 border border-surface-700',
+    danger: 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500 border border-transparent shadow-pos',
+    success: 'bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-500 border border-transparent shadow-pos',
+    outline: 'bg-transparent text-brand-400 border-2 border-brand-500/70 hover:bg-brand-950 focus:ring-brand-500',
+    ghost: 'bg-transparent text-surface-300 hover:bg-surface-800 hover:text-surface-50 focus:ring-surface-500',
   }
   
   const sizes = {

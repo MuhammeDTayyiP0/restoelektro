@@ -93,9 +93,9 @@ export default function BackupLicenseSettings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Veritabanı Yönetimi & Yedekleme */}
-        <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] flex flex-col justify-between shadow-xl">
+        <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-xl">
           <div>
-            <div className="flex items-center justify-between pb-4 border-b border-[#1A1F30] mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-[#322C26] mb-4">
               <div className="flex items-center gap-2.5">
                 <HardDrive size={18} className="text-blue-400" />
                 <h3 className="font-semibold text-white text-sm">SQLite Veritabanı</h3>
@@ -106,15 +106,15 @@ export default function BackupLicenseSettings() {
             </div>
 
             <div className="space-y-3 text-xs text-surface-300">
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Veritabanı Dosyası</span>
                 <span className="font-mono text-white">database.sqlite ({dbInfo.dbBoyutFormatted || 'Aktif'})</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Motor & Şema Sürümü</span>
                 <span className="font-mono text-white">SQLite 3 / v{dbInfo.userVersion || 1} (WAL Modu)</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Son Güvenlik Yedeği</span>
                 <span className="font-mono text-brand-400">{lastBackupTime}</span>
               </div>
@@ -127,7 +127,7 @@ export default function BackupLicenseSettings() {
             </div>
           </div>
 
-          <div className="flex gap-3 mt-6 pt-4 border-t border-[#1A1F30]">
+          <div className="flex gap-3 mt-6 pt-4 border-t border-[#322C26]">
             <motion.button
               type="button"
               whileTap={{ scale: 0.95 }}
@@ -148,7 +148,7 @@ export default function BackupLicenseSettings() {
               whileTap={{ scale: 0.95 }}
               onClick={handleOptimize}
               disabled={isOptimizing}
-              className="h-11 px-4 rounded-xl bg-[#141826] hover:bg-[#1C2236] text-surface-200 border border-[#222B40] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+              className="h-11 px-4 rounded-xl bg-[#1e1a16] hover:bg-[#322C26] text-surface-200 border border-[#3A342C] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
               title="Veritabanını Optimize Et"
             >
               <RefreshCw size={14} className={isOptimizing ? 'animate-spin' : ''} />
@@ -158,9 +158,9 @@ export default function BackupLicenseSettings() {
         </div>
 
         {/* Lisans & Donanım Yetkisi */}
-        <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] flex flex-col justify-between shadow-xl">
+        <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-xl">
           <div>
-            <div className="flex items-center justify-between pb-4 border-b border-[#1A1F30] mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-[#322C26] mb-4">
               <div className="flex items-center gap-2.5">
                 <ShieldCheck size={18} className="text-amber-400" />
                 <h3 className="font-semibold text-white text-sm">Kurumsal Lisans</h3>
@@ -171,15 +171,15 @@ export default function BackupLicenseSettings() {
             </div>
 
             <div className="space-y-3 text-xs text-surface-300">
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Yazılım Sürümü</span>
                 <span className="font-mono text-white">{(dbInfo as any)?.uygulamaSurumu ? `ETİBOL POS v${(dbInfo as any).uygulamaSurumu}` : APP_FULL_NAME}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Lisans Tipi</span>
                 <span className="text-white font-medium">Süresiz Tek Terminal + Mobil Ağ</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#161B2B]">
+              <div className="flex justify-between py-1.5 border-b border-[#1E1A16]">
                 <span className="text-surface-400">Donanım Kimliği (UID)</span>
                 <span className="font-mono text-surface-400 text-[11px]">POS-NODE-8472-X9</span>
               </div>
@@ -190,7 +190,7 @@ export default function BackupLicenseSettings() {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-[#1A1F30] flex items-center justify-between">
+          <div className="mt-6 pt-4 border-t border-[#322C26] flex items-center justify-between">
             <span className="text-[11px] text-surface-500 font-mono">
               Lisans Doğrulama: ÇEVRİMDIŞI GEÇERLİ
             </span>
@@ -207,14 +207,14 @@ export default function BackupLicenseSettings() {
       </div>
 
       {/* Donanım ve Entegrasyon Teşhis Kartı */}
-      <div className="bg-[#0E111B] p-6 rounded-2xl border border-[#1E2436] shadow-xl">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-[#1A1F30] mb-4">
+      <div className="bg-[#171410] p-6 rounded-2xl border border-[#322C26] shadow-xl">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-[#322C26] mb-4">
           <Terminal size={18} className="text-surface-400" />
           <h3 className="font-semibold text-white text-sm">Donanım ve Çevre Birimleri Tanılama</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-[#121624] border border-[#1E2538] flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-[#1e1a16] border border-[#322C26] flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-950/40 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
               <Cpu size={18} />
             </div>
@@ -224,7 +224,7 @@ export default function BackupLicenseSettings() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#121624] border border-[#1E2538] flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-[#1e1a16] border border-[#322C26] flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-950/40 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
               <Terminal size={18} />
             </div>
@@ -234,7 +234,7 @@ export default function BackupLicenseSettings() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#121624] border border-[#1E2538] flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-[#1e1a16] border border-[#322C26] flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-950/40 border border-blue-800/40 flex items-center justify-center text-blue-400">
               <RefreshCw size={18} />
             </div>

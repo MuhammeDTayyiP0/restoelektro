@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import type { YeniSiparis, YeniOdeme, IndirimBilgisi, HesapBolme } from '../../common/types/pos.types'
 import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 import { sutunYoksaEkle } from '../database/migration-runner'
+import { denetimYaz } from '../services/audit.service'
 
 export function hesapIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
@@ -17,6 +18,11 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   // Sütunların varlığını garanti altına al
   sutunYoksaEkle(db, 'siparis', 'satis_birim', "TEXT DEFAULT 'porsiyon'")
   sutunYoksaEkle(db, 'siparis', 'gramaj', 'REAL DEFAULT NULL')
+  sutunYoksaEkle(db, 'hesap', 'teslimat_durumu', 'TEXT')
+  sutunYoksaEkle(db, 'hesap', 'teslimat_telefon', 'TEXT')
+  sutunYoksaEkle(db, 'hesap', 'teslimat_adres', 'TEXT')
+  sutunYoksaEkle(db, 'hesap', 'teslimat_musteri', 'TEXT')
+  sutunYoksaEkle(db, 'hesap', 'kurye', 'TEXT')
 
   // Hesap numarası oluştur
   function hesapNoOlustur(): string {
@@ -68,11 +74,11 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   }
 
   // Yeni hesap aç
-  ipcMain.handle(HESAP_KANALLARI.AC, async (_event, masaId: number | null, personelId: number, hesapTipi: string = 'masa', kisiSayisi: number = 1) => {
+  ipcMain.handle(HESAP_KANALLARI.AC, async (_event, masaId: number | null, personelId: number, hesapTipi: string = 'masa', kisiSayisi: number = 1, ekstra: any = null) => {
     try {
       const hesapNo = hesapNoOlustur()
+      const tip = hesapTipi || 'masa'
 
-      // Masada açık hesap var mı kontrol et
       if (masaId) {
         const mevcutHesap = db.prepare(
           "SELECT id FROM hesap WHERE masa_id = ? AND durum = 'acik'"
@@ -82,12 +88,29 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
         }
       }
 
-      const sonuc = db.prepare(`
-        INSERT INTO hesap (masa_id, hesap_no, hesap_tipi, personel_id, kisi_sayisi)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(masaId, hesapNo, hesapTipi, personelId, kisiSayisi)
+      const teslimatDurumu = (tip === 'paket' || tip === 'gel_al')
+        ? (ekstra?.teslimat_durumu || 'bekliyor')
+        : null
 
-      // Masa durumunu güncelle
+      const sonuc = db.prepare(`
+        INSERT INTO hesap (masa_id, hesap_no, hesap_tipi, personel_id, kisi_sayisi, musteri_id,
+          teslimat_telefon, teslimat_adres, teslimat_musteri, teslimat_durumu, kurye, notlar)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        masaId,
+        hesapNo,
+        tip,
+        personelId,
+        kisiSayisi || 1,
+        ekstra?.musteri_id || null,
+        ekstra?.teslimat_telefon || null,
+        ekstra?.teslimat_adres || null,
+        ekstra?.teslimat_musteri || null,
+        teslimatDurumu,
+        ekstra?.kurye || null,
+        ekstra?.notlar || null
+      )
+
       if (masaId) {
         db.prepare("UPDATE masa SET durum = 'dolu' WHERE id = ?").run(masaId)
       }
@@ -240,6 +263,16 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
       const siparis = db.prepare('SELECT hesap_id FROM siparis WHERE id = ?').get(siparisId) as any
       if (siparis) hesapToplamiGuncelle(siparis.hesap_id)
 
+      denetimYaz(db, {
+        personel_id: onaylayanId,
+        islem: 'siparis_iptal',
+        modul: 'pos',
+        hedef_tip: 'siparis',
+        hedef_id: siparisId,
+        ozet: `Sipariş iptal #${siparisId} — ${iptalNedeni || ''}`,
+        detay: { iptalNedeni, hesap_id: siparis?.hesap_id },
+      })
+
       return { basarili: true }
     } catch (err: any) {
       return { basarili: false, hata: err.message }
@@ -260,6 +293,15 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
 
       // Hesap toplamını güncelle
       hesapToplamiGuncelle(siparis.hesap_id)
+
+      denetimYaz(db, {
+        personel_id: onaylayanId,
+        islem: yeniIkramDurumu === 1 ? 'ikram' : 'ikram_kaldir',
+        modul: 'pos',
+        hedef_tip: 'siparis',
+        hedef_id: siparisId,
+        ozet: yeniIkramDurumu === 1 ? `İkram uygulandı #${siparisId}` : `İkram kaldırıldı #${siparisId}`,
+      })
 
       return { basarili: true, yeniIkram: yeniIkramDurumu }
     } catch (hata: any) {
@@ -284,6 +326,15 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
     db.prepare(`
       UPDATE hesap SET indirim_tutar = ?, net_tutar = ?, notlar = COALESCE(notlar, '') || ? WHERE id = ?
     `).run(indirimTutar, netTutar, `\nİndirim: ${indirim.aciklama || ''}`, indirim.hesap_id)
+
+    denetimYaz(db, {
+      islem: 'indirim',
+      modul: 'pos',
+      hedef_tip: 'hesap',
+      hedef_id: indirim.hesap_id,
+      ozet: `İndirim ${indirim.indirim_tipi} ${indirim.deger} → ${indirimTutar.toFixed(2)} ₺`,
+      detay: indirim,
+    })
 
     return { basarili: true, indirim_tutar: indirimTutar, net_tutar: netTutar }
   })
@@ -368,6 +419,22 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
       })
 
       const sonuc = islem()
+      try {
+        const hesapId = odemeler[0]?.hesap_id
+        denetimYaz(db, {
+          personel_id: odemeler[0]?.personel_id,
+          islem: sonuc.kapandi ? 'odeme_kapat' : 'odeme',
+          modul: 'pos',
+          hedef_tip: 'hesap',
+          hedef_id: hesapId,
+          ozet: sonuc.kapandi
+            ? `Hesap kapatıldı #${hesapId}`
+            : `Kısmi ödeme #${hesapId} — kalan ${sonuc.kalan}`,
+          detay: odemeler.map((o) => ({ tip: o.odeme_tipi, tutar: o.tutar })),
+        })
+      } catch {
+        // denetim hatası ödemeyi bozmasın
+      }
       return { basarili: true, ...sonuc }
     } catch (hata: any) {
       return { basarili: false, hata: hata.message }
@@ -425,6 +492,59 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
     if (hesap?.masa_id) {
       db.prepare("UPDATE masa SET durum = 'bos' WHERE id = ?").run(hesap.masa_id)
     }
+    denetimYaz(db, {
+      islem: 'hesap_iptal',
+      modul: 'pos',
+      hedef_tip: 'hesap',
+      hedef_id: hesapId,
+      ozet: `Hesap iptal #${hesapId}`,
+    })
+    return { basarili: true }
+  })
+
+  ipcMain.handle(HESAP_KANALLARI.PAKET_LISTELE, async (_event, filtre: any = {}) => {
+    const kosul: string[] = ["h.hesap_tipi IN ('paket', 'gel_al', 'bar')"]
+    const deger: any[] = []
+    if (filtre?.durum === 'acik' || !filtre?.durum) {
+      kosul.push("h.durum = 'acik'")
+    } else if (filtre.durum === 'kapali') {
+      kosul.push("h.durum != 'acik'")
+    } else if (filtre.durum && filtre.durum !== 'tumu') {
+      kosul.push('h.durum = ?')
+      deger.push(filtre.durum)
+    }
+    if (filtre?.hesap_tipi && filtre.hesap_tipi !== 'tumu') {
+      kosul[0] = 'h.hesap_tipi = ?'
+      deger.unshift(filtre.hesap_tipi)
+    }
+    if (filtre?.teslimat_durumu && filtre.teslimat_durumu !== 'tumu') {
+      kosul.push('h.teslimat_durumu = ?')
+      deger.push(filtre.teslimat_durumu)
+    }
+    return db.prepare(`
+      SELECT h.*, p.ad || ' ' || p.soyad as personel_adi,
+             (SELECT COUNT(*) FROM siparis s WHERE s.hesap_id = h.id AND s.durum != 'iptal') as siparis_sayisi
+      FROM hesap h
+      LEFT JOIN personel p ON p.id = h.personel_id
+      WHERE ${kosul.join(' AND ')}
+      ORDER BY h.acilis_zamani DESC
+      LIMIT 200
+    `).all(...deger)
+  })
+
+  ipcMain.handle(HESAP_KANALLARI.TESLIMAT_GUNCELLE, async (_event, hesapId: number, veri: any) => {
+    const alanlar: string[] = []
+    const degerler: any[] = []
+    const izinli = ['teslimat_durumu', 'teslimat_telefon', 'teslimat_adres', 'teslimat_musteri', 'kurye', 'musteri_id', 'notlar', 'kisi_sayisi']
+    for (const k of izinli) {
+      if (veri && veri[k] !== undefined) {
+        alanlar.push(`${k} = ?`)
+        degerler.push(veri[k])
+      }
+    }
+    if (!alanlar.length) return { basarili: false, hata: 'Güncellenecek alan yok' }
+    degerler.push(hesapId)
+    db.prepare(`UPDATE hesap SET ${alanlar.join(', ')} WHERE id = ?`).run(...degerler)
     return { basarili: true }
   })
 }

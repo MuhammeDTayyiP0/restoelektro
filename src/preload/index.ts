@@ -38,16 +38,20 @@ const izinliKanallar = [
   // Masa
   'masa:bolumler', 'masa:bolum-ekle', 'masa:bolum-guncelle', 'masa:masalar', 'masa:masa-ekle',
   'masa:toplu-ekle', 'masa:masa-guncelle', 'masa:durumu', 'masa:birlestir', 'masa:tasi',
+  'masa:kilit', 'masa:kilit-ac', 'masa:kilitler',
   // Hesap & Sipariş
   'hesap:ac', 'hesap:kapat', 'hesap:iptal', 'hesap:detay', 'hesap:listele',
   'hesap:acik-hesaplar', 'hesap:siparis-ekle', 'hesap:siparis-iptal',
   'hesap:siparis-guncelle', 'hesap:siparis-ikram-toggle', 'hesap:indirim-uygula', 'hesap:bol', 'hesap:odeme-al',
+  'hesap:paket-listele', 'hesap:teslimat-guncelle',
   // Mutfak
   'mutfak:bekleyen-siparisler', 'mutfak:durum-guncelle', 'mutfak:yeni-siparis',
   // Stok
   'stok:hammaddeler', 'stok:hammadde-ekle', 'stok:hammadde-guncelle',
   'stok:giris', 'stok:hareketleri', 'stok:receteler', 'stok:recete-ekle',
   'stok:recete-guncelle', 'stok:maliyet-analizi',
+  'stok:tedarikci-listele', 'stok:tedarikci-ekle', 'stok:tedarikci-guncelle',
+  'stok:alis-listele', 'stok:alis-kaydet',
   // Müşteri
   'musteri:listele', 'musteri:ekle', 'musteri:guncelle', 'musteri:ara',
   'musteri:detay', 'musteri:sadakat-kart', 'musteri:sadakat-yukle',
@@ -58,6 +62,14 @@ const izinliKanallar = [
   'rapor:stok-raporu', 'rapor:kasa-raporu', 'rapor:disa-aktar',
   // Kasa
   'kasa:listele', 'kasa:hareket-ekle', 'kasa:hareketler',
+  'kasa:vardiya-acik', 'kasa:vardiya-ac', 'kasa:vardiya-kapat',
+  'kasa:vardiya-ozet', 'kasa:vardiya-gecmis', 'kasa:gider-ekle',
+  // Rezervasyon
+  'rezervasyon:listele', 'rezervasyon:ekle', 'rezervasyon:guncelle', 'rezervasyon:sil', 'rezervasyon:durum',
+  // Denetim
+  'denetim:listele',
+  // Terminal
+  'terminal:getir', 'terminal:kaydet', 'terminal:baglanti-test',
   // Yazıcı
   'yazici:fisi-yazdir', 'yazici:mutfak-yazdir', 'yazici:test-yazdir', 'yazici:ayarlar',
   // Fatura

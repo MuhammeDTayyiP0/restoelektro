@@ -45,6 +45,9 @@ export const MASA_KANALLARI = {
   MASA_DURUMU: 'masa:durumu',
   MASA_BIRLESTIR: 'masa:birlestir',
   MASA_TASI: 'masa:tasi',
+  KILIT: 'masa:kilit',
+  KILIT_AC: 'masa:kilit-ac',
+  KILITLER: 'masa:kilitler',
 } as const
 
 /** Hesap & Sipariş kanalları */
@@ -62,6 +65,8 @@ export const HESAP_KANALLARI = {
   INDIRIM_UYGULA: 'hesap:indirim-uygula',
   HESAP_BOL: 'hesap:bol',
   ODEME_AL: 'hesap:odeme-al',
+  PAKET_LISTELE: 'hesap:paket-listele',
+  TESLIMAT_GUNCELLE: 'hesap:teslimat-guncelle',
 } as const
 
 /** Mutfak kanalları */
@@ -82,6 +87,11 @@ export const STOK_KANALLARI = {
   RECETE_EKLE: 'stok:recete-ekle',
   RECETE_GUNCELLE: 'stok:recete-guncelle',
   MALIYET_ANALIZI: 'stok:maliyet-analizi',
+  TEDARIKCI_LISTELE: 'stok:tedarikci-listele',
+  TEDARIKCI_EKLE: 'stok:tedarikci-ekle',
+  TEDARIKCI_GUNCELLE: 'stok:tedarikci-guncelle',
+  ALIS_LISTELE: 'stok:alis-listele',
+  ALIS_KAYDET: 'stok:alis-kaydet',
 } as const
 
 /** Müşteri kanalları */
@@ -115,6 +125,33 @@ export const KASA_KANALLARI = {
   LISTELE: 'kasa:listele',
   HAREKET_EKLE: 'kasa:hareket-ekle',
   HAREKETLER: 'kasa:hareketler',
+  VARDIYA_ACIK: 'kasa:vardiya-acik',
+  VARDIYA_AC: 'kasa:vardiya-ac',
+  VARDIYA_KAPAT: 'kasa:vardiya-kapat',
+  VARDIYA_OZET: 'kasa:vardiya-ozet',
+  VARDIYA_GECMIS: 'kasa:vardiya-gecmis',
+  GIDER_EKLE: 'kasa:gider-ekle',
+} as const
+
+/** Rezervasyon kanalları */
+export const REZERVASYON_KANALLARI = {
+  LISTELE: 'rezervasyon:listele',
+  EKLE: 'rezervasyon:ekle',
+  GUNCELLE: 'rezervasyon:guncelle',
+  SIL: 'rezervasyon:sil',
+  DURUM: 'rezervasyon:durum',
+} as const
+
+/** Denetim izi kanalları */
+export const DENETIM_KANALLARI = {
+  LISTELE: 'denetim:listele',
+} as const
+
+/** Terminal / ikinci kasa / eğitim modu */
+export const TERMINAL_KANALLARI = {
+  GETIR: 'terminal:getir',
+  KAYDET: 'terminal:kaydet',
+  BAGLANTI_TEST: 'terminal:baglanti-test',
 } as const
 
 /** Yazıcı kanalları */
@@ -172,5 +209,3 @@ export const AG_KANALLARI = {
   KARTLARI_GETIR: 'ag:kartlari-getir',
   YEREL_IP_GETIR: 'ag:yerel-ip-getir',
 } as const
-
-

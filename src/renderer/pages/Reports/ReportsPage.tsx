@@ -49,7 +49,7 @@ import type {
 } from '../../../common/types/report.types'
 
 // Endüstriyel Renk Paleti (GEMINI.md uyumlu: Koyu charcoal, Fonksiyonel Yeşil, Sarı, Kırmızı, Mavi)
-const DONUT_RENKLERI = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4']
+const DONUT_RENKLERI = ['#10B981', '#9A5F48', '#F59E0B', '#8A8178', '#EC4899', '#06B6D4']
 
 export default function ReportsPage() {
   const navigate = useNavigate()
@@ -191,8 +191,8 @@ export default function ReportsPage() {
   const CustomGraphTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0C1018] border border-[#1E273A] rounded-xl p-3.5 shadow-xl font-mono text-xs z-50">
-          <p className="text-slate-400 font-bold mb-2 pb-1 border-b border-[#1A2234]">
+        <div className="bg-[#171410] border border-[#322C26] rounded-xl p-3.5 shadow-xl font-mono text-xs z-50">
+          <p className="text-slate-400 font-bold mb-2 pb-1 border-b border-[#322C26]">
             {label} Akışı
           </p>
           <div className="flex flex-col gap-1.5">
@@ -213,14 +213,14 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#090A0F] text-slate-100 min-h-screen select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#0B0A08] text-slate-100 min-h-screen select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4 overflow-hidden">
       
       {/* 1. ÜST BAŞLIK & FİLTRELEME & DIŞA AKTARIM ARAÇ ÇUBUĞU */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 pb-3 border-b border-[#1A2234] shrink-0">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 pb-3 border-b border-[#322C26] shrink-0">
         
         {/* Başlık ve Durum Rozeti */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-[#101522] border border-[#1E293B] flex items-center justify-center text-cyan-400 shadow-md">
+          <div className="w-11 h-11 rounded-xl bg-[#1e1a16] border border-[#322C26] flex items-center justify-center text-cyan-400 shadow-md">
             <Activity size={22} />
           </div>
           <div>
@@ -228,7 +228,7 @@ export default function ReportsPage() {
               <h1 className="text-lg lg:text-xl font-black tracking-tight text-white font-mono uppercase">
                 İŞLETME FİNANS & STOK PANELİ
               </h1>
-              <span className="text-[10px] font-mono font-bold bg-[#141B2D] text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded uppercase">
+              <span className="text-[10px] font-mono font-bold bg-[#1E1A16] text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded uppercase">
                 DENETİM & ANALİTİK
               </span>
             </div>
@@ -242,13 +242,13 @@ export default function ReportsPage() {
         <div className="flex items-center gap-2 flex-wrap w-full xl:w-auto justify-between xl:justify-end">
           
           {/* Segmented Time Control */}
-          <div className="flex items-center gap-1 bg-[#0D121D] p-1 rounded-xl border border-[#1B2335]">
+          <div className="flex items-center gap-1 bg-[#171410] p-1 rounded-xl border border-[#322C26]">
             <button
               onClick={() => setZamanFiltresi('bugun')}
               className={clsx(
                 "px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all",
                 zamanFiltresi === 'bugun'
-                  ? "bg-[#1B2438] text-white border border-cyan-500/40 shadow-sm"
+                  ? "bg-[#322C26] text-white border border-cyan-500/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -259,7 +259,7 @@ export default function ReportsPage() {
               className={clsx(
                 "px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all",
                 zamanFiltresi === 'buhafta'
-                  ? "bg-[#1B2438] text-white border border-cyan-500/40 shadow-sm"
+                  ? "bg-[#322C26] text-white border border-cyan-500/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -270,7 +270,7 @@ export default function ReportsPage() {
               className={clsx(
                 "px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all",
                 zamanFiltresi === 'buay'
-                  ? "bg-[#1B2438] text-white border border-cyan-500/40 shadow-sm"
+                  ? "bg-[#322C26] text-white border border-cyan-500/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -281,7 +281,7 @@ export default function ReportsPage() {
               className={clsx(
                 "px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all",
                 zamanFiltresi === 'ozel'
-                  ? "bg-[#1B2438] text-cyan-300 border border-cyan-500/50 shadow-sm"
+                  ? "bg-[#322C26] text-cyan-300 border border-cyan-500/50 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -291,19 +291,19 @@ export default function ReportsPage() {
 
           {/* Özel Tarih Seçici Inputs (Seçildiğinde görünür) */}
           {zamanFiltresi === 'ozel' && (
-            <div className="flex items-center gap-1.5 bg-[#0D121D] px-2 py-1 rounded-xl border border-[#1B2335]">
+            <div className="flex items-center gap-1.5 bg-[#171410] px-2 py-1 rounded-xl border border-[#322C26]">
               <input
                 type="date"
                 value={ozelBaslangic}
                 onChange={e => setOzelBaslangic(e.target.value)}
-                className="bg-[#080B11] text-xs font-mono text-slate-200 border border-[#222C42] rounded-lg px-2 py-1 focus:border-cyan-400 focus:outline-none"
+                className="bg-[#110F0C] text-xs font-mono text-slate-200 border border-[#3A342C] rounded-lg px-2 py-1 focus:border-cyan-400 focus:outline-none"
               />
               <span className="text-slate-500 text-xs font-mono">-</span>
               <input
                 type="date"
                 value={ozelBitis}
                 onChange={e => setOzelBitis(e.target.value)}
-                className="bg-[#080B11] text-xs font-mono text-slate-200 border border-[#222C42] rounded-lg px-2 py-1 focus:border-cyan-400 focus:outline-none"
+                className="bg-[#110F0C] text-xs font-mono text-slate-200 border border-[#3A342C] rounded-lg px-2 py-1 focus:border-cyan-400 focus:outline-none"
               />
             </div>
           )}
@@ -313,7 +313,7 @@ export default function ReportsPage() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => handleExport(aktifSekme === 'urunler' ? 'urun' : aktifSekme === 'stok' ? 'stok' : 'satis', 'xlsx')}
-              className="h-9 px-3 rounded-xl bg-[#111724] border border-[#202B3F] hover:border-emerald-500/60 text-emerald-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              className="h-9 px-3 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-emerald-500/60 text-emerald-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
               title="Excel (.xlsx) İndir"
             >
               <FileSpreadsheet size={15} className="text-emerald-400" />
@@ -323,7 +323,7 @@ export default function ReportsPage() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => handleExport(aktifSekme === 'urunler' ? 'urun' : aktifSekme === 'stok' ? 'stok' : 'satis', 'csv')}
-              className="h-9 px-3 rounded-xl bg-[#111724] border border-[#202B3F] hover:border-slate-500 text-slate-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              className="h-9 px-3 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-slate-500 text-slate-300 font-mono text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
               title="CSV İndir"
             >
               <Download size={15} className="text-slate-400" />
@@ -334,7 +334,7 @@ export default function ReportsPage() {
               whileTap={{ scale: 0.92 }}
               onClick={raporVerileriniYukle}
               disabled={yukleniyor}
-              className="h-9 w-9 rounded-xl bg-[#111724] border border-[#202B3F] hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-colors"
               title="Yenile"
             >
               <RefreshCw size={15} className={clsx(yukleniyor && "animate-spin text-cyan-400")} />
@@ -353,7 +353,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           
           {/* 1. TOPLAM CİRO */}
-          <div className="bg-[#0C1018] p-3.5 rounded-2xl border border-[#1A2234] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-colors">
+          <div className="bg-[#171410] p-3.5 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div className="w-9 h-9 rounded-xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                 <DollarSign size={18} />
@@ -371,7 +371,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 2. TOPLAM MALİYET */}
-          <div className="bg-[#0C1018] p-3.5 rounded-2xl border border-[#1A2234] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/40 transition-colors">
+          <div className="bg-[#171410] p-3.5 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-rose-500/40 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div className="w-9 h-9 rounded-xl bg-rose-950/60 border border-rose-500/30 flex items-center justify-center text-rose-400">
                 <TrendingDown size={18} />
@@ -389,7 +389,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 3. NET KÂR (CİRO - MALİYET) */}
-          <div className="bg-[#0C1018] p-3.5 rounded-2xl border border-[#1A2234] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
+          <div className="bg-[#171410] p-3.5 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <TrendingUp size={18} />
@@ -407,7 +407,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 4. TOPLAM SATILAN ADİSYON */}
-          <div className="bg-[#0C1018] p-3.5 rounded-2xl border border-[#1A2234] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-colors">
+          <div className="bg-[#171410] p-3.5 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div className="w-9 h-9 rounded-xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <Receipt size={18} />
@@ -425,7 +425,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 5. ORTALAMA MASA / ADİSYON TUTARI */}
-          <div className="bg-[#0C1018] p-3.5 rounded-2xl border border-[#1A2234] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/40 transition-colors">
+          <div className="bg-[#171410] p-3.5 rounded-2xl border border-[#322C26] flex flex-col justify-between shadow-lg relative overflow-hidden group hover:border-indigo-500/40 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div className="w-9 h-9 rounded-xl bg-indigo-950/60 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
                 <Users size={18} />
@@ -450,8 +450,8 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
           {/* Sol Panel: Zaman Akışı Recharts Grafiği (Ciro vs Maliyet vs Net Kâr) */}
-          <div className="lg:col-span-2 bg-[#0C1018] p-4 rounded-2xl border border-[#1A2234] shadow-xl flex flex-col">
-            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#161D2B]">
+          <div className="lg:col-span-2 bg-[#171410] p-4 rounded-2xl border border-[#322C26] shadow-xl flex flex-col">
+            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#1E1A16]">
               <div className="flex items-center gap-2">
                 <BarChart3 size={18} className="text-cyan-400" />
                 <h3 className="font-mono font-bold text-sm text-slate-100 uppercase tracking-wider">
@@ -460,7 +460,7 @@ export default function ReportsPage() {
               </div>
               <div className="flex items-center gap-3 text-[11px] font-mono">
                 <span className="flex items-center gap-1.5 text-cyan-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" /> Ciro
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#9A5F48]" /> Ciro
                 </span>
                 <span className="flex items-center gap-1.5 text-rose-400">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> Maliyet
@@ -481,8 +481,8 @@ export default function ReportsPage() {
                   <AreaChart data={zamanSerisi} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                     <defs>
                       <linearGradient id="ciroGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0}/>
+                        <stop offset="5%" stopColor="#9A5F48" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#9A5F48" stopOpacity={0.0}/>
                       </linearGradient>
                       <linearGradient id="karGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
@@ -493,21 +493,21 @@ export default function ReportsPage() {
                         <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#161D2B" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1E1A16" vertical={false} />
                     <XAxis 
                       dataKey="zaman_etiketi" 
-                      stroke="#64748B" 
+                      stroke="#7A7166" 
                       fontSize={11} 
                       fontFamily="monospace"
                       tickLine={false}
-                      axisLine={{ stroke: '#1E2538' }}
+                      axisLine={{ stroke: '#322C26' }}
                     />
                     <YAxis 
-                      stroke="#64748B" 
+                      stroke="#7A7166" 
                       fontSize={11} 
                       fontFamily="monospace"
                       tickLine={false}
-                      axisLine={{ stroke: '#1E2538' }}
+                      axisLine={{ stroke: '#322C26' }}
                       tickFormatter={(val) => `₺${val}`} 
                     />
                     <Tooltip content={<CustomGraphTooltip />} />
@@ -515,7 +515,7 @@ export default function ReportsPage() {
                       name="Ciro" 
                       type="monotone" 
                       dataKey="toplam_tutar" 
-                      stroke="#3B82F6" 
+                      stroke="#9A5F48" 
                       strokeWidth={2.5} 
                       fillOpacity={1} 
                       fill="url(#ciroGrad)" 
@@ -545,15 +545,15 @@ export default function ReportsPage() {
           </div>
 
           {/* Sağ Panel: Kasa & Ödeme Tipi Dağılımı (Nakit, Kredi Kartı, Açık Hesap) */}
-          <div className="bg-[#0C1018] p-4 rounded-2xl border border-[#1A2234] shadow-xl flex flex-col justify-between">
-            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#161D2B]">
+          <div className="bg-[#171410] p-4 rounded-2xl border border-[#322C26] shadow-xl flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#1E1A16]">
               <div className="flex items-center gap-2">
                 <Banknote size={18} className="text-amber-400" />
                 <h3 className="font-mono font-bold text-sm text-slate-100 uppercase tracking-wider">
                   Kasa & Ödeme Dağılımı
                 </h3>
               </div>
-              <span className="text-[10px] font-mono bg-[#141B2D] text-slate-300 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono bg-[#1E1A16] text-slate-300 px-2 py-0.5 rounded">
                 Tahsilat Dökümü
               </span>
             </div>
@@ -562,7 +562,7 @@ export default function ReportsPage() {
             <div className="space-y-2.5 flex-1 flex flex-col justify-center">
               
               {/* Nakit */}
-              <div className="bg-[#0E131F] p-3 rounded-xl border border-[#192233]">
+              <div className="bg-[#171410] p-3 rounded-xl border border-[#241f1a]">
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2">
                     <Banknote size={16} className="text-emerald-400" />
@@ -572,7 +572,7 @@ export default function ReportsPage() {
                     {formatPara(ozet.nakit_toplam)}
                   </span>
                 </div>
-                <div className="w-full bg-[#161C2B] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#1E1A16] h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="bg-emerald-400 h-full rounded-full transition-all"
                     style={{ width: `${ozet.toplam_ciro > 0 ? Math.min(100, (ozet.nakit_toplam / ozet.toplam_ciro) * 100) : 0}%` }}
@@ -581,7 +581,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Kredi Kartı */}
-              <div className="bg-[#0E131F] p-3 rounded-xl border border-[#192233]">
+              <div className="bg-[#171410] p-3 rounded-xl border border-[#241f1a]">
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2">
                     <CreditCard size={16} className="text-cyan-400" />
@@ -591,7 +591,7 @@ export default function ReportsPage() {
                     {formatPara(ozet.kart_toplam)}
                   </span>
                 </div>
-                <div className="w-full bg-[#161C2B] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#1E1A16] h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="bg-cyan-400 h-full rounded-full transition-all"
                     style={{ width: `${ozet.toplam_ciro > 0 ? Math.min(100, (ozet.kart_toplam / ozet.toplam_ciro) * 100) : 0}%` }}
@@ -600,7 +600,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Açık Hesap (Veresiye / Cari) */}
-              <div className="bg-[#0E131F] p-3 rounded-xl border border-[#192233]">
+              <div className="bg-[#171410] p-3 rounded-xl border border-[#241f1a]">
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2">
                     <BookOpen size={16} className="text-amber-400" />
@@ -610,7 +610,7 @@ export default function ReportsPage() {
                     {formatPara(ozet.acik_hesap_toplam)}
                   </span>
                 </div>
-                <div className="w-full bg-[#161C2B] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[#1E1A16] h-1.5 rounded-full overflow-hidden">
                   <div 
                     className="bg-amber-400 h-full rounded-full transition-all"
                     style={{ width: `${ozet.toplam_ciro > 0 ? Math.min(100, (ozet.acik_hesap_toplam / ozet.toplam_ciro) * 100) : 0}%` }}
@@ -621,7 +621,7 @@ export default function ReportsPage() {
             </div>
 
             {/* İndirim & İkram & İptal Dipnotu */}
-            <div className="mt-3 pt-2.5 border-t border-[#161D2B] grid grid-cols-3 gap-1 text-center font-mono text-[11px]">
+            <div className="mt-3 pt-2.5 border-t border-[#1E1A16] grid grid-cols-3 gap-1 text-center font-mono text-[11px]">
               <div>
                 <span className="text-slate-500 block text-[10px]">İndirim</span>
                 <span className="text-rose-400 font-bold tabular-nums">-{formatPara(ozet.indirim_tutar)}</span>
@@ -646,9 +646,9 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
           {/* Sol Panel (2 Kolon): ÜRÜN & REÇETE PERFORMANS TABLOSU */}
-          <div className="lg:col-span-2 bg-[#0C1018] p-4 rounded-2xl border border-[#1A2234] shadow-xl flex flex-col">
+          <div className="lg:col-span-2 bg-[#171410] p-4 rounded-2xl border border-[#322C26] shadow-xl flex flex-col">
             
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 pb-3 border-b border-[#161D2B]">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 pb-3 border-b border-[#1E1A16]">
               <div className="flex items-center gap-2">
                 <Package size={18} className="text-emerald-400" />
                 <h3 className="font-mono font-bold text-sm text-slate-100 uppercase tracking-wider">
@@ -665,14 +665,14 @@ export default function ReportsPage() {
                     value={urunArama}
                     onChange={e => setUrunArama(e.target.value)}
                     placeholder="Ürün veya kategori ara..."
-                    className="w-full bg-[#080B11] border border-[#1F293D] rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none placeholder:text-slate-600"
+                    className="w-full bg-[#110F0C] border border-[#3A342C] rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none placeholder:text-slate-600"
                   />
                 </div>
 
                 <select
                   value={urunSiralama}
                   onChange={e => setUrunSiralama(e.target.value as any)}
-                  className="bg-[#080B11] border border-[#1F293D] rounded-xl px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none"
+                  className="bg-[#110F0C] border border-[#3A342C] rounded-xl px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none"
                 >
                   <option value="ciro">Ciroya Göre</option>
                   <option value="adet">Satış Adedine Göre</option>
@@ -686,7 +686,7 @@ export default function ReportsPage() {
             <div className="overflow-x-auto pos-scrollbar max-h-96 min-h-[220px]">
               <table className="w-full text-left font-mono text-xs">
                 <thead>
-                  <tr className="border-b border-[#161D2B] text-[11px] text-slate-400 uppercase bg-[#0E131F]">
+                  <tr className="border-b border-[#1E1A16] text-[11px] text-slate-400 uppercase bg-[#171410]">
                     <th className="py-2.5 px-3">Ürün</th>
                     <th className="py-2.5 px-2 text-center">Adet</th>
                     <th className="py-2.5 px-3 text-right">Ciro</th>
@@ -695,7 +695,7 @@ export default function ReportsPage() {
                     <th className="py-2.5 px-2 text-center">Marj</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#131926]">
+                <tbody className="divide-y divide-[#1e1a16]">
                   {filtrelenmisUrunler.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-slate-500 font-mono">
@@ -704,7 +704,7 @@ export default function ReportsPage() {
                     </tr>
                   ) : (
                     filtrelenmisUrunler.map((u) => (
-                      <tr key={u.urun_id} className="hover:bg-[#111724] transition-colors">
+                      <tr key={u.urun_id} className="hover:bg-[#1e1a16] transition-colors">
                         <td className="py-2.5 px-3">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-100">{u.urun_adi}</span>
@@ -743,9 +743,9 @@ export default function ReportsPage() {
           </div>
 
           {/* Sağ Panel (1 Kolon): KRİTİK STOK VE HAMMADDE UYARI PANELİ */}
-          <div className="bg-[#0C1018] p-4 rounded-2xl border border-[#1A2234] shadow-xl flex flex-col justify-between">
+          <div className="bg-[#171410] p-4 rounded-2xl border border-[#322C26] shadow-xl flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#161D2B]">
+              <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#1E1A16]">
                 <div className="flex items-center gap-2">
                   <ShieldAlert size={18} className="text-rose-400" />
                   <h3 className="font-mono font-bold text-sm text-slate-100 uppercase tracking-wider">
@@ -774,7 +774,7 @@ export default function ReportsPage() {
                   kritikStoklar.map((ham) => (
                     <div 
                       key={ham.hammadde_id}
-                      className="bg-[#0E131F] p-2.5 rounded-xl border border-[#1A2233] flex items-center justify-between gap-2"
+                      className="bg-[#171410] p-2.5 rounded-xl border border-[#322C26] flex items-center justify-between gap-2"
                     >
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -815,10 +815,10 @@ export default function ReportsPage() {
             </div>
 
             {/* Alt Kısayol */}
-            <div className="mt-3 pt-2.5 border-t border-[#161D2B]">
+            <div className="mt-3 pt-2.5 border-t border-[#1E1A16]">
               <button
                 onClick={() => navigate('/inventory')}
-                className="w-full h-9 rounded-xl bg-[#141B2D] border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full h-9 rounded-xl bg-[#1E1A16] border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
               >
                 <span>Hammadde Stok Girişi Yap</span>
                 <ArrowRight size={14} />

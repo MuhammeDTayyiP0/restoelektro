@@ -336,6 +336,9 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
     return
   }
 
+  const kategoriSutunlari = (db.prepare('PRAGMA table_info(kategori)').all() as Array<{ name: string }>).map(c => c.name.toLowerCase())
+  const siraNoVar = kategoriSutunlari.includes('sira_no')
+
   console.log('🌱 [Seed] Veritabanı boş, varsayılan menü kategorileri ve ürünleri yükleniyor (İlk Kurulum)...')
 
   // 2. Görsellerin yerel klasörlerde mevcut olduğundan emin ol (arka planda kontrol / indirme)
@@ -359,16 +362,29 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
     let kategoriId: number
     if (kategoriRow) {
       kategoriId = kategoriRow.id
-      db.prepare(`
-        UPDATE kategori 
-        SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, sira_no = COALESCE(sira_no, ?), aktif = 1 
-        WHERE id = ?
-      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira, kategoriId)
+      if (siraNoVar) {
+        db.prepare(`
+          UPDATE kategori
+          SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, sira_no = COALESCE(sira_no, ?), aktif = 1
+          WHERE id = ?
+        `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira, kategoriId)
+      } else {
+        db.prepare(`
+          UPDATE kategori
+          SET ad = ?, renk = COALESCE(?, renk), ikon = COALESCE(?, ikon), sira = ?, aktif = 1
+          WHERE id = ?
+        `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kategoriId)
+      }
     } else {
-      const katSonuc = db.prepare(`
-        INSERT INTO kategori (ad, renk, ikon, sira, sira_no, aktif)
-        VALUES (?, ?, ?, ?, ?, 1)
-      `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira)
+      const katSonuc = siraNoVar
+        ? db.prepare(`
+            INSERT INTO kategori (ad, renk, ikon, sira, sira_no, aktif)
+            VALUES (?, ?, ?, ?, ?, 1)
+          `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira, kat.sira)
+        : db.prepare(`
+            INSERT INTO kategori (ad, renk, ikon, sira, aktif)
+            VALUES (?, ?, ?, ?, 1)
+          `).run(kat.ad, kat.renk, kat.ikon || null, kat.sira)
       kategoriId = Number(katSonuc.lastInsertRowid)
       console.log(`➕ [Seed] Yeni Kategori: ${kat.ad} (ID: ${kategoriId})`)
     }

@@ -1,25 +1,32 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Plus, 
   Users, 
-  Clock, 
-  Search, 
+  Search,
   RefreshCw, 
   Layers, 
-  TrendingUp, 
-  Link2, 
+  Link2,
   UtensilsCrossed, 
-  Sparkles
+  Sparkles,
+  Bike,
+  Printer,
+  StickyNote,
+  CalendarDays,
+  X,
+  DoorOpen
 } from 'lucide-react'
 import { useIPC, useIPCListener, ipcInvoke } from '../../hooks/useIPC'
-import { MASA_KANALLARI } from '../../../common/ipc-channels'
+import { MASA_KANALLARI, HESAP_KANALLARI, AYAR_KANALLARI, REZERVASYON_KANALLARI } from '../../../common/ipc-channels'
 import type { Masa, Bolum } from '../../../common/types/table.types'
-import { formatPara } from '../../utils/formatters'
+import { formatPara, gecenDakikaHesapla, parseSqliteZamani } from '../../utils/formatters'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useToast } from '../../components/ui/Toast'
+import { yazdirAdisyon } from '../../utils/print.utils'
+import { Modal } from '../../components/ui/Modal'
+import { Button } from '../../components/ui/Button'
 
 // Süre formatlama (örn: 75 dk -> 1s 15dk)
 function formatGecenSure(dakika: number): string {
@@ -31,8 +38,25 @@ function formatGecenSure(dakika: number): string {
 
 interface TableCardProps {
   masa: Masa
-  seciliBolum: string
   onClick: (masa: Masa) => void
+  onLongPress: (masa: Masa) => void
+  simdi: number
+}
+
+function masaDoluMu(masa: Masa) {
+  return masa.durum === 'dolu' || !!masa.aktif_hesap_id
+}
+
+function masaRezerveMi(masa: Masa) {
+  return !masaDoluMu(masa) && (masa.durum === 'rezerve' || !!masa.rezervasyon_id)
+}
+
+function masaGecenDk(masa: Masa, simdi: number): number {
+  if (!masaDoluMu(masa)) return 0
+  if (masa.acilis_zamani && parseSqliteZamani(masa.acilis_zamani)) {
+    return gecenDakikaHesapla(masa.acilis_zamani, simdi)
+  }
+  return parseInt(String(masa.acik_sure || '0'), 10) || 0
 }
 
 /**
@@ -40,131 +64,155 @@ interface TableCardProps {
  */
 const TableCard = React.memo(function TableCard({
   masa,
-  seciliBolum,
   onClick,
+  onLongPress,
+  simdi,
 }: TableCardProps) {
-  const doluMu = masa.durum === 'dolu' || !!masa.aktif_hesap_id
-  const rezerveMi = masa.durum === 'rezerve'
+  const doluMu = masaDoluMu(masa)
+  const rezerveMi = masaRezerveMi(masa)
   const birlestiMi = masa.durum === 'birlesti'
+  const uzunBasildi = useRef(false)
+  const basTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Geçen süre hesabı
-  const gecenSure = doluMu
-    ? (masa.acilis_zamani
-        ? Math.max(0, Math.floor((Date.now() - new Date(masa.acilis_zamani).getTime()) / 60000))
-        : (parseInt(masa.acik_sure || '0', 10) || 0))
-    : 0
+  const gecenSure = masaGecenDk(masa, simdi)
+
+  const sureSeviye: 'normal' | 'uyari' | 'kritik' = !doluMu
+    ? 'normal'
+    : gecenSure >= 90
+      ? 'kritik'
+      : gecenSure >= 45
+        ? 'uyari'
+        : 'normal'
 
   const handleClick = useCallback(() => {
+    if (uzunBasildi.current) {
+      uzunBasildi.current = false
+      return
+    }
     onClick(masa)
   }, [onClick, masa])
+
+  const baslat = useCallback((e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    uzunBasildi.current = false
+    if (basTimer.current) clearTimeout(basTimer.current)
+    basTimer.current = setTimeout(() => {
+      uzunBasildi.current = true
+      onLongPress(masa)
+    }, 480)
+  }, [onLongPress, masa])
+
+  const bitir = useCallback(() => {
+    if (basTimer.current) {
+      clearTimeout(basTimer.current)
+      basTimer.current = null
+    }
+  }, [])
+
+  useEffect(() => () => bitir(), [bitir])
 
   return (
     <motion.button
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -3, scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      whileTap={{ scale: 0.96 }}
       transition={{ duration: 0.15 }}
       onClick={handleClick}
+      onPointerDown={baslat}
+      onPointerUp={bitir}
+      onPointerLeave={bitir}
+      onPointerCancel={bitir}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onLongPress(masa)
+      }}
       className={clsx(
-        "relative flex flex-col justify-between h-40 rounded-2xl p-3.5 text-left border transition-all touch-feedback group overflow-hidden shadow-lg",
-        doluMu
-          ? "bg-gradient-to-b from-[#18130B] to-[#0E1017] border-amber-500/50 hover:border-amber-400 shadow-[0_4px_24px_rgba(245,158,11,0.12)] ring-1 ring-amber-500/20"
-          : rezerveMi
-            ? "bg-gradient-to-b from-[#160F24] to-[#0E1017] border-purple-500/40 hover:border-purple-400 shadow-[0_4px_20px_rgba(139,92,246,0.1)] ring-1 ring-purple-500/20"
-            : "bg-gradient-to-b from-[#0B1516] to-[#0C1017] border-emerald-500/25 hover:border-emerald-400/70 shadow-[0_4px_16px_rgba(16,185,129,0.06)]"
+        "relative aspect-square w-full rounded-full p-2 text-center overflow-hidden touch-feedback",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.07),inset_0_-12px_20px_rgba(0,0,0,0.4)]",
+        doluMu && sureSeviye === 'kritik' && "bg-[#2A1414] border-[1.5px] border-rose-500/50",
+        doluMu && sureSeviye === 'uyari' && "bg-[#2A1C12] border-[1.5px] border-orange-500/45",
+        doluMu && sureSeviye === 'normal' && "bg-[#2A1E18] border-[1.5px] border-brand-500/50",
+        !doluMu && rezerveMi && "bg-[#3A2A12] border-[2.5px] border-amber-400 shadow-[0_0_16px_rgba(251,191,36,0.35)]",
+        !doluMu && !rezerveMi && "bg-[#161310] border-[1.5px] border-[#3A342C]"
       )}
     >
-      {/* Kart Üst Durum Çizgisi */}
-      <div className={clsx(
-        "absolute top-0 left-0 right-0 h-1.5",
-        doluMu ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]" : rezerveMi ? "bg-purple-400 shadow-[0_0_8px_rgba(139,92,246,0.8)]" : "bg-emerald-500/60"
-      )} />
+      {doluMu && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden>
+          <circle cx="50" cy="50" r="46.5" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="3.2" />
+          <circle
+            cx="50"
+            cy="50"
+            r="46.5"
+            fill="none"
+            stroke={sureSeviye === 'kritik' ? '#FB7185' : sureSeviye === 'uyari' ? '#FB923C' : '#9A5F48'}
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeDasharray={`${Math.min(292, Math.max(14, (gecenSure / 90) * 292))} 292`}
+            transform="rotate(-90 50 50)"
+          />
+        </svg>
+      )}
 
-      {/* Üst Kısım: Masa No & Durum Rozeti */}
-      <div className="flex items-start justify-between w-full pt-1">
-        <div className="flex flex-col">
-          <span className="text-2xl 2xl:text-3xl font-black font-mono tracking-tight text-white group-hover:text-amber-300 transition-colors">
-            {masa.numara}
+      {rezerveMi && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden>
+          <circle cx="50" cy="50" r="46.5" fill="none" stroke="#FBBF24" strokeWidth="3.6" strokeDasharray="7 5" />
+        </svg>
+      )}
+
+      <div className="relative h-full flex flex-col items-center justify-center px-2.5">
+        {masa.bolum_adi && (
+          <span className={clsx(
+            "mb-0.5 max-w-[85%] truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide leading-none",
+            rezerveMi ? "bg-amber-400/25 text-amber-100" : "bg-black/30 text-surface-300"
+          )}>
+            {masa.bolum_adi}
           </span>
-          {masa.bolum_adi && seciliBolum === 'tum' && (
-            <span className="text-[10px] font-mono text-slate-400 truncate max-w-[80px]">
-              {masa.bolum_adi}
-            </span>
-          )}
-        </div>
+        )}
 
-        {/* Durum Rozeti */}
+        <span className={clsx(
+          "font-semibold tracking-tight leading-none",
+          String(masa.numara).length <= 4 ? "text-[30px] sm:text-[36px]" : "text-[16px] sm:text-[20px]",
+          doluMu && sureSeviye === 'kritik' && "text-rose-200",
+          rezerveMi ? "text-amber-50" : "text-surface-50"
+        )}>
+          {masa.numara}
+        </span>
+
         {doluMu ? (
-          <div className="flex flex-col items-end gap-1">
-            <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full uppercase">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Dolu
-            </span>
-            {gecenSure > 0 && (
-              <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400/90 font-semibold">
-                <Clock size={10} />
-                {formatGecenSure(gecenSure)}
-              </span>
-            )}
+          <div className="mt-1.5 w-full min-w-0">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-surface-400 leading-none">Tutar</div>
+            <div className="font-mono text-[13px] sm:text-sm font-bold tabular-nums text-surface-50 truncate leading-tight">
+              {formatPara(masa.aktif_hesap_tutari || 0)}
+            </div>
+            <div className={clsx(
+              "mt-0.5 text-[11px] font-mono font-semibold leading-none",
+              sureSeviye === 'kritik' ? "text-rose-300" : sureSeviye === 'uyari' ? "text-orange-300" : "text-surface-300"
+            )}>
+              {formatGecenSure(gecenSure)}
+            </div>
           </div>
         ) : rezerveMi ? (
-          <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-            Rezerve
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Boş
-          </span>
-        )}
-      </div>
-
-      {/* Alt Kısım: Fiyat veya Kapasite Bilgisi */}
-      <div className="flex items-end justify-between w-full mt-auto pt-2 border-t border-[#1E2638]">
-        {doluMu ? (
-          <div className="flex flex-col w-full">
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 tracking-wider uppercase">
-              <span>ADİSYON TUTARI</span>
-              {typeof masa.urun_sayisi === 'number' && masa.urun_sayisi > 0 && (
-                <span className="text-[10px] font-mono font-bold text-amber-300/90 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded">
-                  {masa.urun_sayisi} Ürün
-                </span>
-              )}
+          <div className="mt-1.5 w-[88%] min-w-0 rounded-full bg-amber-400 text-[#1A1208] px-2 py-1">
+            <div className="text-[9px] font-black uppercase tracking-widest leading-none">Rezerve</div>
+            <div className="text-[11px] font-bold truncate leading-tight mt-0.5">
+              {masa.rezervasyon_ad || 'Misafir'}
             </div>
-            <div className="flex items-baseline justify-between w-full mt-0.5">
-              <span className="text-base 2xl:text-lg font-black font-mono text-emerald-400 tabular-nums tracking-tight">
-                {formatPara(masa.aktif_hesap_tutari || 0)}
-              </span>
-              {masa.garson_adi && (
-                <span className="text-[10px] font-mono text-slate-400 truncate max-w-[70px]">
-                  👤 {masa.garson_adi}
-                </span>
-              )}
+            <div className="text-[10px] font-mono font-bold leading-none mt-0.5">
+              {masa.rezervasyon_saat || '--:--'}
+              {masa.rezervasyon_kisi ? ` · ${masa.rezervasyon_kisi}k` : ''}
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between w-full text-slate-400 text-xs font-mono">
-            <span className="flex items-center gap-1">
-              <Users size={13} className="text-slate-400" />
-              <span>{masa.kapasite || 4} Kişilik</span>
-            </span>
-            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/20">
-              AÇIK
-            </span>
+          <div className="mt-1.5 text-[11px] text-surface-500">
+            {masa.kapasite || 4} kişilik
           </div>
         )}
       </div>
 
-      {/* Masa Birleşti İkonu */}
       {birlestiMi && (
-        <div 
-          className="absolute bottom-2 right-2 p-1 bg-amber-500/20 border border-amber-500/50 rounded-md text-amber-300 shadow-md"
-          title="Bu masa başka bir masa ile birleşmiştir"
-        >
+        <div className="absolute top-[14%] right-[14%] text-brand-300" title="Birleşik masa">
           <Link2 size={12} />
         </div>
       )}
@@ -193,6 +241,14 @@ export default function TablesPage() {
   const [onek, setOnek] = useState('S')
   const [masaSayisi, setMasaSayisi] = useState(15)
   const [olusturuluyor, setOlusturuluyor] = useState(false)
+  const [aksiyonMasa, setAksiyonMasa] = useState<Masa | null>(null)
+  const [notMetni, setNotMetni] = useState('')
+  const [notModal, setNotModal] = useState(false)
+  const [kisiSayisi, setKisiSayisi] = useState('2')
+  const [kisiModal, setKisiModal] = useState(false)
+  const [rezForm, setRezForm] = useState({ musteri_ad: '', telefon: '', kisi_sayisi: '2', saat: '19:00', notlar: '' })
+  const [rezModal, setRezModal] = useState(false)
+  const [simdi, setSimdi] = useState(() => Date.now())
 
   // İlk açılışta hedef bölümü varsayılan ilk bölüme ayarla
   useEffect(() => {
@@ -275,20 +331,24 @@ export default function TablesPage() {
     masalariYenile()
   })
 
-  // 60 saniyede bir masaları yenile (süreyi güncellemek için)
+  // 15 saniyede bir süreyi güncelle, 60 saniyede bir masaları yenile
   useEffect(() => {
+    const sureTimer = setInterval(() => setSimdi(Date.now()), 15000)
     const timer = setInterval(() => {
       masalariYenile()
     }, 60000)
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(sureTimer)
+      clearInterval(timer)
+    }
   }, [masalariYenile])
 
   // İstatistikler (KPI)
   const istatistikler = useMemo(() => {
     const toplam = masalar.length
     const doluSayisi = masalar.filter(m => m.durum === 'dolu' || !!m.aktif_hesap_id).length
-    const bosSayisi = masalar.filter(m => m.durum === 'bos' && !m.aktif_hesap_id).length
-    const rezerveSayisi = masalar.filter(m => m.durum === 'rezerve').length
+    const bosSayisi = masalar.filter(m => !masaDoluMu(m) && !masaRezerveMi(m)).length
+    const rezerveSayisi = masalar.filter(m => masaRezerveMi(m)).length
     const toplamAdisyon = masalar.reduce((toplam, m) => toplam + (m.aktif_hesap_tutari || 0), 0)
     const dolulukOrani = toplam > 0 ? Math.round((doluSayisi / toplam) * 100) : 0
 
@@ -325,9 +385,9 @@ export default function TablesPage() {
       }
 
       // 2. Durum filtresi
-      const doluMu = masa.durum === 'dolu' || !!masa.aktif_hesap_id
-      const bosMu = masa.durum === 'bos' && !masa.aktif_hesap_id
-      const rezerveMi = masa.durum === 'rezerve'
+      const doluMu = masaDoluMu(masa)
+      const rezerveMi = masaRezerveMi(masa)
+      const bosMu = !doluMu && !rezerveMi
       const birlestiMi = masa.durum === 'birlesti'
 
       if (durumFiltresi === 'dolu' && !doluMu) return false
@@ -357,10 +417,112 @@ export default function TablesPage() {
     }
   }, [navigate])
 
+  const masaUzunBas = useCallback((masa: Masa) => {
+    setAksiyonMasa(masa)
+  }, [])
+
+  const adisyonYazdir = useCallback(async (masa: Masa) => {
+    if (!masa.aktif_hesap_id) {
+      toast.warning('Adisyon yok', 'Bu masada açık hesap yok.')
+      return
+    }
+    try {
+      const hesap = await ipcInvoke<any>(HESAP_KANALLARI.DETAY, masa.aktif_hesap_id)
+      const kasaYazici = await ipcInvoke<string>(AYAR_KANALLARI.GETIR, 'kasa_yazici')
+      if (!kasaYazici) {
+        toast.error('Hata', 'Kasa yazıcısı ayarlanmamış.')
+        return
+      }
+      const ayarlar = await ipcInvoke<Record<string, string>>(AYAR_KANALLARI.TUMU)
+      const basarili = await yazdirAdisyon(hesap, kasaYazici, {
+        ad: ayarlar?.['restoran_adi'] || '',
+        telefon: ayarlar?.['restoran_telefon'] || '',
+        adres: ayarlar?.['restoran_adres'] || '',
+        altNot: ayarlar?.['fis_alt_not'] || '',
+      })
+      if (basarili) toast.success('Yazdırıldı', `Masa ${masa.numara} adisyonu`)
+      else toast.error('Hata', 'Yazdırma başarısız')
+    } catch (err: any) {
+      toast.error('Hata', err.message)
+    }
+  }, [toast])
+
+  const rezervasyonIptal = useCallback(async (masa: Masa) => {
+    if (!masa.rezervasyon_id) return
+    try {
+      const res = await ipcInvoke<any>(REZERVASYON_KANALLARI.DURUM, masa.rezervasyon_id, 'iptal', personel?.id)
+      if (!res?.basarili) throw new Error(res?.hata)
+      toast.success('İptal', `Masa ${masa.numara} rezervasyonu kaldırıldı`)
+      setAksiyonMasa(null)
+      masalariYenile()
+    } catch (err: any) {
+      toast.error('Hata', err.message)
+    }
+  }, [personel?.id, toast, masalariYenile])
+
+  const notKaydet = useCallback(async () => {
+    if (!aksiyonMasa?.aktif_hesap_id) return
+    try {
+      const res = await ipcInvoke<any>(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aksiyonMasa.aktif_hesap_id, { notlar: notMetni })
+      if (!res?.basarili) throw new Error(res?.hata)
+      toast.success('Not kaydedildi', `Masa ${aksiyonMasa.numara}`)
+      setNotModal(false)
+      setAksiyonMasa(null)
+      masalariYenile()
+    } catch (err: any) {
+      toast.error('Hata', err.message)
+    }
+  }, [aksiyonMasa, notMetni, toast, masalariYenile])
+
+  const kisiKaydet = useCallback(async () => {
+    if (!aksiyonMasa?.aktif_hesap_id) return
+    try {
+      const res = await ipcInvoke<any>(HESAP_KANALLARI.TESLIMAT_GUNCELLE, aksiyonMasa.aktif_hesap_id, {
+        kisi_sayisi: Number(kisiSayisi || 1),
+      })
+      if (!res?.basarili) throw new Error(res?.hata)
+      toast.success('Kişi sayısı', `${kisiSayisi} kişi`)
+      setKisiModal(false)
+      setAksiyonMasa(null)
+      masalariYenile()
+    } catch (err: any) {
+      toast.error('Hata', err.message)
+    }
+  }, [aksiyonMasa, kisiSayisi, toast, masalariYenile])
+
+  const hizliRezervasyon = useCallback(async () => {
+    if (!aksiyonMasa || !rezForm.musteri_ad.trim()) {
+      toast.warning('Eksik', 'Misafir adı gerekli')
+      return
+    }
+    const d = new Date()
+    const tarih = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    try {
+      const res = await ipcInvoke<any>(REZERVASYON_KANALLARI.EKLE, {
+        musteri_ad: rezForm.musteri_ad.trim(),
+        telefon: rezForm.telefon,
+        kisi_sayisi: Number(rezForm.kisi_sayisi || 2),
+        saat: rezForm.saat,
+        notlar: rezForm.notlar,
+        masa_id: aksiyonMasa.id,
+        tarih,
+        personel_id: personel?.id,
+      })
+      if (!res?.basarili) throw new Error(res?.hata)
+      toast.success('Rezervasyon', `${aksiyonMasa.numara} — ${rezForm.musteri_ad}`)
+      setRezModal(false)
+      setAksiyonMasa(null)
+      setRezForm({ musteri_ad: '', telefon: '', kisi_sayisi: '2', saat: '19:00', notlar: '' })
+      masalariYenile()
+    } catch (err: any) {
+      toast.error('Hata', err.message)
+    }
+  }, [aksiyonMasa, rezForm, personel?.id, toast, masalariYenile])
+
   if (bolumlerYukleniyor && masalarYukleniyor) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#090A0F] text-slate-100">
-        <div className="w-12 h-12 rounded-2xl bg-[#141926] border border-[#222C42] flex items-center justify-center mb-4">
+      <div className="flex flex-col items-center justify-center h-full bg-[#0B0A08] text-slate-100">
+        <div className="w-12 h-12 rounded-2xl bg-[#1e1a16] border border-[#3A342C] flex items-center justify-center mb-4">
           <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin" />
         </div>
         <p className="text-sm font-mono tracking-widest uppercase text-slate-400 animate-pulse">
@@ -371,49 +533,21 @@ export default function TablesPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#090A0F] text-slate-100 overflow-hidden select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4">
+    <div className="flex flex-col h-full w-full bg-[#0B0A08] text-slate-100 overflow-hidden select-none -m-4 lg:-m-6 p-4 lg:p-6 gap-4">
       
       {/* 1. ÜST BAŞLIK & KOMUTA ÇUBUĞU */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 pb-3 border-b border-[#1A2234] shrink-0">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 pb-3 border-b border-[#322C26] shrink-0">
         
-        {/* Sol Taraf: Başlık & KPI Badge'leri */}
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#121724] border border-[#232F47] flex items-center justify-center text-emerald-400 shadow-sm">
-              <Layers size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black tracking-tight text-white font-mono uppercase flex items-center gap-2">
-                MASA YÖNETİMİ
-                <span className="text-[10px] font-mono font-bold bg-[#141926] text-emerald-400 border border-[#222C42] px-2 py-0.5 rounded-full">
-                  CANLI
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                {istatistikler.toplam} Masa • {istatistikler.doluSayisi} Dolu (%{istatistikler.dolulukOrani})
-              </p>
-            </div>
-          </div>
-
-          {/* Hızlı KPI Mini Sayaçlar */}
-          <div className="hidden sm:flex items-center gap-2 bg-[#0C1017] p-1.5 rounded-xl border border-[#1A2234]">
-            {/* Boş */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/30 border border-emerald-500/20 text-emerald-300 text-xs font-mono font-bold">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
-              <span>{istatistikler.bosSayisi} Boş</span>
-            </div>
-
-            {/* Dolu */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/30 border border-amber-500/20 text-amber-300 text-xs font-mono font-bold">
-              <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
-              <span>{istatistikler.doluSayisi} Dolu</span>
-            </div>
-
-            {/* Toplam Adisyon */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#141926] border border-[#222C42] text-slate-200 text-xs font-mono font-bold">
-              <TrendingUp size={13} className="text-emerald-400" />
-              <span className="text-emerald-400 font-black tabular-nums">{formatPara(istatistikler.toplamAdisyon)}</span>
-            </div>
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-white">
+              Masalar
+            </h2>
+            <p className="text-xs text-surface-400 mt-0.5">
+              {istatistikler.doluSayisi} dolu · {istatistikler.bosSayisi} boş
+              {istatistikler.rezerveSayisi ? ` · ${istatistikler.rezerveSayisi} rezerve` : ''}
+              {' · '}{formatPara(istatistikler.toplamAdisyon)}
+            </p>
           </div>
         </div>
 
@@ -427,7 +561,7 @@ export default function TablesPage() {
               value={aramaMetni}
               onChange={e => setAramaMetni(e.target.value)}
               placeholder="Masa no veya garson ara..."
-              className="w-full h-11 pl-9 pr-8 bg-[#0C1017] border border-[#1E2638] focus:border-emerald-500/60 rounded-xl text-xs font-mono text-slate-200 placeholder:text-slate-400 focus:outline-none transition-colors"
+              className="w-full h-11 pl-9 pr-8 bg-[#171410] border border-[#322C26] focus:border-emerald-500/60 rounded-xl text-xs font-mono text-slate-200 placeholder:text-slate-400 focus:outline-none transition-colors"
             />
             {aramaMetni && (
               <button
@@ -443,7 +577,7 @@ export default function TablesPage() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/customers')}
-            className="h-11 px-3.5 rounded-xl bg-[#121724] border border-[#222C42] hover:border-slate-500 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center gap-2 transition-colors"
+            className="h-11 px-3.5 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-slate-500 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center gap-2 transition-colors"
           >
             <Users size={16} />
             <span className="hidden md:inline">Müşteriler</span>
@@ -452,18 +586,27 @@ export default function TablesPage() {
           {/* Hızlı Paket Sipariş Butonu */}
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/pos')}
+            onClick={() => navigate('/pos?tip=gel_al')}
             className="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all"
           >
             <Plus size={18} />
             <span>Hızlı Satış</span>
           </motion.button>
 
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/pos?tip=paket')}
+            className="h-11 px-4 rounded-xl bg-[#1e1a16] border border-brand-500/40 hover:border-brand-400 text-brand-300 hover:text-white font-mono text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+          >
+            <Bike size={16} />
+            <span>Paket</span>
+          </motion.button>
+
           {/* Yenile Butonu */}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => masalariYenile()}
-            className="h-11 w-11 rounded-xl bg-[#121724] border border-[#222C42] hover:border-slate-500 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="h-11 w-11 rounded-xl bg-[#1e1a16] border border-[#3A342C] hover:border-slate-500 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
             title="Masaları Yenile"
           >
             <RefreshCw size={16} />
@@ -472,22 +615,22 @@ export default function TablesPage() {
       </div>
 
       {/* 2. BÖLÜMLER & DURUM FİLTRELEME ÇUBUĞU (INDUSTRIAL SEGMENTED BAR) */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shrink-0 bg-[#0C1017] p-2 rounded-2xl border border-[#1A2234]">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shrink-0 bg-[#171410] p-2 rounded-2xl border border-[#322C26]">
         
         {/* Kat / Bölge Sekmeleri */}
         <div className="flex items-center gap-1.5 overflow-x-auto pos-scrollbar pb-1 md:pb-0">
           <button
             onClick={() => setSeciliBolum('tum')}
             className={clsx(
-              "h-10 px-4 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all shrink-0",
+              "h-10 px-4 rounded-xl text-xs font-medium flex items-center gap-2 transition-all shrink-0",
               seciliBolum === 'tum'
-                ? "bg-[#1E293B] text-white shadow-sm border border-slate-600/50"
-                : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
+                ? "bg-[#322C26] text-white shadow-sm border border-slate-600/50"
+                : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-[#1e1a16]"
             )}
           >
             <Layers size={14} />
             <span>Tüm Bölümler</span>
-            <span className="bg-[#090A0F] text-slate-400 px-1.5 py-0.5 rounded text-[10px]">
+            <span className="bg-[#0B0A08] text-slate-400 px-1.5 py-0.5 rounded text-[10px]">
               {masalar.length}
             </span>
           </button>
@@ -501,16 +644,16 @@ export default function TablesPage() {
                 key={bolum.id}
                 onClick={() => setSeciliBolum(bolum.id.toString())}
                 className={clsx(
-                  "h-10 px-4 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all shrink-0",
+                  "h-10 px-4 rounded-xl text-xs font-medium flex items-center gap-2 transition-all shrink-0",
                   isActive
-                    ? "bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)] border border-emerald-400/40"
-                    : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-[#141926]"
+                    ? "bg-[#2A1E18] text-white border border-brand-500/40"
+                    : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-[#1e1a16]"
                 )}
               >
                 <span>{bolum.ad}</span>
                 <span className={clsx(
                   "px-1.5 py-0.5 rounded text-[10px]",
-                  isActive ? "bg-emerald-950/70 text-emerald-200" : "bg-[#090A0F] text-slate-400"
+                  isActive ? "bg-brand-950/50 text-brand-200" : "bg-[#0B0A08] text-slate-400"
                 )}>
                   {bStats.dolu}/{bStats.toplam}
                 </span>
@@ -520,12 +663,12 @@ export default function TablesPage() {
         </div>
 
         {/* Durum Filtre Çipleri */}
-        <div className="flex items-center gap-1 bg-[#090D15] p-1 rounded-xl border border-[#161D2B] self-start md:self-auto overflow-x-auto">
+        <div className="flex items-center gap-1 bg-[#110F0C] p-1 rounded-xl border border-[#1E1A16] self-start md:self-auto overflow-x-auto">
           {[
             { id: 'tum', label: 'Tümü' },
             { id: 'bos', label: 'Boş', color: 'text-emerald-400' },
             { id: 'dolu', label: 'Dolu', color: 'text-amber-400' },
-            { id: 'rezerve', label: 'Rezerve', color: 'text-purple-400' }
+            { id: 'rezerve', label: 'Rezerve', color: 'text-amber-300' }
           ].map(f => (
             <button
               key={f.id}
@@ -533,7 +676,7 @@ export default function TablesPage() {
               className={clsx(
                 "h-8 px-3 rounded-lg font-mono text-xs font-bold transition-all shrink-0",
                 durumFiltresi === f.id
-                  ? "bg-[#1A2234] text-white shadow-sm border border-slate-700/60"
+                  ? "bg-[#322C26] text-white shadow-sm border border-slate-700/60"
                   : "text-slate-400 hover:text-slate-200"
               )}
             >
@@ -548,7 +691,7 @@ export default function TablesPage() {
         {filtrelenmisMasalar.length === 0 ? (
           (bolumdeHicMasaYok && isAdmin) ? (
             <div className="flex flex-col items-center justify-center min-h-[380px] text-slate-400 text-center p-6 my-auto">
-              <div className="w-20 h-20 mb-5 rounded-3xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+              <div className="w-20 h-20 mb-5 rounded-3xl bg-[#171410] border border-[#322C26] flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <Sparkles size={36} />
               </div>
               <h3 className="text-2xl font-black font-mono text-white uppercase tracking-tight mb-2">
@@ -558,17 +701,17 @@ export default function TablesPage() {
                 Bu bölüme hızlıca toplu masa ekleyebilirsiniz. Önek ve masa sayısını belirleyip oluştur butonuna tıklayın.
               </p>
 
-              <div className="flex flex-col gap-4 bg-[#0C1017] border border-[#1E2436] p-6 rounded-2xl w-full max-w-sm text-left shadow-2xl">
+              <div className="flex flex-col gap-4 bg-[#171410] border border-[#322C26] p-6 rounded-2xl w-full max-w-sm text-left shadow-2xl">
                 {seciliBolum === 'tum' && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">Hedef Bölüm</label>
                     <select
                       value={hedefBolumId || ''}
                       onChange={e => setSeciliHedefBolumId(parseInt(e.target.value, 10))}
-                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                      className="w-full h-12 px-4 bg-[#1e1a16] border border-[#3A342C] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
                     >
                       {bolumler.map(b => (
-                        <option key={b.id} value={b.id} className="bg-[#0C1017] text-white">
+                        <option key={b.id} value={b.id} className="bg-[#171410] text-white">
                           {b.ad}
                         </option>
                       ))}
@@ -584,7 +727,7 @@ export default function TablesPage() {
                       value={onek}
                       onChange={e => setOnek(e.target.value)}
                       placeholder="Örn: S veya M"
-                      className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white uppercase focus:outline-none transition-colors"
+                      className="w-full h-12 px-4 bg-[#1e1a16] border border-[#3A342C] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white uppercase focus:outline-none transition-colors"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                       <span className="text-[10px] text-slate-500 font-mono">Önizleme:</span>
@@ -603,7 +746,7 @@ export default function TablesPage() {
                     max={100}
                     value={masaSayisi}
                     onChange={e => setMasaSayisi(parseInt(e.target.value) || 1)}
-                    className="w-full h-12 px-4 bg-[#141926] border border-[#222C42] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
+                    className="w-full h-12 px-4 bg-[#1e1a16] border border-[#3A342C] focus:border-emerald-500/60 rounded-xl text-sm font-mono font-bold text-white focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -611,7 +754,7 @@ export default function TablesPage() {
                   whileTap={{ scale: 0.97 }}
                   onClick={handleTopluMasaOlustur}
                   disabled={olusturuluyor || !onek.trim() || masaSayisi < 1}
-                  className="w-full h-12 mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#1A2234] disabled:text-slate-500 disabled:border disabled:border-[#222C42] text-white font-mono text-sm font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:shadow-none flex items-center justify-center gap-2"
+                  className="w-full h-12 mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#322C26] disabled:text-slate-500 disabled:border disabled:border-[#3A342C] text-white font-mono text-sm font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:shadow-none flex items-center justify-center gap-2"
                 >
                   {olusturuluyor ? (
                     <>
@@ -629,7 +772,7 @@ export default function TablesPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-80 text-slate-400 text-center">
-              <div className="w-16 h-16 mb-4 rounded-2xl bg-[#0E121B] border border-[#1E2436] flex items-center justify-center text-slate-400">
+              <div className="w-16 h-16 mb-4 rounded-2xl bg-[#171410] border border-[#322C26] flex items-center justify-center text-slate-400">
                 <UtensilsCrossed size={32} />
               </div>
               <p className="text-base font-mono font-bold text-slate-300 uppercase tracking-wider">
@@ -640,21 +783,22 @@ export default function TablesPage() {
               </p>
               <button
                 onClick={() => { setSeciliBolum('tum'); setDurumFiltresi('tum'); setAramaMetni('') }}
-                className="mt-4 px-4 py-2 bg-[#141926] hover:bg-[#1C2336] border border-[#222C42] text-xs font-mono font-bold text-slate-200 rounded-xl transition-colors"
+                className="mt-4 px-4 py-2 bg-[#1e1a16] hover:bg-[#322C26] border border-[#3A342C] text-xs font-mono font-bold text-slate-200 rounded-xl transition-colors"
               >
                 Filtreleri Sıfırla
               </button>
             </div>
           )
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2.5 sm:gap-3">
             <AnimatePresence>
               {filtrelenmisMasalar.map(masa => (
                 <TableCard
                   key={masa.id}
                   masa={masa}
-                  seciliBolum={seciliBolum}
                   onClick={masaTikla}
+                  onLongPress={masaUzunBas}
+                  simdi={simdi}
                 />
               ))}
             </AnimatePresence>
@@ -662,6 +806,192 @@ export default function TablesPage() {
         )}
       </div>
 
+      <AnimatePresence>
+        {aksiyonMasa && !notModal && !kisiModal && !rezModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setAksiyonMasa(null)}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md mx-3 mb-3 rounded-2xl bg-[#171410] border border-[#322C26] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-start justify-between px-4 py-3 border-b border-[#322C26]">
+                <div>
+                  <div className="text-lg font-black font-mono text-white">MASA {aksiyonMasa.numara}</div>
+                  <div className="text-[11px] font-mono text-surface-400 mt-0.5">
+                    {masaDoluMu(aksiyonMasa)
+                      ? `Açık hesap · ${formatPara(aksiyonMasa.aktif_hesap_tutari || 0)}`
+                      : masaRezerveMi(aksiyonMasa)
+                        ? `${aksiyonMasa.rezervasyon_ad || 'Rezerve'} · ${aksiyonMasa.rezervasyon_saat || ''}`
+                        : `${aksiyonMasa.kapasite || 4} kişilik · boş`}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAksiyonMasa(null)}
+                  className="w-9 h-9 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-400 hover:text-white flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const m = aksiyonMasa
+                    setAksiyonMasa(null)
+                    masaTikla(m)
+                  }}
+                  className="h-12 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm flex items-center gap-2.5"
+                >
+                  <DoorOpen size={18} />
+                  {masaDoluMu(aksiyonMasa) ? 'Kasaya git' : masaRezerveMi(aksiyonMasa) ? 'Masaya oturt' : 'Masayı aç'}
+                </button>
+
+                {masaDoluMu(aksiyonMasa) && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        adisyonYazdir(aksiyonMasa)
+                        setAksiyonMasa(null)
+                      }}
+                      className="h-12 px-3 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-100 font-semibold text-sm flex items-center gap-2.5 hover:border-brand-500/40"
+                    >
+                      <Printer size={18} className="text-brand-400" />
+                      Adisyon yazdır
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setKisiSayisi(String(aksiyonMasa.hesap_kisi || aksiyonMasa.kapasite || 2))
+                        setKisiModal(true)
+                      }}
+                      className="h-12 px-3 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-100 font-semibold text-sm flex items-center gap-2.5 hover:border-brand-500/40"
+                    >
+                      <Users size={18} className="text-brand-400" />
+                      Kişi sayısı
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotMetni(aksiyonMasa.hesap_notlar || '')
+                        setNotModal(true)
+                      }}
+                      className="h-12 px-3 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-100 font-semibold text-sm flex items-center gap-2.5 hover:border-brand-500/40"
+                    >
+                      <StickyNote size={18} className="text-brand-400" />
+                      Masa notu
+                    </button>
+                  </>
+                )}
+
+                {masaRezerveMi(aksiyonMasa) && aksiyonMasa.rezervasyon_id && (
+                  <button
+                    type="button"
+                    onClick={() => rezervasyonIptal(aksiyonMasa)}
+                    className="h-12 px-3 rounded-xl bg-rose-950/40 border border-rose-800/50 text-rose-300 font-semibold text-sm flex items-center gap-2.5"
+                  >
+                    <X size={18} />
+                    Rezervasyonu iptal
+                  </button>
+                )}
+
+                {!masaDoluMu(aksiyonMasa) && !masaRezerveMi(aksiyonMasa) && (
+                  <button
+                    type="button"
+                    onClick={() => setRezModal(true)}
+                    className="h-12 px-3 rounded-xl bg-[#1e1a16] border border-[#322C26] text-surface-100 font-semibold text-sm flex items-center gap-2.5 hover:border-brand-500/40"
+                  >
+                    <CalendarDays size={18} className="text-brand-400" />
+                    Rezervasyon yaz
+                  </button>
+                )}
+              </div>
+              <p className="px-4 pb-3 text-[10px] font-mono text-surface-500">
+                Kısa dokunuş masayı açar · uzun basış bu menüyü açar
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Modal isOpen={notModal} onClose={() => setNotModal(false)} title={`Masa ${aksiyonMasa?.numara || ''} notu`} size="sm">
+        <div className="flex flex-col gap-3">
+          <textarea
+            value={notMetni}
+            onChange={(e) => setNotMetni(e.target.value)}
+            rows={4}
+            className="w-full px-3 py-2 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-sm focus:outline-none focus:border-brand-500"
+            placeholder="Alerji, özel istek, iç not..."
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setNotModal(false)}>Vazgeç</Button>
+            <Button onClick={notKaydet}>Kaydet</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={kisiModal} onClose={() => setKisiModal(false)} title="Kişi sayısı" size="sm">
+        <div className="flex flex-col gap-3">
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={kisiSayisi}
+            onChange={(e) => setKisiSayisi(e.target.value)}
+            className="h-12 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white font-mono text-lg focus:outline-none focus:border-brand-500"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setKisiModal(false)}>Vazgeç</Button>
+            <Button onClick={kisiKaydet}>Kaydet</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={rezModal} onClose={() => setRezModal(false)} title={`Rezervasyon — Masa ${aksiyonMasa?.numara || ''}`} size="sm">
+        <div className="flex flex-col gap-3">
+          <input
+            value={rezForm.musteri_ad}
+            onChange={(e) => setRezForm({ ...rezForm, musteri_ad: e.target.value })}
+            placeholder="Misafir adı"
+            className="h-11 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-sm focus:outline-none focus:border-brand-500"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={rezForm.telefon}
+              onChange={(e) => setRezForm({ ...rezForm, telefon: e.target.value })}
+              placeholder="Telefon"
+              className="h-11 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-sm focus:outline-none focus:border-brand-500"
+            />
+            <input
+              type="time"
+              value={rezForm.saat}
+              onChange={(e) => setRezForm({ ...rezForm, saat: e.target.value })}
+              className="h-11 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-sm focus:outline-none focus:border-brand-500"
+            />
+          </div>
+          <input
+            type="number"
+            min={1}
+            value={rezForm.kisi_sayisi}
+            onChange={(e) => setRezForm({ ...rezForm, kisi_sayisi: e.target.value })}
+            className="h-11 px-3 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-sm focus:outline-none focus:border-brand-500"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setRezModal(false)}>Vazgeç</Button>
+            <Button onClick={hizliRezervasyon}>Kaydet</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

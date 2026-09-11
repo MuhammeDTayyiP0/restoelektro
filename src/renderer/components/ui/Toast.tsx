@@ -86,23 +86,23 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
   const typeConfig = {
     success: {
       icon: <CheckCircle2 className="text-emerald-400" size={18} />,
-      border: 'border-l-emerald-500 border-[#1E2333]',
+      border: 'border-l-emerald-500 border-[#322C26]',
       accentBg: 'bg-emerald-500/10 text-emerald-400',
     },
     error: {
       icon: <AlertCircle className="text-red-400" size={18} />,
-      border: 'border-l-red-500 border-[#1E2333]',
+      border: 'border-l-red-500 border-[#322C26]',
       accentBg: 'bg-red-500/10 text-red-400',
     },
     warning: {
       icon: <AlertTriangle className="text-amber-400" size={18} />,
-      border: 'border-l-amber-500 border-[#1E2333]',
+      border: 'border-l-amber-500 border-[#322C26]',
       accentBg: 'bg-amber-500/10 text-amber-400',
     },
     info: {
-      icon: <Info className="text-blue-400" size={18} />,
-      border: 'border-l-blue-500 border-[#1E2333]',
-      accentBg: 'bg-blue-500/10 text-blue-400',
+      icon: <Info className="text-brand-300" size={18} />,
+      border: 'border-l-brand-500 border-[#322C26]',
+      accentBg: 'bg-brand-500/10 text-brand-300',
     },
   }
 
@@ -115,7 +115,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       className={clsx(
-        'pointer-events-auto bg-[#0C0F17] shadow-lg rounded-xl border border-l-4 p-3.5 flex items-start gap-3 select-none',
+        'pointer-events-auto bg-[#171410] shadow-pos-lg rounded-xl border border-l-4 p-3.5 flex items-start gap-3 select-none',
         config.border
       )}
       role="alert"
