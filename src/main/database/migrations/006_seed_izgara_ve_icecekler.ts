@@ -15,6 +15,8 @@ export const migration006: Migration = {
     // Ürün tablosunda 'aciklama' ve 'satis_turleri' sütunları yoksa ekle (Seed için gerekli)
     sutunYoksaEkle(db, 'urun', 'aciklama', 'TEXT')
     sutunYoksaEkle(db, 'urun', 'satis_turleri', 'TEXT')
+    sutunYoksaEkle(db, 'urun', 'porsiyon_fiyati', 'REAL DEFAULT NULL')
+    sutunYoksaEkle(db, 'urun', 'kilo_fiyati', 'REAL DEFAULT NULL')
     // Seed INSERT sira_no kullanır; sütun ancak migration 010'da ekleniyordu.
     // Eğitim DB gibi sıfırdan kurulumda 006, 010'dan önce çalışır.
     sutunYoksaEkle(db, 'kategori', 'sira', 'INTEGER DEFAULT 0')

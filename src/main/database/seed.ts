@@ -1,6 +1,6 @@
 // =====================================================
 // ETİBOL POS — Varsayılan Menü & Tohumlama (Seed) Servisi
-// Izgaralar, İçecekler, Unsplash CDN Görselleri & Varyantlar
+// Izgara, Soğuk İçecekler, Sıcak İçecekler — yerel ürün görselleri
 // Tamamen İdempotent & Sıfır Veri Kaybı Garantisi
 // =====================================================
 
@@ -22,12 +22,15 @@ export interface TohumUrun {
   kdv_orani?: number
   birim: string
   satis_turleri?: Array<{ birim: string; fiyat: number }>
+  porsiyon_fiyati?: number | null
+  kilo_fiyati?: number | null
   resim_yolu: string
   dosya_adi: string
   resim_url: string
   yazici_grup: 'mutfak' | 'bar' | 'firin' | 'kasa'
   sira?: number
   secenekler?: TohumUrunOpsiyon[]
+  alternatifAdlar?: string[]
 }
 
 export interface TohumKategori {
@@ -122,6 +125,9 @@ export async function gorseliIndirVeKaydet(url: string, dosyaAdi: string): Promi
   }
 
   // 2. Yerelde bulunamazsa internetten indir
+  if (!url) {
+    return `/uploads/products/${dosyaAdi}`
+  }
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
     if (res.ok) {
@@ -143,7 +149,7 @@ export async function gorseliIndirVeKaydet(url: string, dosyaAdi: string): Promi
 }
 
 /**
- * SADECE talep edilen Izgara ve Soğuk İçecekler menü yapısı
+ * İlk kurulum varsayılan menüsü: Izgara, Soğuk İçecekler, Sıcak İçecekler
  */
 export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
   {
@@ -154,89 +160,114 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
     sira: 1,
     urunler: [
       {
+        ad: 'Karışık Izgara',
+        aciklama: 'Adana, kuşbaşı, tavuk ve pirzola karışık ızgara tabağı',
+        kisaltma: 'Karışık Izgara',
+        fiyat: 1600,
+        kdv_orani: 10,
+        birim: 'KG',
+        satis_turleri: [{ birim: 'kg', fiyat: 1600 }],
+        kilo_fiyati: 1600,
+        dosya_adi: 'karisik-izgara.jpg',
+        resim_yolu: '/uploads/products/karisik-izgara.jpg',
+        resim_url: '',
+        yazici_grup: 'mutfak',
+        sira: 1
+      },
+      {
         ad: 'Adana Kebap',
-        aciklama: 'Zırh kıyması Adana Kebap, közlenmiş biber ve domates ile lavaş üstünde',
+        aciklama: 'Zırh kıyması Adana kebap, közlenmiş biber ve domates ile',
         kisaltma: 'Adana Kebap',
         fiyat: 350,
         kdv_orani: 10,
         birim: 'Porsiyon',
         satis_turleri: [
           { birim: 'porsiyon', fiyat: 350 },
-          { birim: 'kg', fiyat: 1400 }
+          { birim: 'kg', fiyat: 1600 }
         ],
+        porsiyon_fiyati: 350,
+        kilo_fiyati: 1600,
         dosya_adi: 'adana-kebap.jpg',
         resim_yolu: '/uploads/products/adana-kebap.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1644364935906-792b2245a2c0?auto=format&fit=crop&w=800&q=80',
-        yazici_grup: 'mutfak',
-        sira: 1
-      },
-      {
-        ad: 'Kuşbaşı',
-        aciklama: 'Şişte pişmiş kuzu kuşbaşı kebap, közlenmiş garnitürler',
-        kisaltma: 'Kuşbaşı',
-        fiyat: 380,
-        kdv_orani: 10,
-        birim: 'Porsiyon',
-        satis_turleri: [
-          { birim: 'porsiyon', fiyat: 380 },
-          { birim: 'kg', fiyat: 1500 }
-        ],
-        dosya_adi: 'kusbasi.jpg',
-        resim_yolu: '/uploads/products/kusbasi.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=800&q=80',
+        resim_url: '',
         yazici_grup: 'mutfak',
         sira: 2
       },
       {
-        ad: 'Tavuk Şiş',
-        aciklama: 'Izgara tavuk göğsünden ızgara şiş kebap',
-        kisaltma: 'Tavuk Şiş',
-        fiyat: 260,
+        ad: 'Kuşbaşı',
+        aciklama: 'Izgara kuzu kuşbaşı, közlenmiş garnitürler',
+        kisaltma: 'Kuşbaşı',
+        fiyat: 350,
         kdv_orani: 10,
         birim: 'Porsiyon',
         satis_turleri: [
-          { birim: 'porsiyon', fiyat: 260 },
-          { birim: 'kg', fiyat: 950 }
+          { birim: 'porsiyon', fiyat: 350 },
+          { birim: 'kg', fiyat: 1600 }
         ],
-        dosya_adi: 'tavuk-sis.jpg',
-        resim_yolu: '/uploads/products/tavuk-sis.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1779358964755-75464e144187?auto=format&fit=crop&w=800&q=80',
+        porsiyon_fiyati: 350,
+        kilo_fiyati: 1600,
+        dosya_adi: 'kusbasi.jpg',
+        resim_yolu: '/uploads/products/kusbasi.jpg',
+        resim_url: '',
         yazici_grup: 'mutfak',
         sira: 3
+      },
+      {
+        ad: 'Tavuk Şiş',
+        aciklama: 'Izgara tavuk göğsü şiş',
+        kisaltma: 'Tavuk Şiş',
+        fiyat: 350,
+        kdv_orani: 10,
+        birim: 'Porsiyon',
+        satis_turleri: [
+          { birim: 'porsiyon', fiyat: 350 },
+          { birim: 'kg', fiyat: 1200 }
+        ],
+        porsiyon_fiyati: 350,
+        kilo_fiyati: 1200,
+        dosya_adi: 'tavuk-sis.jpg',
+        resim_yolu: '/uploads/products/tavuk-sis.jpg',
+        resim_url: '',
+        yazici_grup: 'mutfak',
+        sira: 4
       },
       {
         ad: 'Tavuk Kanat',
         aciklama: 'Izgarada kızarmış tavuk kanatları',
         kisaltma: 'Tavuk Kanat',
-        fiyat: 270,
+        fiyat: 350,
         kdv_orani: 10,
         birim: 'Porsiyon',
         satis_turleri: [
-          { birim: 'porsiyon', fiyat: 270 },
-          { birim: 'kg', fiyat: 1000 }
+          { birim: 'porsiyon', fiyat: 350 },
+          { birim: 'kg', fiyat: 1200 }
         ],
+        porsiyon_fiyati: 350,
+        kilo_fiyati: 1200,
         dosya_adi: 'tavuk-kanat.jpg',
         resim_yolu: '/uploads/products/tavuk-kanat.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1722490967033-c23909ed5f09?auto=format&fit=crop&w=800&q=80',
+        resim_url: '',
         yazici_grup: 'mutfak',
-        sira: 4
+        sira: 5
       },
       {
         ad: 'Pirzola',
         aciklama: 'Izgara kuzu pirzola',
         kisaltma: 'Pirzola',
-        fiyat: 450,
+        fiyat: 550,
         kdv_orani: 10,
         birim: 'Porsiyon',
         satis_turleri: [
-          { birim: 'porsiyon', fiyat: 450 },
-          { birim: 'kg', fiyat: 1800 }
+          { birim: 'porsiyon', fiyat: 550 },
+          { birim: 'kg', fiyat: 1600 }
         ],
+        porsiyon_fiyati: 550,
+        kilo_fiyati: 1600,
         dosya_adi: 'pirzola.jpg',
         resim_yolu: '/uploads/products/pirzola.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1766589152485-9aafd9812a19?auto=format&fit=crop&w=800&q=80',
+        resim_url: '',
         yazici_grup: 'mutfak',
-        sira: 5
+        sira: 6
       }
     ]
   },
@@ -248,56 +279,174 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
     sira: 2,
     urunler: [
       {
-        ad: 'Coca-Cola Kutu',
-        aciklama: 'Kırmızı Coca-Cola kutu içecek',
-        kisaltma: 'Coca-Cola Kutu',
+        ad: 'Pepsi Cam',
+        aciklama: 'Cam şişe Pepsi',
+        kisaltma: 'Pepsi Cam',
         fiyat: 50,
         kdv_orani: 10,
         birim: 'Adet',
-        dosya_adi: 'coca-cola-kutu.jpg',
-        resim_yolu: '/uploads/products/coca-cola-kutu.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80',
+        satis_turleri: [{ birim: 'adet', fiyat: 50 }],
+        dosya_adi: 'pepsi-cam.jpg',
+        resim_yolu: '/uploads/products/pepsi-cam.jpg',
+        resim_url: '',
         yazici_grup: 'bar',
         sira: 1
       },
       {
-        ad: 'Fanta Kutu',
-        aciklama: 'Turuncu Fanta kutu içecek',
-        kisaltma: 'Fanta Kutu',
+        ad: 'Coca-Cola Cam',
+        aciklama: 'Cam şişe Coca-Cola',
+        kisaltma: 'Coca-Cola Cam',
         fiyat: 50,
         kdv_orani: 10,
         birim: 'Adet',
-        dosya_adi: 'fanta-kutu.jpg',
-        resim_yolu: '/uploads/products/fanta-kutu.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?auto=format&fit=crop&w=800&q=80',
+        satis_turleri: [{ birim: 'adet', fiyat: 50 }],
+        dosya_adi: 'coca-cola-cam.jpg',
+        resim_yolu: '/uploads/products/coca-cola-cam.jpg',
+        resim_url: '',
         yazici_grup: 'bar',
         sira: 2
       },
       {
-        ad: 'Pepsi Kutu',
-        aciklama: 'Mavi Pepsi kutu içecek',
-        kisaltma: 'Pepsi Kutu',
-        fiyat: 50,
+        ad: 'FuseTea Karpuz',
+        aciklama: 'Karpuz aromalı soğuk çay',
+        kisaltma: 'FuseTea Karpuz',
+        fiyat: 75,
         kdv_orani: 10,
         birim: 'Adet',
-        dosya_adi: 'pepsi-kutu.jpg',
-        resim_yolu: '/uploads/products/pepsi-kutu.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=800&q=80',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'fusetea-karpuz.jpg',
+        resim_yolu: '/uploads/products/fusetea-karpuz.jpg',
+        resim_url: '',
         yazici_grup: 'bar',
         sira: 3
       },
       {
-        ad: 'Şalgam',
-        aciklama: 'Cam bardakta kırmızı şalgam suyu',
-        kisaltma: 'Acılı / Acısız Şalgam',
-        fiyat: 40,
+        ad: 'FuseTea Mango',
+        aciklama: 'Mango aromalı soğuk çay',
+        kisaltma: 'FuseTea Mango',
+        fiyat: 75,
         kdv_orani: 10,
         birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'fusetea-mango.jpg',
+        resim_yolu: '/uploads/products/fusetea-mango.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 4
+      },
+      {
+        ad: 'FuseTea Çilek',
+        aciklama: 'Çilek aromalı soğuk çay',
+        kisaltma: 'FuseTea Çilek',
+        fiyat: 75,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'fusetea-cilek.jpg',
+        resim_yolu: '/uploads/products/fusetea-cilek.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 5
+      },
+      {
+        ad: 'FuseTea Şeftali',
+        aciklama: 'Şeftali aromalı soğuk çay',
+        kisaltma: 'FuseTea Şeftali',
+        fiyat: 75,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'fusetea-seftali.jpg',
+        resim_yolu: '/uploads/products/fusetea-seftali.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 6
+      },
+      {
+        ad: 'Beypazarı Soda',
+        aciklama: 'Beypazarı cam şişe sade maden suyu',
+        kisaltma: 'Beypazarı',
+        fiyat: 30,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 30 }],
+        dosya_adi: 'sade-soda.jpg',
+        resim_yolu: '/uploads/products/sade-soda.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 7,
+        alternatifAdlar: ['Kızılay Soda', 'Sade Soda', 'Kızılay']
+      },
+      {
+        ad: 'Erikli Su',
+        aciklama: 'Erikli 0.5L pet şişe içme suyu',
+        kisaltma: 'Erikli',
+        fiyat: 15,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 15 }],
+        dosya_adi: 'su.jpg',
+        resim_yolu: '/uploads/products/su.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 8
+      },
+      {
+        ad: 'Coca-Cola Kutu',
+        aciklama: 'Kutu Coca-Cola',
+        kisaltma: 'Coca-Cola Kutu',
+        fiyat: 75,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'coca-cola-kutu.jpg',
+        resim_yolu: '/uploads/products/coca-cola-kutu.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 9
+      },
+      {
+        ad: 'Fanta Kutu',
+        aciklama: 'Kutu Fanta',
+        kisaltma: 'Fanta Kutu',
+        fiyat: 75,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'fanta-kutu.jpg',
+        resim_yolu: '/uploads/products/fanta-kutu.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 10
+      },
+      {
+        ad: 'Pepsi Kutu',
+        aciklama: 'Kutu Pepsi',
+        kisaltma: 'Pepsi Kutu',
+        fiyat: 75,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 75 }],
+        dosya_adi: 'pepsi-kutu.jpg',
+        resim_yolu: '/uploads/products/pepsi-kutu.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 11
+      },
+      {
+        ad: 'Adaman Şalgam (Acılı/Acısız)',
+        aciklama: 'Adaman şalgam suyu, acılı veya acısız',
+        kisaltma: 'Adaman Şalgam',
+        fiyat: 50,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 50 }],
         dosya_adi: 'salgam.jpg',
         resim_yolu: '/uploads/products/salgam.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1546173159-315724a31696?auto=format&fit=crop&w=800&q=80',
+        resim_url: '',
         yazici_grup: 'bar',
-        sira: 4,
+        sira: 12,
+        alternatifAdlar: ['Doğanay Şalgam (Acılı/Acısız)', 'Şalgam (Acılı/Acısız)', 'Doğanay Şalgam', 'Şalgam'],
         secenekler: [
           { ad: 'Acılı', fiyat: 0, fiyat_farki: 0 },
           { ad: 'Acısız', fiyat: 0, fiyat_farki: 0 }
@@ -305,16 +454,54 @@ export const VARSAYILAN_MENU_VERILERI: TohumKategori[] = [
       },
       {
         ad: 'Açık Ayran',
-        aciklama: 'Bakır Maşrapada köpüklü açık ayran',
+        aciklama: 'Köpüklü açık ayran',
         kisaltma: 'Açık Ayran',
-        fiyat: 35,
+        fiyat: 50,
         kdv_orani: 10,
         birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 50 }],
         dosya_adi: 'acik-ayran.jpg',
         resim_yolu: '/uploads/products/acik-ayran.jpg',
-        resim_url: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=800&q=80',
+        resim_url: '',
         yazici_grup: 'bar',
-        sira: 5
+        sira: 13
+      }
+    ]
+  },
+  {
+    ad: 'Sıcak İçecekler',
+    alternatifAdlar: ['Sıcaklar', 'Çay Kahve'],
+    renk: '#D97706',
+    ikon: 'coffee',
+    sira: 3,
+    urunler: [
+      {
+        ad: 'Çay',
+        aciklama: 'İnce belli bardakta demli çay',
+        kisaltma: 'Çay',
+        fiyat: 15,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 15 }],
+        dosya_adi: 'cay.jpg',
+        resim_yolu: '/uploads/products/cay.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 1
+      },
+      {
+        ad: 'Kahve',
+        aciklama: 'Fincanda sıcak kahve',
+        kisaltma: 'Kahve',
+        fiyat: 50,
+        kdv_orani: 10,
+        birim: 'Adet',
+        satis_turleri: [{ birim: 'adet', fiyat: 50 }],
+        dosya_adi: 'kahve.jpg',
+        resim_yolu: '/uploads/products/kahve.jpg',
+        resim_url: '',
+        yazici_grup: 'bar',
+        sira: 2
       }
     ]
   }
@@ -337,14 +524,21 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
   }
 
   const kategoriSutunlari = (db.prepare('PRAGMA table_info(kategori)').all() as Array<{ name: string }>).map(c => c.name.toLowerCase())
+  const urunSutunlari = (db.prepare('PRAGMA table_info(urun)').all() as Array<{ name: string }>).map(c => c.name.toLowerCase())
   const siraNoVar = kategoriSutunlari.includes('sira_no')
+  const porsiyonFiyatVar = urunSutunlari.includes('porsiyon_fiyati')
+  const kiloFiyatVar = urunSutunlari.includes('kilo_fiyati')
 
   console.log('🌱 [Seed] Veritabanı boş, varsayılan menü kategorileri ve ürünleri yükleniyor (İlk Kurulum)...')
 
-  // 2. Görsellerin yerel klasörlerde mevcut olduğundan emin ol (arka planda kontrol / indirme)
+  // 2. Görsellerin yerel klasörlerde mevcut olduğundan emin ol
   for (const kat of VARSAYILAN_MENU_VERILERI) {
     for (const urun of kat.urunler) {
-      gorseliIndirVeKaydet(urun.resim_url, urun.dosya_adi).catch(() => {})
+      if (urun.resim_url) {
+        gorseliIndirVeKaydet(urun.resim_url, urun.dosya_adi).catch(() => {})
+      } else {
+        gorseliIndirVeKaydet('', urun.dosya_adi).catch(() => {})
+      }
     }
   }
 
@@ -391,46 +585,101 @@ export function varsayilanIzgaraVeIcecekleriEkle(db: Database.Database): void {
 
     for (const urun of kat.urunler) {
       let urunRow = db.prepare('SELECT id FROM urun WHERE LOWER(ad) = LOWER(?)').get(urun.ad) as { id: number } | undefined
+      if (!urunRow && urun.alternatifAdlar && urun.alternatifAdlar.length > 0) {
+        for (const altAd of urun.alternatifAdlar) {
+          urunRow = db.prepare('SELECT id FROM urun WHERE LOWER(ad) = LOWER(?)').get(altAd) as { id: number } | undefined
+          if (urunRow) break
+        }
+      }
       const satisTurleriStr = JSON.stringify(urun.satis_turleri || [{ birim: urun.birim.toLowerCase(), fiyat: urun.fiyat }])
 
       let urunId: number
+      const porsiyonFiyat = urun.porsiyon_fiyati ?? (urun.satis_turleri?.find(t => t.birim === 'porsiyon')?.fiyat ?? null)
+      const kiloFiyat = urun.kilo_fiyati ?? (urun.satis_turleri?.find(t => t.birim === 'kg' || t.birim === 'kilo')?.fiyat ?? null)
+
       if (urunRow) {
         urunId = urunRow.id
-        db.prepare(`
-          UPDATE urun 
-          SET kategori_id = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, satis_turleri = ?, aktif = 1
-          WHERE id = ?
-        `).run(
-          kategoriId,
-          urun.kisaltma || urun.ad,
-          urun.aciklama,
-          urun.fiyat,
-          urun.kdv_orani || 10,
-          urun.birim,
-          urun.resim_yolu,
-          urun.yazici_grup,
-          urun.sira || 0,
-          satisTurleriStr,
-          urunId
-        )
+        if (porsiyonFiyatVar && kiloFiyatVar) {
+          db.prepare(`
+            UPDATE urun 
+            SET kategori_id = ?, ad = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, satis_turleri = ?, porsiyon_fiyati = ?, kilo_fiyati = ?, aktif = 1
+            WHERE id = ?
+          `).run(
+            kategoriId,
+            urun.ad,
+            urun.kisaltma || urun.ad,
+            urun.aciklama,
+            urun.fiyat,
+            urun.kdv_orani || 10,
+            urun.birim,
+            urun.resim_yolu,
+            urun.yazici_grup,
+            urun.sira || 0,
+            satisTurleriStr,
+            porsiyonFiyat,
+            kiloFiyat,
+            urunId
+          )
+        } else {
+          db.prepare(`
+            UPDATE urun 
+            SET kategori_id = ?, ad = ?, kisaltma = ?, aciklama = ?, fiyat = ?, kdv_orani = ?, birim = ?, resim_yolu = ?, yazici_grup = ?, sira = ?, satis_turleri = ?, aktif = 1
+            WHERE id = ?
+          `).run(
+            kategoriId,
+            urun.ad,
+            urun.kisaltma || urun.ad,
+            urun.aciklama,
+            urun.fiyat,
+            urun.kdv_orani || 10,
+            urun.birim,
+            urun.resim_yolu,
+            urun.yazici_grup,
+            urun.sira || 0,
+            satisTurleriStr,
+            urunId
+          )
+        }
       } else {
-        const urunSonuc = db.prepare(`
-          INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, satis_turleri, aktif)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-        `).run(
-          kategoriId,
-          urun.ad,
-          urun.kisaltma || urun.ad,
-          urun.aciklama,
-          urun.fiyat,
-          urun.kdv_orani || 10,
-          urun.birim,
-          urun.resim_yolu,
-          urun.yazici_grup,
-          urun.sira || 0,
-          satisTurleriStr
-        )
-        urunId = Number(urunSonuc.lastInsertRowid)
+        if (porsiyonFiyatVar && kiloFiyatVar) {
+          const urunSonuc = db.prepare(`
+            INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, satis_turleri, porsiyon_fiyati, kilo_fiyati, aktif)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+          `).run(
+            kategoriId,
+            urun.ad,
+            urun.kisaltma || urun.ad,
+            urun.aciklama,
+            urun.fiyat,
+            urun.kdv_orani || 10,
+            urun.birim,
+            urun.resim_yolu,
+            urun.yazici_grup,
+            urun.sira || 0,
+            satisTurleriStr,
+            porsiyonFiyat,
+            kiloFiyat
+          )
+          urunId = Number(urunSonuc.lastInsertRowid)
+        } else {
+          const urunSonuc = db.prepare(`
+            INSERT INTO urun (kategori_id, ad, kisaltma, aciklama, fiyat, kdv_orani, birim, resim_yolu, yazici_grup, sira, satis_turleri, aktif)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+          `).run(
+            kategoriId,
+            urun.ad,
+            urun.kisaltma || urun.ad,
+            urun.aciklama,
+            urun.fiyat,
+            urun.kdv_orani || 10,
+            urun.birim,
+            urun.resim_yolu,
+            urun.yazici_grup,
+            urun.sira || 0,
+            satisTurleriStr
+          )
+          urunId = Number(urunSonuc.lastInsertRowid)
+        }
         console.log(`  └─ ➕ [Seed] Ürün: ${urun.ad} (ID: ${urunId}, ${urun.fiyat}₺, ${urun.birim}) -> Görsel: ${urun.resim_yolu}`)
       }
 
