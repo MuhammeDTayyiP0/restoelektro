@@ -31,6 +31,20 @@ import MiktarModal from './MiktarModal'
 // Memoized Alt Bileşenler
 // ============================================================
 
+function siparisKgMi(siparis: any): boolean {
+  const birim = String(siparis?.satis_birim || siparis?.satisBirim || siparis?.secilenSatisTuru || siparis?.urun_birim || '').toLowerCase()
+  if (birim === 'kg' || birim === 'kilo') return true
+  return siparis?.gramaj !== undefined && Number(siparis.gramaj) > 0
+}
+
+function siparisMiktarYazi(siparis: any): string {
+  if (siparisKgMi(siparis)) {
+    const g = siparis.gramaj && Number(siparis.gramaj) > 0 ? Number(siparis.gramaj) : Number(siparis.miktar) || 1
+    return `${g} kg`
+  }
+  return `${siparis.miktar}x`
+}
+
 const SiparisItemRow = React.memo(({ 
   siparis, 
   secilenMiktar, 
@@ -75,7 +89,7 @@ const SiparisItemRow = React.memo(({
 
         <div className="flex flex-col">
           <span className="font-bold text-slate-100 text-sm flex items-center gap-1.5">
-            <span>{siparis.miktar}x</span>
+            <span>{siparisMiktarYazi(siparis)}</span>
             <span>{siparis.urun_adi || 'Bilinmeyen Ürün'}</span>
             {isIkram && (
               <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1.5 py-0.5 rounded uppercase">
@@ -145,7 +159,7 @@ const OdenmisItemRow = React.memo(({ siparis }: { siparis: any }) => (
       <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
       <div className="flex flex-col">
         <span className="font-bold text-slate-400 text-xs line-through">
-          {siparis.miktar}x {siparis.urun_adi || 'Ürün'}
+          {siparisMiktarYazi(siparis)} {siparis.urun_adi || 'Ürün'}
         </span>
         {siparis.varyant_adi && <span className="text-[10px] text-slate-400 line-through">[{siparis.varyant_adi}]</span>}
       </div>

@@ -7,7 +7,8 @@ import {
   formatResimUrl, 
   hasCokluSatisTuru, 
   getUrunKiloFiyati, 
-  getUrunPorsiyonFiyati 
+  getUrunPorsiyonFiyati,
+  urunTartiliMi
 } from '../../../utils/formatters'
 import type { Urun, UrunVaryant, UrunOpsiyonu } from '../../../../common/types/menu.types'
 import { Modal } from '../../../components/ui/Modal'
@@ -105,16 +106,15 @@ export default function PosMenu() {
   // Ürüne tıklanınca: Çoklu satış türü → Satış türü modalı, Saf tartılı → Gramaj modalı, Varyantlı → Varyant modalı, Diğer → Doğrudan sepet
   const urunTikla = useCallback((urun: Urun) => {
     const coklu = hasCokluSatisTuru(urun)
-    const birimUpper = (urun.birim || '').toUpperCase()
-    const pureTartili = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes(birimUpper)
+    const tartili = urunTartiliMi(urun)
     const hasVaryant = urun.varyantlar && urun.varyantlar.length > 0
     const hasOpsiyon = urun.opsiyonlar && urun.opsiyonlar.length > 0
 
     if (coklu) {
       // 1. Çoklu Satış Türü (Porsiyon / KG): Hızlı Seçim Modalı Aç
       setSatisTuruModalUrun(urun)
-    } else if (pureTartili) {
-      // 2. Tek Satış Türü & Saf Tartılı: Gramaj Modalı Aç
+    } else if (tartili) {
+      // 2. Tek Satış Türü & Saf Tartılı: Gramaj Modalı Aç (porsiyon varsayılmaz)
       setGirilenGramaj('1')
       setGramajModalUrun(urun)
       setSecilenSatisTuru('kg')

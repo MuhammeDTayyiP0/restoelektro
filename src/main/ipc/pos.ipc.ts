@@ -371,8 +371,8 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
                   const odenenToplamFiyat = item.miktar * birimFiyat;
                   const odenenCostPrice = item.miktar * birimCost;
                   db.prepare(`
-                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, cost_price, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup)
-                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup 
+                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, cost_price, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup, satis_birim, gramaj)
+                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup, satis_birim, gramaj 
                     FROM siparis WHERE id = ?
                   `).run(item.miktar, odenenToplamFiyat, odenenCostPrice, item.id);
                 } else {

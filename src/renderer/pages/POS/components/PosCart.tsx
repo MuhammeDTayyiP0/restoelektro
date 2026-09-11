@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePosStore, type SepetKalemi } from '../../../stores/usePosStore'
-import { formatPara, hesaplaKalemTutari } from '../../../utils/formatters'
+import { formatPara, hesaplaKalemTutari, formatMiktar } from '../../../utils/formatters'
 import { Button } from '../../../components/ui/Button'
 import { Numpad } from '../../../components/ui/Numpad'
 import { Modal } from '../../../components/ui/Modal'
@@ -19,7 +19,8 @@ import {
   Flame, 
   AlertCircle,
   ShoppingBag,
-  Tag
+  Tag,
+  CheckCircle2
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -100,6 +101,7 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
               {!isIptalBekliyor && siparis.durum === 'hazirlaniyor' && <span className="text-[11px] text-brand-300">hazırlanıyor</span>}
               {!isIptalBekliyor && siparis.durum === 'hazir' && <span className="text-[11px] text-emerald-400">hazır</span>}
               {siparis.durum === 'iptal' && <span className="text-[11px] text-surface-500">iptal</span>}
+              {siparis.durum === 'odendi' && <span className="text-[11px] text-emerald-400">ödendi</span>}
               {siparis.ikram === 1 && <span className="text-[11px] text-brand-300">ikram</span>}
             </div>
             {siparis.varyant_adi && (
@@ -123,7 +125,7 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
 
       {/* Sipariş Aksiyon Çekmecesi */}
       <AnimatePresence>
-        {isSelected && siparis.durum !== 'iptal' && (
+        {isSelected && siparis.durum !== 'iptal' && siparis.durum !== 'odendi' && (
           <motion.div 
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -170,6 +172,60 @@ const MutfakSiparisItem = React.memo(function MutfakSiparisItem({
     </div>
   )
 })
+
+// =====================================================
+// 1b. ÖDENEN SİPARİŞ KALEMİ
+// =====================================================
+const OdenenSiparisItem = React.memo(function OdenenSiparisItem({ siparis }: { siparis: any }) {
+  const isKgSiparis = (
+    siparis.satis_birim?.toLowerCase() === 'kg' ||
+    siparis.satis_birim?.toLowerCase() === 'kilo' ||
+    (siparis as any).satisBirim?.toLowerCase() === 'kg' ||
+    (siparis as any).secilenSatisTuru?.toLowerCase() === 'kg' ||
+    (siparis.urun_birim?.toLowerCase() === 'kg') ||
+    (siparis.gramaj !== undefined && Number(siparis.gramaj) > 0)
+  )
+
+  return (
+    <div className="flex gap-2.5 px-3 py-2.5 opacity-70 select-none">
+      <div className="w-8 h-8 rounded-full bg-emerald-950/40 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+        <CheckCircle2 size={15} className="text-emerald-400" />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-sm font-medium tracking-tight truncate text-surface-400 line-through" title={siparis.urun_adi}>
+              {siparis.miktar}x {siparis.urun_adi}
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              {isKgSiparis ? (
+                <span className="text-[11px] font-mono text-surface-500">
+                  {siparis.gramaj ? `${siparis.gramaj} kg` : 'kg'}
+                </span>
+              ) : (
+                siparis.porsiyon && siparis.porsiyon !== 1 && (
+                  <span className="text-[11px] text-surface-500">
+                    {siparis.porsiyon === 2 ? 'duble' : `${siparis.porsiyon}p`}
+                  </span>
+                )
+              )}
+              <span className="text-[11px] text-emerald-400">ödendi</span>
+            </div>
+            {siparis.varyant_adi && (
+              <span className="text-[11px] text-surface-500 mt-0.5 truncate line-through">
+                {siparis.varyant_adi}
+              </span>
+            )}
+          </div>
+          <span className="text-sm font-mono font-semibold tabular-nums shrink-0 text-surface-500 line-through">
+            {formatPara(siparis.toplam_fiyat)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+})
+
 // =====================================================
 interface SepetItemProps {
   kalem: SepetKalemi
@@ -177,6 +233,7 @@ interface SepetItemProps {
   isEditingNote: boolean
   onSelect: (id: string) => void
   onMiktarDegistir: (id: string, miktar: number) => void
+  onGramajDegistir: (id: string, gramaj: number) => void
   onOpenMiktarModal: (kalem: SepetKalemi) => void
   onToggleNoteEdit: (id: string) => void
   onSaveNote: (id: string, notlar: string) => void
@@ -190,6 +247,7 @@ const SepetItem = React.memo(function SepetItem({
   isEditingNote,
   onSelect,
   onMiktarDegistir,
+  onGramajDegistir,
   onOpenMiktarModal,
   onToggleNoteEdit,
   onSaveNote,
@@ -203,6 +261,7 @@ const SepetItem = React.memo(function SepetItem({
   }, [kalem.notlar])
 
   const { toplamKalemFiyat, isKg } = hesaplaKalemTutari(kalem)
+  const gosterilenMiktar = isKg ? (kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1) : kalem.miktar
 
   return (
     <div 
@@ -213,8 +272,11 @@ const SepetItem = React.memo(function SepetItem({
       )}
     >
       <div className="flex gap-2.5">
-        <div className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center font-mono text-[13px] font-semibold tabular-nums text-brand-200 shrink-0 mt-0.5">
-          {kalem.miktar}
+        <div className={clsx(
+          "h-8 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center font-mono text-[12px] font-semibold tabular-nums text-brand-200 shrink-0 mt-0.5 px-1.5",
+          isKg ? "min-w-[2.5rem]" : "w-8"
+        )}>
+          {isKg ? formatMiktar(gosterilenMiktar, 3) : kalem.miktar}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start gap-2">
@@ -263,31 +325,49 @@ const SepetItem = React.memo(function SepetItem({
             exit={{ opacity: 0, height: 0 }}
             className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#3A342C] gap-2"
           >
-            {/* Miktar Arttır / Azalt / Doğrudan Gir Butonları */}
+            {/* Miktar / Gramaj Arttır / Azalt */}
             <div className="flex items-center bg-[#171410] border border-[#403830] rounded-lg p-0.5 shadow-inner">
               <motion.button 
                 whileTap={{ scale: 0.9 }}
                 className="w-9 h-9 flex items-center justify-center rounded-md bg-[#241f1a] hover:bg-[#3A342C] text-slate-200"
-                onClick={(e) => { e.stopPropagation(); onMiktarDegistir(kalem.id, kalem.miktar - 1) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (isKg) {
+                    const mevcut = kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1
+                    const next = Math.round((mevcut - 0.05) * 1000) / 1000
+                    onGramajDegistir(kalem.id, next)
+                  } else {
+                    onMiktarDegistir(kalem.id, kalem.miktar - 1)
+                  }
+                }}
               >
                 <Minus size={16} />
               </motion.button>
 
               <button 
-                className="w-12 h-9 text-center font-mono font-bold text-brand-300 text-sm hover:bg-[#241f1a] rounded px-1 transition-colors"
+                className="min-w-[3rem] w-12 h-9 text-center font-mono font-bold text-brand-300 text-sm hover:bg-[#241f1a] rounded px-1 transition-colors"
                 onClick={(e) => { 
                   e.stopPropagation(); 
                   onOpenMiktarModal(kalem)
                 }}
-                title="Miktarı klavyeden girmek için dokunun"
+                title={isKg ? 'Gramaj girmek için dokunun' : 'Miktarı klavyeden girmek için dokunun'}
               >
-                {kalem.miktar}
+                {isKg ? formatMiktar(gosterilenMiktar, 3) : kalem.miktar}
               </button>
 
               <motion.button 
                 whileTap={{ scale: 0.9 }}
                 className="w-9 h-9 flex items-center justify-center rounded-md bg-[#241f1a] hover:bg-[#3A342C] text-brand-300"
-                onClick={(e) => { e.stopPropagation(); onMiktarDegistir(kalem.id, kalem.miktar + 1) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (isKg) {
+                    const mevcut = kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1
+                    const next = Math.round((mevcut + 0.05) * 1000) / 1000
+                    onGramajDegistir(kalem.id, next)
+                  } else {
+                    onMiktarDegistir(kalem.id, kalem.miktar + 1)
+                  }
+                }}
               >
                 <Plus size={16} />
               </motion.button>
@@ -397,6 +477,7 @@ const SepetItem = React.memo(function SepetItem({
     prevProps.kalem.opsiyonlar === nextProps.kalem.opsiyonlar &&
     prevProps.onSelect === nextProps.onSelect &&
     prevProps.onMiktarDegistir === nextProps.onMiktarDegistir &&
+    prevProps.onGramajDegistir === nextProps.onGramajDegistir &&
     prevProps.onOpenMiktarModal === nextProps.onOpenMiktarModal &&
     prevProps.onToggleNoteEdit === nextProps.onToggleNoteEdit &&
     prevProps.onSaveNote === nextProps.onSaveNote &&
@@ -411,26 +492,27 @@ const SepetItem = React.memo(function SepetItem({
 interface QuantityModalProps {
   kalem: SepetKalemi | null
   onClose: () => void
-  onApply: (kalemId: string, miktar: number) => void
+  onApply: (kalemId: string, deger: number, alan: 'miktar' | 'gramaj') => void
 }
 
 const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onApply }: QuantityModalProps) {
   const [girilenMiktar, setGirilenMiktar] = useState('')
 
+  const isKg = kalem ? hesaplaKalemTutari(kalem).isKg : false
+
   useEffect(() => {
     if (kalem) {
-      setGirilenMiktar(kalem.miktar.toString())
+      const kg = hesaplaKalemTutari(kalem).isKg
+      setGirilenMiktar(kg ? String(kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1) : kalem.miktar.toString())
     }
   }, [kalem])
 
   if (!kalem) return null
 
-  const isKesirli = ['KG', 'GRAM', 'GR', 'LITRE', 'LT', 'L'].includes((kalem.urun?.birim || '').toUpperCase())
-
   const handleApply = () => {
-    const parsed = isKesirli ? parseFloat(girilenMiktar) : parseInt(girilenMiktar, 10)
+    const parsed = isKg ? parseFloat(girilenMiktar.replace(',', '.')) : parseInt(girilenMiktar, 10)
     if (!isNaN(parsed) && parsed > 0) {
-      onApply(kalem.id, parsed)
+      onApply(kalem.id, parsed, isKg ? 'gramaj' : 'miktar')
       onClose()
     }
   }
@@ -439,7 +521,7 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
     <Modal 
       isOpen={!!kalem} 
       onClose={onClose} 
-      title="Miktar Belirle"
+      title={isKg ? 'Gramaj Belirle' : 'Miktar Belirle'}
     >
       <div 
         className="relative z-50 isolate flex flex-col gap-2 sm:gap-3 bg-[#171410] text-slate-100 select-none overflow-y-auto pos-scrollbar max-h-[85vh] p-1"
@@ -450,7 +532,7 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
             {kalem.urun.ad}
           </span>
           <span className="font-mono text-[10px] sm:text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded uppercase shrink-0">
-            Birim: {kalem.urun.birim || 'Adet'}
+            Birim: {isKg ? 'KG' : (kalem.urun.birim || 'Adet')}
           </span>
         </div>
 
@@ -485,14 +567,14 @@ const QuantityModal = React.memo(function QuantityModal({ kalem, onClose, onAppl
               ['1', '2', '3'],
               ['4', '5', '6'],
               ['7', '8', '9'],
-              ['C', '0', isKesirli ? ',' : ''],
+              ['C', '0', isKg ? ',' : ''],
               ['⌫']
             ]}
             onKeyPress={(key) => {
               if (key === '⌫') {
                 setGirilenMiktar(prev => prev.slice(0, -1))
               } else if (key === ',' || key === '.') {
-                if (isKesirli && !girilenMiktar.includes('.')) {
+                if (isKg && !girilenMiktar.includes('.')) {
                   setGirilenMiktar(prev => (prev || '0') + '.')
                 }
               } else if (key !== 'C' && key !== '') {
@@ -533,6 +615,7 @@ export const PosCart = React.memo(function PosCart() {
   const sepet = usePosStore(state => state.sepet)
   const sepettenCikar = usePosStore(state => state.sepettenCikar)
   const sepetMiktarGuncelle = usePosStore(state => state.sepetMiktarGuncelle)
+  const sepetGramajGuncelle = usePosStore(state => state.sepetGramajGuncelle)
   const sepetNotGuncelle = usePosStore(state => state.sepetNotGuncelle)
   const sepetIkramTogle = usePosStore(state => state.sepetIkramTogle)
   const sepetiTemizle = usePosStore(state => state.sepetiTemizle)
@@ -605,10 +688,15 @@ export const PosCart = React.memo(function PosCart() {
     }, 0)
   }, [sepet])
 
-  // Genel Toplam (Önceki siparişler + yeni eklenecekler)
-  const genelToplamTutar = useMemo(() => {
-    return (aktifHesap?.toplam_tutar || 0) + toplamTutar
-  }, [aktifHesap?.toplam_tutar, toplamTutar])
+  // Adisyon / ödenen / kalan
+  const hesapOzeti = useMemo(() => {
+    const araToplam = (aktifHesap?.toplam_tutar || 0) + toplamTutar
+    const indirim = aktifHesap?.indirim_tutar || 0
+    const net = (aktifHesap?.net_tutar ?? Math.max(0, (aktifHesap?.toplam_tutar || 0) - indirim)) + toplamTutar
+    const odenen = aktifHesap?.odemeler?.reduce((acc: number, o: any) => acc + Number(o.tutar || 0), 0) || 0
+    const kalan = Math.max(0, net - odenen)
+    return { araToplam, indirim, net, odenen, kalan }
+  }, [aktifHesap?.toplam_tutar, aktifHesap?.net_tutar, aktifHesap?.indirim_tutar, aktifHesap?.odemeler, toplamTutar])
 
   const handleMiktarDegistir = useCallback((id: string, miktar: number) => {
     if (miktar <= 0) {
@@ -617,6 +705,22 @@ export const PosCart = React.memo(function PosCart() {
       sepetMiktarGuncelle(id, miktar)
     }
   }, [sepettenCikar, sepetMiktarGuncelle])
+
+  const handleGramajDegistir = useCallback((id: string, gramaj: number) => {
+    if (gramaj <= 0) {
+      sepettenCikar(id)
+    } else {
+      sepetGramajGuncelle(id, gramaj)
+    }
+  }, [sepettenCikar, sepetGramajGuncelle])
+
+  const handleMiktarVeyaGramajUygula = useCallback((id: string, deger: number, alan: 'miktar' | 'gramaj') => {
+    if (alan === 'gramaj') {
+      handleGramajDegistir(id, deger)
+    } else {
+      handleMiktarDegistir(id, deger)
+    }
+  }, [handleGramajDegistir, handleMiktarDegistir])
 
   const handleToggleSelect = useCallback((id: string) => {
     setSeciliKalemId(prev => prev === id ? null : id)
@@ -758,10 +862,19 @@ export const PosCart = React.memo(function PosCart() {
     hesapAyarla
   ])
 
-  // Mutfaktaki siparişlerin sıralanmış listesi
+  // Mutfaktaki açık siparişler ve ödenenler ayrı listelenir
   const siraliMutfakSiparisleri = useMemo(() => {
     if (!aktifHesap?.siparisler) return []
-    return [...aktifHesap.siparisler].sort((a, b) => b.id - a.id)
+    return aktifHesap.siparisler
+      .filter((s: any) => s.durum !== 'odendi')
+      .sort((a: any, b: any) => b.id - a.id)
+  }, [aktifHesap?.siparisler])
+
+  const odenenSiparisler = useMemo(() => {
+    if (!aktifHesap?.siparisler) return []
+    return aktifHesap.siparisler
+      .filter((s: any) => s.durum === 'odendi')
+      .sort((a: any, b: any) => b.id - a.id)
   }, [aktifHesap?.siparisler])
 
   return (
@@ -897,6 +1010,7 @@ export const PosCart = React.memo(function PosCart() {
                 isEditingNote={notDuzenlenenKalemId === kalem.id}
                 onSelect={handleToggleSelect}
                 onMiktarDegistir={handleMiktarDegistir}
+                onGramajDegistir={handleGramajDegistir}
                 onOpenMiktarModal={setMiktarSoranKalem}
                 onToggleNoteEdit={handleToggleNoteEdit}
                 onSaveNote={handleSaveNote}
@@ -925,20 +1039,66 @@ export const PosCart = React.memo(function PosCart() {
                 onIptalToggle={handleMutfakIptalToggle}
               />
             ))}
+
+            {odenenSiparisler.length > 0 && (
+              <>
+                {(sepet.length > 0 || siraliMutfakSiparisleri.length > 0) && (
+                  <div className="mx-3 my-2 border-t border-dashed border-[#322C26]" />
+                )}
+                <div className="px-3 pt-1 pb-1 text-[11px] text-emerald-400/90">
+                  Ödenenler · {odenenSiparisler.length}
+                </div>
+                {odenenSiparisler.map((siparis: any) => (
+                  <OdenenSiparisItem key={siparis.id} siparis={siparis} />
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
 
       <div className="p-3 bg-[#171410] border-t border-[#322C26] shrink-0 flex flex-col gap-2">
-        <div className="flex items-end justify-between px-0.5">
-          <div className="text-[13px] text-surface-400">
-            {(sepet.length + (aktifHesap?.siparisler?.filter((s: any) => s.durum !== 'iptal').length || 0))} kalem
-            {aktifHesap?.indirim_tutar ? ` · indirim ${formatPara(aktifHesap.indirim_tutar)}` : ''}
+        {hesapOzeti.odenen > 0 || hesapOzeti.indirim > 0 ? (
+          <div className="flex flex-col gap-1 px-0.5">
+            <div className="text-[11px] text-surface-500">
+              {(sepet.length + siraliMutfakSiparisleri.filter((s: any) => s.durum !== 'iptal').length)} kalem
+              {odenenSiparisler.length > 0 ? ` · ${odenenSiparisler.length} ödendi` : ''}
+            </div>
+            <div className="flex justify-between items-center text-[12px] text-surface-400">
+              <span>Adisyon</span>
+              <span className="font-mono tabular-nums">{formatPara(hesapOzeti.araToplam)}</span>
+            </div>
+            {hesapOzeti.indirim > 0 && (
+              <div className="flex justify-between items-center text-[12px] text-rose-400">
+                <span>İndirim</span>
+                <span className="font-mono tabular-nums">-{formatPara(hesapOzeti.indirim)}</span>
+              </div>
+            )}
+            {hesapOzeti.odenen > 0 && (
+              <div className="flex justify-between items-center text-[12px] text-emerald-400">
+                <span>Ödenen</span>
+                <span className="font-mono tabular-nums">-{formatPara(hesapOzeti.odenen)}</span>
+              </div>
+            )}
+            <div className="flex items-end justify-between pt-1.5 mt-0.5 border-t border-[#322C26]">
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-amber-400">
+                Kalan hesap
+              </span>
+              <span className="font-mono text-2xl font-bold tabular-nums text-amber-400 leading-none">
+                {formatPara(hesapOzeti.kalan)}
+              </span>
+            </div>
           </div>
-          <div className="font-mono text-2xl font-bold tabular-nums text-surface-50 leading-none">
-            {formatPara(genelToplamTutar)}
+        ) : (
+          <div className="flex items-end justify-between px-0.5">
+            <div className="text-[13px] text-surface-400">
+              {(sepet.length + siraliMutfakSiparisleri.filter((s: any) => s.durum !== 'iptal').length)} kalem
+            </div>
+            <div className="font-mono text-2xl font-bold tabular-nums text-surface-50 leading-none">
+              {formatPara(hesapOzeti.kalan)}
+            </div>
           </div>
-        </div>
+        )}
 
         {aktifHesap && (
           <div className="grid grid-cols-2 gap-1.5">
@@ -1013,7 +1173,7 @@ export const PosCart = React.memo(function PosCart() {
       <QuantityModal
         kalem={miktarSoranKalem}
         onClose={() => setMiktarSoranKalem(null)}
-        onApply={handleMiktarDegistir}
+        onApply={handleMiktarVeyaGramajUygula}
       />
     </div>
   )

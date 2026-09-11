@@ -44,6 +44,7 @@ interface PosState {
   ) => void
   sepettenCikar: (id: string) => void
   sepetMiktarGuncelle: (id: string, miktar: number) => void
+  sepetGramajGuncelle: (id: string, gramaj: number) => void
   sepetNotGuncelle: (id: string, notlar: string) => void
   sepetIkramTogle: (id: string) => void
   sepetiTemizle: () => void
@@ -72,31 +73,30 @@ export const usePosStore = create<PosState>((set) => ({
     const isKg = normSatisTuru === 'kg' || normSatisTuru === 'kilo'
     const normGramaj = isKg ? (gramaj || 1) : undefined
 
-    // Aynı ürün, varyant, opsiyon, porsiyon, satis turu ve gramaj var mı kontrol et (Porsiyon ve KG ayrı satırlar)
+    // Aynı ürün, varyant, opsiyon, porsiyon, satis turu var mı (KG satırları gramaj birleştirilir)
     const varolanIndeks = state.sepet.findIndex(k => {
       const kSatisTuru = (k.secilenSatisTuru || k.satisBirim || (k.urun.birim?.toLowerCase() === 'kg' ? 'kg' : 'porsiyon')).toLowerCase()
       const kIsKg = kSatisTuru === 'kg' || kSatisTuru === 'kilo'
-      const kGramaj = kIsKg ? (k.gramaj || 1) : undefined
 
-      return (
-        k.urun.id === urun.id && 
-        k.varyant?.id === varyant?.id && 
-        k.porsiyon === porsiyon &&
-        kIsKg === isKg &&
-        kGramaj === normGramaj &&
-        JSON.stringify(k.opsiyonlar) === JSON.stringify(opsiyonlar) &&
-        k.notlar === notlar
-      )
+      if (k.urun.id !== urun.id || k.varyant?.id !== varyant?.id) return false
+      if (JSON.stringify(k.opsiyonlar) !== JSON.stringify(opsiyonlar)) return false
+      if (k.notlar !== notlar) return false
+      if (kIsKg !== isKg) return false
+      if (isKg) return true
+      return k.porsiyon === porsiyon
     })
 
     if (varolanIndeks >= 0) {
       const varOlanItem = state.sepet[varolanIndeks]
       return {
-        sepet: state.sepet.map(item =>
-          item.id === varOlanItem.id
-            ? { ...item, miktar: item.miktar + miktar }
-            : item
-        )
+        sepet: state.sepet.map(item => {
+          if (item.id !== varOlanItem.id) return item
+          if (isKg) {
+            const yeniGramaj = Math.round(((item.gramaj || 0) + (normGramaj || 0)) * 1000) / 1000
+            return { ...item, gramaj: yeniGramaj, miktar: 1, secilenSatisTuru: 'kg', satisBirim: 'kilo' }
+          }
+          return { ...item, miktar: item.miktar + miktar }
+        })
       }
     }
 
@@ -127,6 +127,16 @@ export const usePosStore = create<PosState>((set) => ({
   
   sepetMiktarGuncelle: (id, miktar) => set((state) => ({
     sepet: state.sepet.map(k => k.id === id ? { ...k, miktar } : k)
+  })),
+
+  sepetGramajGuncelle: (id, gramaj) => set((state) => ({
+    sepet: state.sepet.map(k => k.id === id ? {
+      ...k,
+      gramaj,
+      miktar: k.miktar && k.miktar > 0 ? k.miktar : 1,
+      secilenSatisTuru: 'kg',
+      satisBirim: 'kilo'
+    } : k)
   })),
   
   sepetNotGuncelle: (id, notlar) => set((state) => {

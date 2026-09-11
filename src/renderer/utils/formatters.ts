@@ -74,6 +74,25 @@ export function getUrunSatisTurleri(urun: any): Array<{ birim: string; fiyat: nu
   return turler.filter(t => t && t.fiyat !== undefined && t.fiyat !== null)
 }
 
+const TARTILI_BIRIMLER = ['kg', 'kilo', 'gram', 'gr', 'litre', 'lt', 'l']
+
+export function isTartiliBirim(birim?: string | null): boolean {
+  const b = (birim || '').trim().toLowerCase()
+  if (TARTILI_BIRIMLER.indexOf(b) !== -1) return true
+  return b.indexOf('kg') !== -1 || b.indexOf('kilo') !== -1 || b.indexOf('gramaj') !== -1
+}
+
+/** Ürünün tek satış türü tartılı/kg ise true (porsiyon varsayılmaz) */
+export function urunTartiliMi(urun: any): boolean {
+  if (!urun) return false
+  if (isTartiliBirim(urun.birim)) return true
+  const turler = getUrunSatisTurleri(urun)
+  if (!turler.length) return false
+  const kgVar = turler.some(t => isTartiliBirim(t.birim))
+  const porsiyonVar = turler.some(t => !isTartiliBirim(t.birim))
+  return kgVar && !porsiyonVar
+}
+
 /**
  * Ürünün birden fazla satış türü (örn hem porsiyon hem kg) olup olmadığını kontrol eder
  */
