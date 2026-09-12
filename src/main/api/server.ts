@@ -9,6 +9,7 @@ import { BrowserWindow, app as electronApp } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
 import { bossMobilHTML } from './boss-mobile'
+import { bossRotalariniKaydet } from './boss-api'
 import path from 'path'
 import fs from 'fs'
 import multer from 'multer'
@@ -411,62 +412,8 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     res.json({ personel: guvenli, token })
   })
 
-  // ===== BOSS MODÜLÜ =====
-
-  // Anlık satış özeti
-  app.get('/api/boss/ozet', jwtDogrula, (req, res) => {
-    const db = veritabaniGetir()
-    const bugun = new Date().toISOString().slice(0, 10)
-
-    const ozet = db.prepare(`
-      SELECT
-        COALESCE(SUM(CASE WHEN durum = 'odendi' THEN net_tutar ELSE 0 END), 0) as toplam_ciro,
-        COUNT(CASE WHEN durum = 'odendi' THEN 1 END) as kapanan_hesap,
-        COUNT(CASE WHEN durum = 'acik' THEN 1 END) as acik_hesap,
-        COALESCE(AVG(CASE WHEN durum = 'odendi' THEN net_tutar END), 0) as ortalama_hesap
-      FROM hesap WHERE DATE(acilis_zamani) = ?
-    `).get(bugun) as any
-
-    const saatlik = db.prepare(`
-      SELECT CAST(strftime('%H', acilis_zamani) AS INTEGER) as saat,
-             COALESCE(SUM(net_tutar), 0) as tutar
-      FROM hesap WHERE durum = 'odendi' AND DATE(acilis_zamani) = ?
-      GROUP BY saat ORDER BY saat
-    `).all(bugun)
-
-    res.json({ ozet, saatlik, tarih: bugun })
-  })
-
-  // Canlı masalar
-  app.get('/api/boss/masalar', jwtDogrula, (req, res) => {
-    const db = veritabaniGetir()
-    const masalar = db.prepare(`
-      SELECT m.*, b.ad as bolum_adi, h.toplam_tutar, h.acilis_zamani,
-             p.ad || ' ' || p.soyad as garson_adi
-      FROM masa m
-      JOIN bolum b ON b.id = m.bolum_id
-      LEFT JOIN hesap h ON h.masa_id = m.id AND h.durum = 'acik'
-      LEFT JOIN personel p ON p.id = h.personel_id
-      WHERE m.aktif = 1
-    `).all()
-    res.json(masalar)
-  })
-
-  // Kategori satış raporu
-  app.get('/api/boss/kategori-rapor', jwtDogrula, (req, res) => {
-    const db = veritabaniGetir()
-    const bugun = new Date().toISOString().slice(0, 10)
-    const rapor = db.prepare(`
-      SELECT k.ad as kategori, SUM(s.toplam_fiyat) as tutar, SUM(s.miktar) as adet
-      FROM siparis s
-      JOIN urun u ON u.id = s.urun_id
-      JOIN kategori k ON k.id = u.kategori_id
-      JOIN hesap h ON h.id = s.hesap_id
-      WHERE s.durum != 'iptal' AND DATE(h.acilis_zamani) = ?
-      GROUP BY k.id ORDER BY tutar DESC
-    `).all(bugun)
-    res.json(rapor)
-  })
+  // ===== BOSS MODÜLÜ (salt okunur patron paneli) =====
+  bossRotalariniKaydet(app, JWT_SECRET)
 
   // ===== GARSON MODÜLÜ =====
 
@@ -778,7 +725,8 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     console.log(`   QR Menü:           http://localhost:${port}/api/qrmenu`)
     console.log(``)
     console.log(`   📱 GARSON TERMİNALİ: http://${localIP}:${port}/garson`)
-    console.log(`   ☝️  Bu adresi garsonların telefonlarına verin!`)
+    console.log(`   👑 PATRON PANELİ:    http://${localIP}:${port}/boss`)
+    console.log(`   ☝️  Bu adresleri telefonlara veya Cloudflare tüneline verin!`)
   })
 }
 

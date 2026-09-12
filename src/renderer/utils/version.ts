@@ -7,7 +7,7 @@
  * package.json'dan otomatik olarak derlenen sürüm numarası (Örn: "2.3.1")
  */
 export const APP_VERSION: string =
-  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.5.3'
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.5.4'
 
 /**
  * Sürüm etiketi (Örn: "v2.3.1")
