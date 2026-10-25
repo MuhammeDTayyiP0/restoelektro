@@ -4,8 +4,11 @@ import { ToastProvider } from './components/ui/Toast'
 import { initTema } from './stores/useUIStore'
 import { useIPCListener, ipcInvoke } from './hooks/useIPC'
 import { yazdirMutfak } from './utils/print.utils'
-import { AYAR_KANALLARI } from '../common/ipc-channels'
+import { AYAR_KANALLARI, PERSONEL_KANALLARI } from '../common/ipc-channels'
 import AutoLaunchModal from './components/modals/AutoLaunchModal'
+import YoneticiOnayiModal from './components/modals/YoneticiOnayiModal'
+import PinDegistirModal from './components/modals/PinDegistirModal'
+import { useAuthStore } from './stores/useAuthStore'
 
 // Sayfalar ve Layoutlar
 import LoginPage from './pages/Login/LoginPage'
@@ -35,6 +38,17 @@ export default function App() {
   useEffect(() => {
     initTema()
     useTerminalStore.getState().yukle()
+
+    // Kayıtlı oturumu ana işlemde yeniden kur; token geçersizse giriş ekranına dön
+    const { girisYapildi, token, cikisYap, girisYap } = useAuthStore.getState()
+    if (girisYapildi) {
+      ipcInvoke<any>(PERSONEL_KANALLARI.OTURUM_DOGRULA, token)
+        .then((res) => {
+          if (res?.basarili) girisYap(res.personel, token as string, Boolean(res.pinDegistirmeli))
+          else cikisYap()
+        })
+        .catch(() => cikisYap())
+    }
 
     const sorulduMu = localStorage.getItem('etibol_auto_launch_prompted')
     if (!sorulduMu) {
@@ -96,6 +110,10 @@ export default function App() {
             isOpen={autoLaunchModalAcik}
             onClose={() => setAutoLaunchModalAcik(false)}
           />
+
+          {/* Yetkisiz işlemde yönetici PIN'i; varsayılan PIN ile girişte zorunlu PIN değişimi */}
+          <YoneticiOnayiModal />
+          <PinDegistirModal />
         </div>
       </HashRouter>
     </ToastProvider>

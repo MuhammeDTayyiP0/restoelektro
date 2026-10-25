@@ -7,6 +7,8 @@
 import jwt from 'jsonwebtoken'
 import { veritabaniGetir } from '../database/connection'
 import { istemciAdresi, pinGirisLimiti } from './giris-limiti'
+import { pinIlePersonelBul, personelGuvenli } from '../services/pin.service'
+import { pinOzeti } from '../services/guvenlik.service'
 
 const PATRON_ROLLER = new Set(['admin', 'mudur'])
 
@@ -269,9 +271,7 @@ export function bossRotalariniKaydet(app: any, jwtSecret: string): void {
 
     try {
       const db = veritabaniGetir()
-      const personel = db.prepare(
-        'SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1'
-      ).get(pin_kodu) as any
+      const personel = pinIlePersonelBul(db, pin_kodu, pinOzeti)
 
       if (!personel || !PATRON_ROLLER.has(String(personel.rol))) {
         const kilitSn = pinGirisLimiti.hatali(anahtar)
@@ -282,13 +282,15 @@ export function bossRotalariniKaydet(app: any, jwtSecret: string): void {
       }
 
       pinGirisLimiti.basarili(anahtar)
+      if (personel.pin_degismeli === 1) {
+        return res.status(403).json({ hata: 'Varsayılan PIN ile uzaktan giriş yapılamaz — önce kasadan PIN\'inizi değiştirin' })
+      }
       const token = jwt.sign(
         { id: personel.id, rol: personel.rol, ad: personel.ad, soyad: personel.soyad },
         jwtSecret,
         { expiresIn: '12h' }
       )
-      const { sifre_hash, pin_kodu: _pin, ...guvenli } = personel
-      res.json({ personel: guvenli, token })
+      res.json({ personel: personelGuvenli(personel), token })
     } catch (hata: any) {
       res.status(500).json({ hata: hata.message || 'Giriş yapılamadı' })
     }

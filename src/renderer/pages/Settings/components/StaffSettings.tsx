@@ -6,6 +6,7 @@ import { PERSONEL_KANALLARI } from '../../../../common/ipc-channels'
 import { Edit2, Trash2, UserPlus, KeyRound, User, ShieldCheck } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
+import YetkiTablosu from './YetkiTablosu'
 
 export default function StaffSettings() {
   const [personeller, setPersoneller] = useState<any[]>([])
@@ -20,7 +21,9 @@ export default function StaffSettings() {
   const [kullaniciAdi, setKullaniciAdi] = useState('')
   const [sifre, setSifre] = useState('')
   const [rol, setRol] = useState('garson')
+  // PIN yalnızca özet olarak saklanır: düzenlemede boş = değişmez
   const [pinKodu, setPinKodu] = useState('')
+  const [pinKaldir, setPinKaldir] = useState(false)
 
   const personelleriGetir = async () => {
     try {
@@ -45,7 +48,8 @@ export default function StaffSettings() {
       setSoyad(personel.soyad)
       setKullaniciAdi(personel.kullanici_adi)
       setRol(personel.rol)
-      setPinKodu(personel.pin_kodu || '')
+      setPinKodu('')
+      setPinKaldir(false)
       setSifre('') // Şifre düzenlemede boş gelir
     } else {
       setDuzenlenenPersonel(null)
@@ -54,6 +58,7 @@ export default function StaffSettings() {
       setKullaniciAdi('')
       setRol('garson')
       setPinKodu('')
+      setPinKaldir(false)
       setSifre('')
     }
     setModalAcik(true)
@@ -61,11 +66,14 @@ export default function StaffSettings() {
 
   const kaydet = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    if (pinKodu && pinKodu.length !== 4) return error('Uyarı', 'PIN 4 haneli olmalı')
+
     try {
       if (duzenlenenPersonel) {
         // Güncelle
-        const data: any = { ad, soyad, rol, pin_kodu: pinKodu }
+        const data: any = { ad, soyad, rol }
+        if (pinKodu) data.pin_kodu = pinKodu
+        else if (pinKaldir) data.pin_kodu = ''
         if (sifre) data.sifre = sifre // Sadece yazıldıysa güncelle
         
         const res = await ipcInvoke<any>(PERSONEL_KANALLARI.GUNCELLE, duzenlenenPersonel.id, data)
@@ -78,7 +86,7 @@ export default function StaffSettings() {
           return
         }
         const res = await ipcInvoke<any>(PERSONEL_KANALLARI.EKLE, {
-          ad, soyad, kullanici_adi: kullaniciAdi, sifre, rol, pin_kodu: pinKodu
+          ad, soyad, kullanici_adi: kullaniciAdi, sifre, rol, pin_kodu: pinKodu || undefined
         })
         if (res?.basarili === false) return error('Kaydedilemedi', res.hata)
         success('Başarılı', 'Yeni personel kaydedildi.')
@@ -93,7 +101,8 @@ export default function StaffSettings() {
   const sil = async (id: number) => {
     if (!window.confirm('Bu personeli silmek istediğinize emin misiniz?')) return
     try {
-      await ipcInvoke(PERSONEL_KANALLARI.SIL, id)
+      const res = await ipcInvoke<any>(PERSONEL_KANALLARI.SIL, id)
+      if (res?.basarili === false) return error('Silinemedi', res.hata)
       success('Başarılı', 'Personel silindi.')
       personelleriGetir()
     } catch (err: any) {
@@ -177,9 +186,9 @@ export default function StaffSettings() {
               
               <div className="flex justify-between items-center pt-3 border-t border-[#322C26]">
                 <div>
-                  {p.pin_kodu ? (
+                  {p.pin_tanimli ? (
                     <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 bg-emerald-950/30 px-2 py-1 rounded-lg border border-emerald-800/30">
-                      <KeyRound size={12} /> PIN: {p.pin_kodu}
+                      <KeyRound size={12} /> PIN tanımlı
                     </span>
                   ) : (
                     <span className="text-xs font-mono text-surface-500 italic">PIN Tanımsız</span>
@@ -209,6 +218,8 @@ export default function StaffSettings() {
           ))
         )}
       </div>
+
+      <YetkiTablosu />
 
       <Modal
         isOpen={modalAcik}
@@ -270,13 +281,22 @@ export default function StaffSettings() {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-surface-400">Hızlı PIN (4 Hane)</label>
               <input 
-                type="text" 
-                maxLength={4} 
-                value={pinKodu} 
-                onChange={e => setPinKodu(e.target.value.replace(/\D/g, ''))} 
-                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono tracking-widest focus:outline-none focus:border-brand-500 transition-colors" 
-                placeholder="1234" 
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={4}
+                value={pinKodu}
+                disabled={pinKaldir}
+                onChange={e => setPinKodu(e.target.value.replace(/\D/g, ''))}
+                className="h-11 px-3.5 rounded-xl bg-[#110F0C] border border-[#322C26] text-white text-xs font-mono tracking-widest focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-40"
+                placeholder={duzenlenenPersonel ? (duzenlenenPersonel.pin_tanimli ? 'Değiştirmek için yeni PIN' : 'Yeni PIN') : '4 hane'}
               />
+              {duzenlenenPersonel?.pin_tanimli ? (
+                <label className="flex items-center gap-1.5 text-[11px] text-surface-400">
+                  <input type="checkbox" checked={pinKaldir} onChange={e => { setPinKaldir(e.target.checked); setPinKodu('') }} />
+                  PIN'i kaldır
+                </label>
+              ) : null}
             </div>
           </div>
 

@@ -22,6 +22,8 @@ import { rezervasyonIPCKaydet } from './reservation.ipc'
 import { denetimIPCKaydet } from './audit.ipc'
 import { terminalIPCKaydet } from './terminal.ipc'
 import { ipcHandleSar } from './ipc-registry'
+import { KANAL_YETKILERI, yetkiIste } from '../services/yetki.service'
+import { veritabaniGetir } from '../database/connection'
 import { uzakKanalListesi } from './uzak-kanallar'
 import { otomatikBaslatmaIPCKaydet } from './app.ipc'
 import { terminalAyarYukle } from '../services/terminal.service'
@@ -100,7 +102,9 @@ export function ipcHandlerlariniKaydet(ipcMain: IpcMain, mod: 'ana' | 'ikinci' =
     return
   }
 
-  ipcHandleSar(ipcMain)
+  ipcHandleSar(ipcMain, KANAL_YETKILERI, (event, yetki) => {
+    yetkiIste(veritabaniGetir(), event, yetki)
+  })
   personelIPCKaydet(ipcMain)
   menuIPCKaydet(ipcMain)
   masaIPCKaydet(ipcMain)

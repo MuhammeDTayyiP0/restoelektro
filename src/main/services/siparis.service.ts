@@ -166,7 +166,7 @@ export function siparisleriEkle(
   hesapId: number,
   personelId: number,
   siparisler: SiparisGirdisi[],
-  secenek: { ikramIzinli?: boolean } = {}
+  secenek: { ikramIzinli?: boolean; ikramOnaylayanId?: number } = {}
 ): EklenenKalem[] {
   if (!Array.isArray(siparisler) || siparisler.length === 0) throw new IslemHatasi('Eklenecek sipariş yok')
 
@@ -221,7 +221,7 @@ export function siparisleriEkle(
       `).run(
         hesapId, urun.id, varyantId, miktar,
         birimFiyat, toplamFiyat, personelId, sip.notlar || null,
-        ikram ? 1 : 0, ikram ? personelId : null, urun.yazici_grup, porsiyon,
+        ikram ? 1 : 0, ikram ? (secenek.ikramOnaylayanId ?? personelId) : null, urun.yazici_grup, porsiyon,
         isKg ? 'kg' : 'porsiyon', gramaj
       )
       const siparisId = Number(sonuc.lastInsertRowid)
@@ -482,11 +482,4 @@ export function hesapIptalEt(db: Database.Database, hesapId: number): { masa_id:
     if (hesap.masa_id) db.prepare("UPDATE masa SET durum = 'bos' WHERE id = ?").run(hesap.masa_id)
     return { masa_id: hesap.masa_id }
   })()
-}
-
-/** Rol + modül + işlem için yetki tablosuna bakar (admin her zaman yetkili) */
-export function yetkiVarMi(db: Database.Database, rol: string, modul: string, islem: string): boolean {
-  if (rol === 'admin') return true
-  const satir = db.prepare('SELECT izin FROM yetki WHERE rol = ? AND modul = ? AND islem = ?').get(rol, modul, islem) as any
-  return satir?.izin === 1
 }

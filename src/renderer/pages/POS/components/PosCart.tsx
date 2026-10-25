@@ -737,7 +737,7 @@ export const PosCart = React.memo(function PosCart() {
 
   const handleMutfakIkramToggle = useCallback(async (siparisId: number) => {
     try {
-      const res = await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_IKRAM_TOGGLE, siparisId, personel?.id || 1)
+      const res = await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_IKRAM_TOGGLE, siparisId)
       if (res && res.basarili) {
         if (res.yeniIkram === 1) success('İkram Uygulandı', 'Sipariş ikram olarak işaretlendi.')
         else success('İkram Kaldırıldı', 'Siparişin ikram durumu kaldırıldı.')
@@ -794,7 +794,9 @@ export const PosCart = React.memo(function PosCart() {
           const detay = aktifHesap.siparisler.find((s: any) => s.id === iptalId)
           if (detay) iptalEdilenSiparislerDetay.push(detay)
           
-          await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_IPTAL, iptalId, 'Müşteri İsteği', personel?.id || 1)
+          // Yetki yoksa ipcInvoke yönetici onayı ister; reddedilirse kaydetme durur
+          const iptalRes = await ipcInvoke<any>(HESAP_KANALLARI.SIPARIS_IPTAL, iptalId, 'Müşteri İsteği')
+          if (!iptalRes?.basarili) throw new Error(iptalRes?.hata || 'Sipariş iptal edilemedi')
         }
       }
 

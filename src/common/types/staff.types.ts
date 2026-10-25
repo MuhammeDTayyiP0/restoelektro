@@ -14,7 +14,8 @@ export interface Personel {
   kullanici_adi: string
   sifre_hash?: string // Asla client'a gönderilmez
   rol: PersonelRol
-  pin_kodu?: string
+  /** PIN yalnızca özet olarak saklanır; istemci sadece tanımlı olup olmadığını bilir */
+  pin_tanimli?: boolean | number
   aktif: boolean
   telefon: string | null
   created_at: string
@@ -47,7 +48,12 @@ export interface GirisYaniti {
   personel?: Personel
   token?: string
   hata?: string
+  /** Varsayılan (herkesçe bilinen) PIN ile girildi — devam etmeden önce değiştirilmeli */
+  pinDegistirmeli?: boolean
 }
+
+/** Yönetici onayı gerektiren işlemlerin anahtarları (modul/islem) */
+export type YetkiAnahtari = 'pos/iptal' | 'pos/ikram' | 'pos/indirim' | 'kasa/yazma' | 'menu/yazma' | 'personel/yazma'
 
 /** Modül isimleri */
 export type ModulAdi = 'pos' | 'rapor' | 'stok' | 'menu' | 'personel' | 'ayar' | 'musteri' | 'kasa'

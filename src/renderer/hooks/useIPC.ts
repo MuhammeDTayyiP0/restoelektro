@@ -4,6 +4,8 @@
 // =====================================================
 
 import { useCallback, useEffect, useState, useRef } from 'react'
+import { PERSONEL_KANALLARI } from '../../common/ipc-channels'
+import { yoneticiOnayiIste } from '../stores/useOnayStore'
 
 /**
  * IPC üzerinden asenkron veri çeken ve durumu yöneten hook
@@ -63,9 +65,14 @@ export function useIPCListener(kanal: string, callback: (...args: any[]) => void
 }
 
 /**
- * Beklemeye gerek kalmadan basit bir invoke yapmak için yardımcı fonksiyon
+ * Beklemeye gerek kalmadan basit bir invoke yapmak için yardımcı fonksiyon.
+ * Ana işlem yönetici onayı isterse (yetkiGerekli) PIN penceresi açılır ve onaylanınca çağrı bir kez tekrarlanır.
  */
 export async function ipcInvoke<T = any>(kanal: string, ...args: any[]): Promise<T> {
-  // @ts-ignore
-  return await window.api.invoke(kanal, ...args)
+  const sonuc: any = await window.api.invoke(kanal, ...args)
+  if (sonuc && typeof sonuc === 'object' && sonuc.yetkiGerekli && kanal !== PERSONEL_KANALLARI.YONETICI_ONAYI) {
+    const onaylandi = await yoneticiOnayiIste(sonuc.yetkiGerekli, sonuc.hata)
+    if (onaylandi) return (await window.api.invoke(kanal, ...args)) as T
+  }
+  return sonuc as T
 }

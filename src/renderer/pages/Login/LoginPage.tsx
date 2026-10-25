@@ -91,7 +91,7 @@ export default function LoginPage() {
       
       if (response.basarili && response.personel && response.token) {
         setHasPinError(false)
-        girisYap(response.personel, response.token)
+        girisYap(response.personel, response.token, Boolean(response.pinDegistirmeli))
         success('Giriş Başarılı', `Hoş geldin, ${response.personel.ad}`)
         navigate('/tables')
       } else {
@@ -168,7 +168,7 @@ export default function LoginPage() {
       })
       
       if (response.basarili && response.personel && response.token) {
-        girisYap(response.personel, response.token)
+        girisYap(response.personel, response.token, Boolean(response.pinDegistirmeli))
         success('Giriş Başarılı', `Hoş geldin, ${response.personel.ad}`)
         navigate('/tables')
       } else {

@@ -47,6 +47,7 @@ export function UpdateWidget() {
     progress,
     error,
     lastChecked,
+    yoneticiIzniGerekli,
     isPopoverOpen,
     setPopoverOpen,
     togglePopover,
@@ -368,6 +369,14 @@ export function UpdateWidget() {
                       <div className="h-full bg-emerald-500 w-full" />
                     </div>
                   </div>
+
+                  {yoneticiIzniGerekli && (
+                    <div className="p-2.5 rounded-xl border border-amber-700/50 bg-amber-950/30 text-[11px] leading-relaxed text-amber-200">
+                      Kurulum sırasında Windows <b>yönetici onayı</b> isteyecek. Bu bilgisayarda yönetici şifresi
+                      bilinmiyorsa kurulum yarıda kalır ve uygulama kendiliğinden açılmaz — güncellemeyi
+                      yönetici hesabıyla yapın.
+                    </div>
+                  )}
 
                   <button
                     onClick={yukleVeYenidenBaslat}

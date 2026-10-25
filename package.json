@@ -6,8 +6,8 @@
   "author": "ETİBOL POS",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "dev": "npm run build:mobile && electron-vite dev",
+    "build": "electron-vite build && npm run build:mobile",
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
@@ -16,7 +16,8 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "build:mobile": "vite build -c vite.mobile.config.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

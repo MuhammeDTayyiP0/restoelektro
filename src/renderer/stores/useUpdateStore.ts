@@ -32,6 +32,8 @@ export interface GuncellemeDurumBilgisi {
   progress?: GuncellemeIlerleme
   error?: string
   lastChecked?: string
+  /** Kurulum Windows yönetici onayı (UAC) isteyecek */
+  yoneticiIzniGerekli?: boolean
 }
 
 interface UpdateState extends GuncellemeDurumBilgisi {
@@ -78,6 +80,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
             progress: data.progress,
             error: data.error,
             lastChecked: data.lastChecked,
+            yoneticiIzniGerekli: data.yoneticiIzniGerekli,
           })
         }
       })
@@ -109,6 +112,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
             progress: durum.progress,
             error: durum.error,
             lastChecked: durum.lastChecked,
+            yoneticiIzniGerekli: durum.yoneticiIzniGerekli,
           })
         }
       } catch (err) {

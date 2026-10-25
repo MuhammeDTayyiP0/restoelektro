@@ -15,6 +15,9 @@ export const PERSONEL_KANALLARI = {
   SIL: 'personel:sil',
   YETKILERI_GETIR: 'personel:yetkileri-getir',
   YETKI_GUNCELLE: 'personel:yetki-guncelle',
+  OTURUM_DOGRULA: 'personel:oturum-dogrula',
+  PIN_DEGISTIR: 'personel:pin-degistir',
+  YONETICI_ONAYI: 'personel:yonetici-onayi',
 } as const
 
 /** Menü kanalları */

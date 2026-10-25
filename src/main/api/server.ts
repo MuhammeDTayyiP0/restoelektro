@@ -5,16 +5,13 @@ import { Server } from 'socket.io'
 import { createServer } from 'http'
 import { veritabaniGetir } from '../database/connection'
 import { BrowserWindow, app as electronApp } from 'electron'
-import { garsonMobilHTML } from './garson-mobile'
-import { qrMenuHTML } from './qrmenu-mobile'
-import { bossMobilHTML } from './boss-mobile'
 import { bossRotalariniKaydet } from './boss-api'
 import { istemciAdresi, pinGirisLimiti, lanJetonLimiti } from './giris-limiti'
 import path from 'path'
 import fs from 'fs'
 import { varsayilanYerelIpGetir } from '../services/network.service'
 import { terminalAyarYukle } from '../services/terminal.service'
-import { jwtGizliAnahtar, guvenliEsitMi } from '../services/guvenlik.service'
+import { jwtGizliAnahtar, guvenliEsitMi, pinOzeti } from '../services/guvenlik.service'
 import { uploadsDizininiGetir } from '../services/gorsel.service'
 import {
   IslemHatasi,
@@ -22,19 +19,18 @@ import {
   siparisleriEkle,
   siparisIptalEt,
   siparisIkramAyarla,
-  yetkiVarMi,
 } from '../services/siparis.service'
+import { yetkiVarMi, YetkiHatasi } from '../services/yetki.service'
+import { pinIlePersonelBul, personelGuvenli } from '../services/pin.service'
 import { ipcHandlerCalistir } from '../ipc/ipc-registry'
 import { uzakKanalIzinliMi } from '../ipc/uzak-kanallar'
+import { denetimYaz } from '../services/audit.service'
 
 let sunucu: any = null
 let io: Server | null = null
 
-/** Yanıta asla gönderilmeyecek personel alanları */
-function personelGuvenli(personel: any) {
-  const { sifre_hash, pin_kodu, ...guvenli } = personel
-  return guvenli
-}
+/** 003 migration'ının tohumladığı herkesçe bilinen şifrenin (admin123) özeti */
+const VARSAYILAN_SIFRE_HASH = '$2a$10$8K1p/a0dL1LXMIgoEDFrwOfMQkf9xP6h.k2HEQKAOI8k3x5HYlIjW'
 
 /** Bu makinedeki tarayıcı / Electron renderer (file:// → 'null') kaynakları */
 function yerelKaynakMi(origin: string | undefined): boolean {
@@ -231,26 +227,33 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     res.sendFile(path.join(rsPath, 'icon.ico'))
   })
 
-  // ===== MOBİL GARSON ARAYÜZÜ =====
-  // Telefondan http://<bilgisayar-ip>:3847/garson adresine gidince açılır
-  app.get('/garson', (_req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.send(garsonMobilHTML())
-  })
+  // ===== TELEFON ARAYÜZLERİ (src/mobile → out/mobile, npm run build:mobile) =====
+  // Garson: /garson · Patron: /boss, /patron · QR menü: /qrmenu, /menu
+  // Varlıklar içerik özetli dosya adlarıyla /m/ altından uzun önbellekle sunulur.
+  const mobilDizin = [
+    path.join(electronApp.getAppPath(), 'out', 'mobile'),
+    path.join(__dirname, '..', 'mobile'),
+  ].find((d) => fs.existsSync(d)) || path.join(electronApp.getAppPath(), 'out', 'mobile')
 
-  // ===== PATRON (BOSS) MOBİL ARAYÜZÜ =====
-  // Telefondan http://<bilgisayar-ip>:3847/boss veya /patron adresine gidince açılır
-  app.get(['/boss', '/patron'], (_req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.send(bossMobilHTML())
-  })
+  app.use('/m', express.static(mobilDizin, { index: false, dotfiles: 'deny', maxAge: '30d', immutable: true }))
 
-  // ===== QR MENÜ ARAYÜZÜ =====
-  // Müşteriler http://<bilgisayar-ip>:3847/qrmenu veya /menu adresine gidince açılır
-  app.get(['/qrmenu', '/menu'], (_req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.send(qrMenuHTML())
-  })
+  const MOBIL_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self'; base-uri 'none'; form-action 'self'"
+  const MENU_CSP = MOBIL_CSP
+    .replace("style-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com")
+    .replace("font-src 'self'", "font-src 'self' https://fonts.gstatic.com")
+
+  const mobilSayfa = (ad: 'garson' | 'boss' | 'menu') => (_req: any, res: any) => {
+    const dosya = path.join(mobilDizin, `${ad}.html`)
+    if (!fs.existsSync(dosya)) {
+      return res.status(503).type('text/plain').send('Telefon arayüzü derlenmemiş — "npm run build:mobile" çalıştırın.')
+    }
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Content-Security-Policy', ad === 'menu' ? MENU_CSP : MOBIL_CSP)
+    res.sendFile(dosya)
+  }
+  app.get('/garson', mobilSayfa('garson'))
+  app.get(['/boss', '/patron'], mobilSayfa('boss'))
+  app.get(['/qrmenu', '/menu'], mobilSayfa('menu'))
 
   // PIN ile giriş (mobil garsonlar için) — istemci başına artan kilit
   app.post('/api/garson/pin-giris', (req, res) => {
@@ -258,18 +261,18 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     const izin = pinGirisLimiti.izinVarMi(anahtar)
     if (!izin.izinli) return res.status(429).json({ hata: `Çok fazla deneme. ${izin.beklemeSn} sn sonra tekrar deneyin` })
 
-    const pin_kodu = String(req.body?.pin_kodu || '').trim()
     const db = veritabaniGetir()
-    const personel = pin_kodu
-      ? db.prepare('SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1').get(pin_kodu) as any
-      : null
+    const personel = pinIlePersonelBul(db, String(req.body?.pin_kodu || '').trim(), pinOzeti)
     if (!personel) {
       const kilitSn = pinGirisLimiti.hatali(anahtar)
       if (kilitSn) return res.status(429).json({ hata: `Çok fazla hatalı deneme. ${kilitSn} sn kilitlendi` })
       return res.status(401).json({ hata: 'Geçersiz PIN kodu' })
     }
-
     pinGirisLimiti.basarili(anahtar)
+    if (personel.pin_degismeli === 1) {
+      return res.status(403).json({ hata: 'Varsayılan PIN ile telefondan giriş yapılamaz — önce kasadan PIN\'inizi değiştirin' })
+    }
+
     const token = jwt.sign({ id: personel.id, rol: personel.rol }, JWT_SECRET, { expiresIn: '12h' })
     res.json({ personel: personelGuvenli(personel), token })
   })
@@ -290,6 +293,9 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     }
 
     pinGirisLimiti.basarili(anahtar)
+    if (personel.sifre_hash === VARSAYILAN_SIFRE_HASH) {
+      return res.status(403).json({ hata: 'Varsayılan şifre ile uzaktan giriş yapılamaz — önce kasadan şifrenizi değiştirin' })
+    }
     const token = jwt.sign({ id: personel.id, rol: personel.rol }, JWT_SECRET, { expiresIn: '12h' })
     res.json({ personel: personelGuvenli(personel), token })
   })
@@ -360,9 +366,34 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   }
 
   function garsonHataYaniti(res: any, hata: any) {
+    if (hata instanceof YetkiHatasi) return res.status(403).json({ hata: hata.message, yetkiGerekli: hata.yetki })
     if (hata instanceof IslemHatasi) return res.status(400).json({ hata: hata.message })
     console.error('❌ Garson API hatası:', hata)
     return res.status(500).json({ hata: 'İşlem sırasında beklenmeyen bir hata oluştu' })
+  }
+
+  /**
+   * Garsonun işlem yetkisi; yoksa aynı istekte gönderilen yönetici PIN'i ile onay.
+   * Onaylayanın personel id'sini döndürür; ikisi de yoksa YetkiHatasi (telefon PIN ister).
+   */
+  function garsonYetkisi(req: any, yetki: string): number {
+    const db = veritabaniGetir()
+    const [modul, islem] = yetki.split('/')
+    if (yetkiVarMi(db, req.kullanici.rol, modul, islem)) return req.kullanici.id
+
+    const pin = String(req.body?.yonetici_pin || '')
+    if (!pin) throw new YetkiHatasi(yetki)
+
+    const anahtar = 'onay:' + istemciAdresi(req)
+    const izin = pinGirisLimiti.izinVarMi(anahtar)
+    if (!izin.izinli) throw new IslemHatasi(`Çok fazla hatalı deneme. ${izin.beklemeSn} sn bekleyin`)
+    const onaylayan = pinIlePersonelBul(db, pin, pinOzeti)
+    if (!onaylayan || !yetkiVarMi(db, onaylayan.rol, modul, islem)) {
+      pinGirisLimiti.hatali(anahtar)
+      throw new YetkiHatasi(yetki, onaylayan ? `${onaylayan.ad} bu işlemi onaylayamaz` : 'Yönetici PIN\'i geçersiz')
+    }
+    pinGirisLimiti.basarili(anahtar)
+    return onaylayan.id
   }
 
   // Sipariş gönder — fiyatlar sunucuda ürün/varyant/opsiyon kayıtlarından hesaplanır
@@ -376,10 +407,11 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       const masa = db.prepare('SELECT numara FROM masa WHERE id = ? AND aktif = 1').get(masaId) as any
       if (!masa) throw new IslemHatasi('Masa bulunamadı')
 
-      const ikramIzinli = yetkiVarMi(db, req.kullanici.rol, 'pos', 'ikram')
+      const ikramVar = Array.isArray(siparisler) && siparisler.some((s: any) => s?.ikram)
+      const ikramOnaylayanId = ikramVar ? garsonYetkisi(req, 'pos/ikram') : undefined
       const { hesapId, kalemler } = db.transaction(() => {
         const hesapId = masaHesabiniGetirVeyaAc(db, masaId, personelId)
-        return { hesapId, kalemler: siparisleriEkle(db, hesapId, personelId, siparisler, { ikramIzinli }) }
+        return { hesapId, kalemler: siparisleriEkle(db, hesapId, personelId, siparisler, { ikramOnaylayanId }) }
       })()
 
       // Tüm ekranlara (Masa listesi, POS vb.) anlık yenileme sinyali gönder
@@ -402,17 +434,24 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     }
   })
 
-  // Sipariş iptal et — yetki tablosunda pos/iptal izni gerekir
+  // Sipariş iptal et — pos/iptal yetkisi ya da yönetici PIN'i gerekir
   app.post('/api/garson/siparis-iptal', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
     const siparisId = Number(req.body?.siparis_id)
     const iptalNedeni = req.body?.iptal_nedeni
 
     try {
-      if (!yetkiVarMi(db, req.kullanici.rol, 'pos', 'iptal')) {
-        return res.status(403).json({ hata: 'Sipariş iptali için yetkiniz yok — yöneticiye başvurun' })
-      }
-      const siparis = siparisIptalEt(db, siparisId, iptalNedeni || 'Garson tarafından iptal', req.kullanici.id)
+      const onaylayanId = garsonYetkisi(req, 'pos/iptal')
+      const siparis = siparisIptalEt(db, siparisId, iptalNedeni || 'Garson tarafından iptal', onaylayanId)
+      denetimYaz(db, {
+        personel_id: req.kullanici.id,
+        islem: 'siparis_iptal',
+        modul: 'pos',
+        hedef_tip: 'siparis',
+        hedef_id: siparisId,
+        ozet: `Garson iptali #${siparisId} — ${iptalNedeni || ''}`,
+        detay: { hesap_id: siparis.hesap_id, onaylayan_id: onaylayanId },
+      })
 
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
@@ -432,16 +471,23 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     }
   })
 
-  // Sipariş ikram durumunu değiştir — yetki tablosunda pos/ikram izni gerekir
+  // Sipariş ikram durumunu değiştir — pos/ikram yetkisi ya da yönetici PIN'i gerekir
   app.post('/api/garson/siparis-ikram', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
     const siparisId = Number(req.body?.siparis_id)
 
     try {
-      if (!yetkiVarMi(db, req.kullanici.rol, 'pos', 'ikram')) {
-        return res.status(403).json({ hata: 'İkram için yetkiniz yok — yöneticiye başvurun' })
-      }
-      const sonuc = siparisIkramAyarla(db, siparisId, Boolean(req.body?.ikram), req.kullanici.id)
+      const onaylayanId = garsonYetkisi(req, 'pos/ikram')
+      const sonuc = siparisIkramAyarla(db, siparisId, Boolean(req.body?.ikram), onaylayanId)
+      denetimYaz(db, {
+        personel_id: req.kullanici.id,
+        islem: sonuc.ikram ? 'ikram' : 'ikram_kaldir',
+        modul: 'pos',
+        hedef_tip: 'siparis',
+        hedef_id: siparisId,
+        ozet: `Garson ${sonuc.ikram ? 'ikramı' : 'ikram kaldırma'} #${siparisId}`,
+        detay: { onaylayan_id: onaylayanId },
+      })
 
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
@@ -520,7 +566,7 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       return res.status(403).json({ basarili: false, hata: 'Bu kanal uzaktan çağrılamaz' })
     }
     try {
-      const sonuc = await ipcHandlerCalistir(kanal, Array.isArray(args) ? args : [])
+      const sonuc = await ipcHandlerCalistir(kanal, Array.isArray(args) ? args : [], req.body?.terminalId)
       res.json(sonuc)
     } catch (hata: any) {
       res.status(500).json({ basarili: false, hata: hata?.message || 'IPC hatası' })

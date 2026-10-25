@@ -6,8 +6,8 @@
 import { IpcMain, app, BrowserWindow } from 'electron'
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater'
 import { is } from '@electron-toolkit/utils'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { join, dirname } from 'path'
+import { existsSync, writeFileSync, unlinkSync } from 'fs'
 import { GUNCELLEME_KANALLARI } from '../../common/ipc-channels'
 
 export interface GuncellemeIlerleme {
@@ -35,6 +35,24 @@ export interface GuncellemeDurumBilgisi {
   progress?: GuncellemeIlerleme
   error?: string
   lastChecked?: string
+  /** Kurulum klasörüne yazılamıyor — kurulum Windows yönetici onayı (UAC) isteyecek */
+  yoneticiIzniGerekli?: boolean
+}
+
+/**
+ * Kurulum "tüm kullanıcılar için" (Program Files) yapıldıysa ve oturumdaki Windows kullanıcısı
+ * oraya yazamıyorsa güncelleme yönetici onayı ister. Kısıtlı hesapta onay verilemezse kurulum yarıda kalır;
+ * bu yüzden kullanıcı önceden uyarılır.
+ */
+function kurulumKlasoruYazilabilirMi(): boolean {
+  const deneme = join(dirname(process.execPath), `.etibol-yazma-${process.pid}.tmp`)
+  try {
+    writeFileSync(deneme, '')
+    unlinkSync(deneme)
+    return true
+  } catch {
+    return false
+  }
 }
 
 // Merkezi bellek durumu
@@ -170,6 +188,7 @@ function updaterDinleyicileriniKur(): void {
         total: guncellemeDurumu.progress?.total || 0,
       },
       error: undefined,
+      yoneticiIzniGerekli: !is.dev && !kurulumKlasoruYazilabilirMi(),
     })
   })
 

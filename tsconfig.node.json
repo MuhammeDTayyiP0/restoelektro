@@ -15,6 +15,7 @@
     "src/preload/**/*.ts",
     "src/common/**/*.ts",
     "electron.vite.config.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vite.mobile.config.ts"
   ]
 }

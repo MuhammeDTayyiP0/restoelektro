@@ -20,8 +20,10 @@ import {
   hesapBol,
   hesapIptalEt,
 } from '../services/siparis.service'
+import { yetkiIste, oturumGetir, YetkiHatasi } from '../services/yetki.service'
 
-function hataYaniti(hata: any): { basarili: false; hata: string } {
+function hataYaniti(hata: any): { basarili: false; hata: string; yetkiGerekli?: string } {
+  if (hata instanceof YetkiHatasi) return { basarili: false, hata: hata.message, yetkiGerekli: hata.yetki }
   if (!(hata instanceof IslemHatasi)) console.error('❌ POS işlemi hatası:', hata)
   return { basarili: false, hata: hata?.message || 'İşlem başarısız' }
 }
@@ -89,9 +91,14 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // Sipariş ekle — fiyatlar istemciden alınmaz, sunucuda yeniden hesaplanır
-  ipcMain.handle(HESAP_KANALLARI.SIPARIS_EKLE, async (_event, hesapId: number, personelId: number, siparisler: YeniSiparis[]) => {
+  ipcMain.handle(HESAP_KANALLARI.SIPARIS_EKLE, async (event, hesapId: number, personelId: number, siparisler: YeniSiparis[]) => {
     try {
-      const kalemler = siparisleriEkle(db, hesapId, personelId, siparisler as any)
+      // İkramlı kalem varsa ikram yetkisi (veya yönetici onayı) gerekir
+      const ikramOnaylayanId = Array.isArray(siparisler) && siparisler.some((s) => s?.ikram)
+        ? yetkiIste(db, event, 'pos/ikram').onaylayanId
+        : undefined
+      const ekleyen = oturumGetir(event)?.personelId ?? personelId
+      const kalemler = siparisleriEkle(db, hesapId, ekleyen, siparisler as any, { ikramOnaylayanId })
 
       // Mutfak ekranına bildirim gönder
       for (const pencere of BrowserWindow.getAllWindows()) {
@@ -105,8 +112,9 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // Sipariş iptal
-  ipcMain.handle(HESAP_KANALLARI.SIPARIS_IPTAL, async (_event, siparisId: number, iptalNedeni: string, onaylayanId: number) => {
+  ipcMain.handle(HESAP_KANALLARI.SIPARIS_IPTAL, async (event, siparisId: number, iptalNedeni: string) => {
     try {
+      const { onaylayanId } = yetkiIste(db, event, 'pos/iptal')
       const siparis = siparisIptalEt(db, siparisId, iptalNedeni, onaylayanId)
       denetimYaz(db, {
         personel_id: onaylayanId,
@@ -124,8 +132,9 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // Sipariş İkram Toggle
-  ipcMain.handle(HESAP_KANALLARI.SIPARIS_IKRAM_TOGGLE, async (_event, siparisId: number, onaylayanId: number) => {
+  ipcMain.handle(HESAP_KANALLARI.SIPARIS_IKRAM_TOGGLE, async (event, siparisId: number) => {
     try {
+      const { onaylayanId } = yetkiIste(db, event, 'pos/ikram')
       const sonuc = siparisIkramAyarla(db, siparisId, null, onaylayanId)
       denetimYaz(db, {
         personel_id: onaylayanId,
@@ -142,10 +151,12 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // İndirim uygula
-  ipcMain.handle(HESAP_KANALLARI.INDIRIM_UYGULA, async (_event, indirim: IndirimBilgisi) => {
+  ipcMain.handle(HESAP_KANALLARI.INDIRIM_UYGULA, async (event, indirim: IndirimBilgisi) => {
     try {
+      const { onaylayanId } = yetkiIste(db, event, 'pos/indirim')
       const sonuc = indirimUygula(db, indirim as any)
       denetimYaz(db, {
+        personel_id: onaylayanId,
         islem: 'indirim',
         modul: 'pos',
         hedef_tip: 'hesap',
@@ -195,10 +206,12 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // Hesap iptal
-  ipcMain.handle(HESAP_KANALLARI.IPTAL, async (_event, hesapId: number) => {
+  ipcMain.handle(HESAP_KANALLARI.IPTAL, async (event, hesapId: number) => {
     try {
+      const { onaylayanId } = yetkiIste(db, event, 'pos/iptal')
       hesapIptalEt(db, hesapId)
       denetimYaz(db, {
+        personel_id: onaylayanId,
         islem: 'hesap_iptal',
         modul: 'pos',
         hedef_tip: 'hesap',

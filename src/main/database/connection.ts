@@ -11,6 +11,8 @@ import { migrationlariCalistir } from './migration-runner'
 import { otomatikYedekAl } from './backup'
 import { varsayilanIzgaraVeIcecekleriEkle } from './seed'
 import { egitimModuAktifMi } from '../services/terminal.service'
+import { duzPinleriDonustur } from '../services/pin.service'
+import { pinOzeti } from '../services/guvenlik.service'
 
 // Veritabanı örneği (singleton)
 let db: Database.Database | null = null
@@ -57,6 +59,10 @@ export async function veritabaniBaslat(): Promise<void> {
 
   await otomatikYedekAl(db, 'acilis')
   await migrationlariCalistir(db)
+
+  // Eski sürümlerden kalan düz metin PIN'ler özete çevrilir (anahtar userData/guvenlik.json'da)
+  const donusen = duzPinleriDonustur(db, pinOzeti)
+  if (donusen) console.log(`🔐 ${donusen} personel PIN'i özet olarak saklanmaya geçirildi`)
 
   try {
     varsayilanIzgaraVeIcecekleriEkle(db)

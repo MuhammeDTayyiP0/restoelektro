@@ -36,6 +36,7 @@ const izinliKanallar = [
   'personel:giris-yap', 'personel:cikis-yap', 'personel:pin-giris',
   'personel:listele', 'personel:ekle', 'personel:guncelle', 'personel:sil',
   'personel:yetkileri-getir', 'personel:yetki-guncelle',
+  'personel:oturum-dogrula', 'personel:pin-degistir', 'personel:yonetici-onayi',
   // Menü
   'menu:kategoriler', 'menu:kategori-ekle', 'menu:kategori-guncelle', 'menu:kategori-sil',
   'menu:urunler', 'menu:urun-detay', 'menu:urun-ekle', 'menu:urun-guncelle', 'menu:urun-sil',
