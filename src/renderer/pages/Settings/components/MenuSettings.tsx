@@ -47,21 +47,6 @@ import { ProductImageCropper } from './ProductImageCropper'
 
 const ISTEK_ZAMAN_ASIMI = 12_000
 
-const zamanAsimliFetch = async (input: RequestInfo | URL, init?: RequestInit, timeout = ISTEK_ZAMAN_ASIMI) => {
-  const controller = new AbortController()
-  const zamanAsimi = window.setTimeout(() => controller.abort(), timeout)
-  try {
-    return await fetch(input, { ...init, signal: controller.signal })
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.')
-    }
-    throw err
-  } finally {
-    window.clearTimeout(zamanAsimi)
-  }
-}
-
 const zamanAsimli = async <T,>(islem: Promise<T>, timeout = ISTEK_ZAMAN_ASIMI): Promise<T> => {
   let zamanAsimi: number | undefined
   try {
@@ -561,34 +546,20 @@ export default function MenuSettings() {
   const kirpilmisGorseliYukle = async (gorsel: Blob) => {
     setResimYukleniyor(true)
     try {
-      const formData = new FormData()
-      formData.append('image', new File([gorsel], 'product.jpg', { type: 'image/jpeg' }))
-
-      const res = await zamanAsimliFetch('http://localhost:3847/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data?.basarili || !data.resim_yolu) throw new Error(data?.hata || 'Görsel sunucuya kaydedilemedi')
-      setUrunResimYolu(data.resim_yolu)
+      // IPC üzerinden kaydedilir: ikinci kasada istek LAN köprüsüyle ana kasaya gider
+      const base64 = await zamanAsimli(new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Görsel verisi okunamadı'))
+        reader.onerror = () => reject(new Error('Görsel dosyası okunamadı'))
+        reader.readAsDataURL(gorsel)
+      }))
+      const res = await zamanAsimli(ipcInvoke<any>(MENU_KANALLARI.RESIM_YUKLE, { base64 }))
+      if (!res?.basarili || !res.resim_yolu) throw new Error(res?.hata || 'Görsel kaydedilemedi')
+      setUrunResimYolu(res.resim_yolu)
       setKirpmaKaynagi(null)
       success('Görsel Hazır', 'Kırpılmış ve optimize edilmiş ürün görseli kaydedildi.')
-    } catch (fetchErr: any) {
-      try {
-        const base64 = await zamanAsimli(new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Görsel verisi okunamadı'))
-          reader.onerror = () => reject(new Error('Görsel dosyası okunamadı'))
-          reader.readAsDataURL(gorsel)
-        }))
-        const res = await zamanAsimli(ipcInvoke<any>(MENU_KANALLARI.RESIM_YUKLE, { base64, dosyaAdi: 'product.jpg', uzanti: '.jpg' }))
-        if (!res?.basarili || !res.resim_yolu) throw new Error(res?.hata || 'Görsel kaydedilemedi')
-        setUrunResimYolu(res.resim_yolu)
-        setKirpmaKaynagi(null)
-        success('Görsel Hazır', 'Kırpılmış ve optimize edilmiş ürün görseli kaydedildi.')
-      } catch (ipcErr: any) {
-        error('Yükleme Hatası', ipcErr.message || fetchErr.message || 'Görsel kaydedilemedi')
-      }
+    } catch (err: any) {
+      error('Yükleme Hatası', err.message || 'Görsel kaydedilemedi')
     } finally {
       setResimYukleniyor(false)
     }
@@ -599,13 +570,8 @@ export default function MenuSettings() {
     if (!url) return
     setResimYukleniyor(true)
     try {
-      const res = await zamanAsimliFetch('http://localhost:3847/api/upload/from-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      })
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data?.basarili || !data.image) throw new Error(data?.hata || 'Görsel bağlantısından indirilemedi')
+      const data = await zamanAsimli(ipcInvoke<any>(MENU_KANALLARI.RESIM_URL_GETIR, url))
+      if (!data?.basarili || !data.image) throw new Error(data?.hata || 'Görsel bağlantısından indirilemedi')
       setResimUrl('')
       kirpmaModaliniAc(data.image)
     } catch (err: any) {

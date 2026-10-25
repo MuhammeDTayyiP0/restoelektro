@@ -36,7 +36,19 @@ jobs:
         # sayesinde better-sqlite3 ve serialport gibi native modüller otomatik olarak
         # Electron için derlenecektir.
 
+      - name: Typecheck (ana işlem Node 16 tipleriyle)
+        run: npm run typecheck
+
+      - name: Tests (Electron'un kendi Node 16'sında)
+        run: npm test
+
+      # PR'lar yalnızca paketlenir; GitHub Release'e sadece main/master'a push yayınlanır
+      - name: Build only (pull request)
+        if: github.event_name == 'pull_request'
+        run: npm run dist -- -p never
+
       - name: Build and Publish (electron-builder handles GitHub Release)
+        if: github.event_name == 'push'
         run: npm run dist -- -p always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

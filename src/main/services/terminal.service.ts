@@ -7,6 +7,7 @@ import { app } from 'electron'
 import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { randomBytes } from 'crypto'
+import { release } from 'os'
 
 export interface TerminalAyar {
   terminalId: string
@@ -14,6 +15,8 @@ export interface TerminalAyar {
   anaUrl: string
   lanToken: string
   egitim: boolean
+  /** Donanım hızlandırma: otomatik = Windows 7/8'de kapalı, 10+ açık */
+  gpu?: 'otomatik' | 'acik' | 'kapali'
 }
 
 function rastgeleKod(uzunluk: number): string {
@@ -85,6 +88,22 @@ export function terminalAyarKaydet(kismi: Partial<TerminalAyar>): TerminalAyar {
   onbellek.egitim = Boolean(onbellek.egitim)
   writeFileSync(terminalDosyaYolu(), JSON.stringify(onbellek, null, 2), 'utf8')
   return onbellek
+}
+
+/** Windows 7 / 8 / 8.1 (NT 6.x) mi? */
+export function eskiWindowsMu(): boolean {
+  return process.platform === 'win32' && parseInt(release().split('.')[0], 10) < 10
+}
+
+/**
+ * Donanım hızlandırma kapatılsın mı?
+ * Eski sürücülerde beyaz ekran/çökme yaygın olduğundan Windows 7/8'de varsayılan kapalıdır.
+ */
+export function gpuKapaliMi(): boolean {
+  const tercih = terminalAyarYukle().gpu || 'otomatik'
+  if (tercih === 'kapali') return true
+  if (tercih === 'acik') return false
+  return eskiWindowsMu()
 }
 
 export function egitimModuAktifMi(): boolean {

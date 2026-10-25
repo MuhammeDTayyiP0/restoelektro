@@ -10,15 +10,23 @@ import { compareSync, hashSync } from 'bcryptjs'
 import { sign } from 'jsonwebtoken'
 import type { Personel, GirisBilgileri, GirisYaniti, YeniPersonel } from '../../common/types/staff.types'
 import { denetimYaz } from '../services/audit.service'
-
-// JWT gizli anahtar (üretimde çevresel değişkenden alınmalı)
-const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
+import { jwtGizliAnahtar } from '../services/guvenlik.service'
 
 /**
  * Personel IPC handler'larını kaydeder
  */
 export function personelIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
+  const JWT_SECRET = jwtGizliAnahtar()
+
+  /** PIN 4 hane olmalı ve başka aktif personelde kullanılmamalı (PIN ile giriş kişiyi PIN'den bulur) */
+  function pinHatasi(pin: unknown, haricId?: number): string | null {
+    if (pin === null || pin === undefined || pin === '') return null
+    const p = String(pin)
+    if (!/^\d{4}$/.test(p)) return 'PIN 4 haneli rakam olmalı'
+    const cakisan = db.prepare('SELECT id FROM personel WHERE pin_kodu = ? AND aktif = 1 AND id != ?').get(p, haricId ?? -1)
+    return cakisan ? 'Bu PIN başka bir personel tarafından kullanılıyor' : null
+  }
 
   // Giriş yap (kullanıcı adı + şifre)
   ipcMain.handle(PERSONEL_KANALLARI.GIRIS_YAP, async (_event, bilgiler: GirisBilgileri): Promise<GirisYaniti> => {
@@ -140,6 +148,9 @@ export function personelIPCKaydet(ipcMain: IpcMain): void {
 
   // Personel ekle
   ipcMain.handle(PERSONEL_KANALLARI.EKLE, async (_event, yeniPersonel: YeniPersonel) => {
+    if (!yeniPersonel?.sifre) return { basarili: false, hata: 'Şifre gerekli' }
+    const pinHata = pinHatasi(yeniPersonel.pin_kodu)
+    if (pinHata) return { basarili: false, hata: pinHata }
     const sifreHash = hashSync(yeniPersonel.sifre, 10)
     const sonuc = db.prepare(`
       INSERT INTO personel (ad, soyad, kullanici_adi, sifre_hash, rol, pin_kodu, telefon)
@@ -158,6 +169,10 @@ export function personelIPCKaydet(ipcMain: IpcMain): void {
 
   // Personel güncelle
   ipcMain.handle(PERSONEL_KANALLARI.GUNCELLE, async (_event, id: number, veriler: Partial<YeniPersonel>) => {
+    if (veriler.pin_kodu !== undefined) {
+      const pinHata = pinHatasi(veriler.pin_kodu, id)
+      if (pinHata) return { basarili: false, hata: pinHata }
+    }
     const alanlar: string[] = []
     const degerler: any[] = []
 

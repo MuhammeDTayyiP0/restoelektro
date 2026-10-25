@@ -3,41 +3,49 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
-import { networkInterfaces } from 'os'
 import { veritabaniGetir } from '../database/connection'
 import { BrowserWindow, app as electronApp } from 'electron'
 import { garsonMobilHTML } from './garson-mobile'
 import { qrMenuHTML } from './qrmenu-mobile'
 import { bossMobilHTML } from './boss-mobile'
 import { bossRotalariniKaydet } from './boss-api'
+import { istemciAdresi, pinGirisLimiti, lanJetonLimiti } from './giris-limiti'
 import path from 'path'
 import fs from 'fs'
-import multer from 'multer'
-import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
 import { varsayilanYerelIpGetir } from '../services/network.service'
 import { terminalAyarYukle } from '../services/terminal.service'
-import { ipcHandlerCalistir, yerelKanalMi } from '../ipc/ipc-registry'
-
-
-const JWT_SECRET = 'restoelektro-gizli-anahtar-2024'
+import { jwtGizliAnahtar, guvenliEsitMi } from '../services/guvenlik.service'
+import { uploadsDizininiGetir } from '../services/gorsel.service'
+import {
+  IslemHatasi,
+  masaHesabiniGetirVeyaAc,
+  siparisleriEkle,
+  siparisIptalEt,
+  siparisIkramAyarla,
+  yetkiVarMi,
+} from '../services/siparis.service'
+import { ipcHandlerCalistir } from '../ipc/ipc-registry'
+import { uzakKanalIzinliMi } from '../ipc/uzak-kanallar'
 
 let sunucu: any = null
 let io: Server | null = null
 
-const yuklemeHataYaniti = (res: any, status: number, message: string) =>
-  res.status(status).json({ success: false, message, basarili: false, hata: message })
+/** Yanıta asla gönderilmeyecek personel alanları */
+function personelGuvenli(personel: any) {
+  const { sifre_hash, pin_kodu, ...guvenli } = personel
+  return guvenli
+}
 
-/**
- * Ürün görselleri için yükleme dizinini döndürür ve yoksa oluşturur
- */
-export function uploadsDizininiGetir(): string {
-  const isDev = !electronApp.isPackaged
-  const base = isDev ? process.cwd() : electronApp.getPath('userData')
-  const productsDir = path.join(base, 'public', 'uploads', 'products')
-  if (!fs.existsSync(productsDir)) {
-    fs.mkdirSync(productsDir, { recursive: true })
-  }
-  return productsDir
+/** Bu makinedeki tarayıcı / Electron renderer (file:// → 'null') kaynakları */
+function yerelKaynakMi(origin: string | undefined): boolean {
+  if (!origin || origin === 'null') return true
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(origin)
+}
+
+/** Cloudflare Tunnel veya başka bir ters vekil üzerinden gelen istek mi? */
+function vekilIstegiMi(req: any): boolean {
+  const h = req.headers || {}
+  return Boolean(h['cf-ray'] || h['cf-connecting-ip'] || h['x-forwarded-for'])
 }
 
 /**
@@ -129,225 +137,87 @@ export function varsayilanGorselleriSenkronizeEt(): void {
   }
 }
 
-// Multer Disk Depolama Yapılandırması
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    try {
-      cb(null, uploadsDizininiGetir())
-    } catch (err) {
-      cb(err instanceof Error ? err : new Error('Yükleme dizini oluşturulamadı'), '')
-    }
-  },
-  filename: (_req, file, cb) => {
-    try {
-      const ext = (path.extname(file.originalname) || '.jpg').toLowerCase()
-      const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext) ? ext : '.jpg'
-      const uniqueSuffix = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
-      cb(null, uniqueSuffix)
-    } catch (err) {
-      cb(err instanceof Error ? err : new Error('Dosya adı oluşturulamadı'), '')
-    }
-  }
-})
-
-const uploadMiddleware = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
-  },
-
-  fileFilter: (_req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/jpg']
-    if (allowedMimes.includes(file.mimetype.toLowerCase()) || file.mimetype.startsWith('image/')) {
-      cb(null, true)
-    } else {
-      cb(new Error('Yalnızca geçerli bir görsel dosyası (JPG, PNG, WEBP, GIF, SVG) yükleyebilirsiniz.'))
-    }
-  }
-})
+const GORSEL_UZANTI = /\.(jpe?g|png|webp|gif|svg)$/i
 
 /**
  * API sunucusunu başlatır
  */
 export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
+  const JWT_SECRET = jwtGizliAnahtar()
   const app = express()
   const httpServer = createServer(app)
-  io = new Server(httpServer, { cors: { origin: '*' } })
+  io = new Server(httpServer, {
+    cors: { origin: (origin, cb) => cb(null, yerelKaynakMi(origin)) },
+  })
 
-  app.use(cors())
+  app.disable('x-powered-by')
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Referrer-Policy', 'no-referrer')
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+    next()
+  })
+
+  // Herkese açık menü ve görseller her kaynaktan okunabilir; diğer API'ler yalnızca bu makineden
+  const acikCors = cors()
+  const yerelCors = cors({ origin: (origin, cb) => cb(null, yerelKaynakMi(origin)) })
+  app.use((req, res, next) => {
+    const acik = /^\/(public\/)?uploads\//.test(req.path) || /^\/api\/(qrmenu|menu)$/.test(req.path)
+    return (acik ? acikCors : yerelCors)(req, res, next)
+  })
+
   app.use(express.json({ limit: '20mb' }))
-  app.use(express.urlencoded({ extended: true, limit: '20mb' }))
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
-  // ===== STATİK DOSYA SUNUCUSU & GÖRSEL RESOLVER =====
+  // ===== STATİK GÖRSEL SUNUCUSU =====
   // 1. Varsayılan görselleri userData dizinine senkronize et
   varsayilanGorselleriSenkronizeEt()
 
   const uploadsProductDir = uploadsDizininiGetir()
-  const uploadRoot = path.dirname(uploadsProductDir) // .../public/uploads veya .../uploads
+  const uploadRoot = path.dirname(uploadsProductDir) // .../public/uploads
   const tumUploadsDizinleri = statikUploadsDizinleriniGetir()
 
-  // 2. express.static ile tüm tespit edilen aday dizinleri sırayla sun
-  app.use('/uploads', express.static(uploadRoot))
-  app.use('/public/uploads', express.static(uploadRoot))
+  // Yüklenen dosyalar asla script çalıştıramaz (eski SVG yüklemeleri dahil)
+  const gorselBasliklari = (res: any) => {
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox")
+  }
+  const statikSecenek = { dotfiles: 'deny' as const, index: false as const, setHeaders: gorselBasliklari }
 
-  for (const d of tumUploadsDizinleri) {
-    app.use('/uploads', express.static(d))
-    app.use('/public/uploads', express.static(d))
-    // Eğer dizin public klasörüyse kökten de sun
-    if (path.basename(d) === 'uploads') {
-      const publicUstDizin = path.dirname(d)
-      app.use(express.static(publicUstDizin))
-    }
+  // 2. Yalnızca uploads dizinleri sunulur — üst klasörler (userData, resources) asla kökten açılmaz
+  for (const d of [uploadRoot, ...tumUploadsDizinleri.filter(d => d !== uploadRoot)]) {
+    app.use('/uploads', express.static(d, statikSecenek))
+    app.use('/public/uploads', express.static(d, statikSecenek))
   }
 
-  // 3. Fallback Resolver (404 önleyici): express.static bulamazsa tüm dizinlerde derin arama yap
+  // 3. Fallback: yalnızca dosya ADINA göre bilinen products dizinlerinde arar (yol gezintisi yok)
   app.get(['/uploads/*', '/public/uploads/*'], (req, res, next) => {
-    const safUrl = decodeURIComponent(req.path.replace(/^\/(public\/)?uploads\//, ''))
-    if (!safUrl) return next()
-
-    const dosyaAdi = path.basename(safUrl)
-
-    // A) Aktif products dizininde kontrol et
-    const hedefAktif = path.join(uploadsProductDir, dosyaAdi)
-    if (fs.existsSync(hedefAktif)) {
-      return res.sendFile(hedefAktif)
-    }
-
-    // B) Bilinen tüm uploads dizinlerinde ara
-    for (const d of tumUploadsDizinleri) {
-      const tamYol = path.join(d, safUrl)
-      if (fs.existsSync(tamYol)) {
-        return res.sendFile(tamYol)
-      }
-      const productsYolu = path.join(d, 'products', dosyaAdi)
-      if (fs.existsSync(productsYolu)) {
-        return res.sendFile(productsYolu)
-      }
-    }
-
-    next()
-  })
-
-
-  // ===== DOSYA YÜKLEME ENDPOINT'İ =====
-  app.post('/api/upload', (req, res) => {
-    uploadMiddleware.single('image')(req, res, async (err: any) => {
-      if (err) {
-        if (err instanceof multer.MulterError) {
-          if (err.code === 'LIMIT_FILE_SIZE') {
-            return yuklemeHataYaniti(res, 400, 'Görsel boyutu en fazla 10MB olabilir')
-          }
-          return yuklemeHataYaniti(res, 400, `Yükleme hatası: ${err.message}`)
-        }
-        return yuklemeHataYaniti(res, 400, err.message || 'Dosya yüklenemedi')
-      }
-
-      // Multipart dosya yüklendiyse
-      if (req.file) {
-        const resimYolu = `/uploads/products/${req.file.filename}`
-        return res.json({
-          basarili: true,
-          resim_yolu: resimYolu,
-          url: resimYolu,
-          dosya_adi: req.file.filename,
-          boyut: req.file.size
-        })
-      }
-
-      // Base64 JSON formatında gönderildiyse
-      if (req.body && req.body.image && typeof req.body.image === 'string') {
-        try {
-          const raw = req.body.image
-          let ext = '.jpg'
-          let base64Data = raw
-
-          if (raw.startsWith('data:image/')) {
-            const match = raw.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/)
-            if (match) {
-              ext = '.' + (match[1] === 'jpeg' ? 'jpg' : match[1])
-              base64Data = match[2]
-            }
-          }
-
-          const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext.toLowerCase()) ? ext.toLowerCase() : '.jpg'
-          const filename = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
-          const uploadPath = path.join(uploadsProductDir, filename)
-          const buffer = Buffer.from(base64Data, 'base64')
-
-          if (!buffer.length) throw new Error('Görsel verisi boş')
-          await fs.promises.writeFile(uploadPath, buffer)
-
-          const resimYolu = `/uploads/products/${filename}`
-          return res.json({
-            basarili: true,
-            resim_yolu: resimYolu,
-            url: resimYolu,
-            dosya_adi: filename,
-            boyut: buffer.length
-          })
-        } catch (base64Err: any) {
-          return yuklemeHataYaniti(res, 500, `Base64 kaydetme hatası: ${base64Err.message}`)
-        }
-      }
-
-      return yuklemeHataYaniti(res, 400, 'Yüklenecek görsel dosyası bulunamadı')
-    })
-  })
-
-  // URL'den görsel alma: dış bağlantı kalıcı olarak kullanılmaz; kırpma sonrası
-  // istemcinin gönderdiği JPEG, yukarıdaki /api/upload ile yerel uploads dizinine kaydedilir.
-  app.post('/api/upload/from-url', async (req, res) => {
-    const kaynakUrl = typeof req.body?.url === 'string' ? req.body.url.trim() : ''
-    let url: URL
+    let dosyaAdi: string
     try {
-      url = new URL(kaynakUrl)
-      if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Geçersiz protokol')
-      if (['localhost', '127.0.0.1', '::1'].includes(url.hostname.toLowerCase())) throw new Error('Yerel adreslere izin verilmiyor')
+      dosyaAdi = path.basename(decodeURIComponent(req.path))
     } catch {
-      return res.status(400).json({ basarili: false, hata: 'Geçerli bir HTTP(S) görsel bağlantısı girin' })
+      return next()
     }
+    if (!dosyaAdi || dosyaAdi.startsWith('.') || !GORSEL_UZANTI.test(dosyaAdi)) return next()
 
-    const controller = new AbortController()
-    const zamanAsimi = setTimeout(() => controller.abort(), 5_000)
-    try {
-      const cevap = await fetch(url.toString(), { signal: controller.signal, redirect: 'follow' })
-      if (!cevap.ok) return res.status(400).json({ basarili: false, hata: `Görsel indirilemedi (HTTP ${cevap.status})` })
-
-      const contentType = (cevap.headers.get('content-type') || '').split(';')[0].trim().toLowerCase()
-      const izinliTurler = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
-      if (!izinliTurler.includes(contentType)) {
-        return res.status(400).json({ basarili: false, hata: 'Bağlantı geçerli bir görsel dosyası döndürmüyor' })
-      }
-
-      const contentLength = Number(cevap.headers.get('content-length') || 0)
-      if (contentLength > 10 * 1024 * 1024) {
-        return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
-      }
-
-      const buffer = Buffer.from(await cevap.arrayBuffer())
-      if (!buffer.length || buffer.length > 10 * 1024 * 1024) {
-        return res.status(400).json({ basarili: false, hata: 'Görsel boyutu en fazla 10MB olabilir' })
-      }
-
-      return res.json({
-        basarili: true,
-        image: `data:${contentType};base64,${buffer.toString('base64')}`,
-        boyut: buffer.length
-      })
-    } catch (err: any) {
-      const hata = err?.name === 'AbortError' ? 'Görsel indirme zaman aşımına uğradı' : 'Görsel bağlantısından indirilemedi'
-      return res.status(400).json({ basarili: false, hata })
-    } finally {
-      clearTimeout(zamanAsimi)
-    }
+    const adaylar = [
+      path.join(uploadsProductDir, dosyaAdi),
+      ...tumUploadsDizinleri.map(d => path.join(d, 'products', dosyaAdi)),
+    ]
+    const bulunan = adaylar.find(a => fs.existsSync(a))
+    if (!bulunan) return next()
+    gorselBasliklari(res)
+    return res.sendFile(bulunan)
   })
 
-  // JWT doğrulama middleware
+  // JWT doğrulama middleware — devre dışı bırakılan personelin token'ı da reddedilir
   const jwtDogrula = (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.replace('Bearer ', '')
     if (!token) return res.status(401).json({ hata: 'Yetkilendirme gerekli' })
     try {
-      req.kullanici = jwt.verify(token, JWT_SECRET)
+      const kullanici = jwt.verify(token, JWT_SECRET) as any
+      const aktif = veritabaniGetir().prepare('SELECT rol FROM personel WHERE id = ? AND aktif = 1').get(kullanici?.id) as any
+      if (!aktif) return res.status(401).json({ hata: 'Oturum geçersiz' })
+      req.kullanici = { ...kullanici, rol: aktif.rol }
       next()
     } catch {
       res.status(401).json({ hata: 'Geçersiz token' })
@@ -382,34 +252,46 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     res.send(qrMenuHTML())
   })
 
-  // PIN ile giriş (mobil garsonlar için)
+  // PIN ile giriş (mobil garsonlar için) — istemci başına artan kilit
   app.post('/api/garson/pin-giris', (req, res) => {
-    const db = veritabaniGetir()
-    const { pin_kodu } = req.body
-    const personel = db.prepare('SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1').get(pin_kodu) as any
-    if (!personel) return res.status(401).json({ hata: 'Geçersiz PIN kodu' })
+    const anahtar = 'garson:' + istemciAdresi(req)
+    const izin = pinGirisLimiti.izinVarMi(anahtar)
+    if (!izin.izinli) return res.status(429).json({ hata: `Çok fazla deneme. ${izin.beklemeSn} sn sonra tekrar deneyin` })
 
+    const pin_kodu = String(req.body?.pin_kodu || '').trim()
+    const db = veritabaniGetir()
+    const personel = pin_kodu
+      ? db.prepare('SELECT * FROM personel WHERE pin_kodu = ? AND aktif = 1').get(pin_kodu) as any
+      : null
+    if (!personel) {
+      const kilitSn = pinGirisLimiti.hatali(anahtar)
+      if (kilitSn) return res.status(429).json({ hata: `Çok fazla hatalı deneme. ${kilitSn} sn kilitlendi` })
+      return res.status(401).json({ hata: 'Geçersiz PIN kodu' })
+    }
+
+    pinGirisLimiti.basarili(anahtar)
     const token = jwt.sign({ id: personel.id, rol: personel.rol }, JWT_SECRET, { expiresIn: '12h' })
-    const { sifre_hash, ...guvenli } = personel
-    res.json({ personel: guvenli, token })
+    res.json({ personel: personelGuvenli(personel), token })
   })
 
   // Giriş endpoint'i (mobil uygulamalar için)
   app.post('/api/giris', (req, res) => {
-    const db = veritabaniGetir()
-    const { kullanici_adi, sifre } = req.body
-    const personel = db.prepare('SELECT * FROM personel WHERE kullanici_adi = ? AND aktif = 1').get(kullanici_adi) as any
-    if (!personel) return res.status(401).json({ hata: 'Kullanıcı bulunamadı' })
+    const anahtar = 'giris:' + istemciAdresi(req)
+    const izin = pinGirisLimiti.izinVarMi(anahtar)
+    if (!izin.izinli) return res.status(429).json({ hata: `Çok fazla deneme. ${izin.beklemeSn} sn sonra tekrar deneyin` })
 
-    // Basit şifre kontrolü (üretimde bcrypt kullanılmalı)
+    const db = veritabaniGetir()
+    const { kullanici_adi, sifre } = req.body || {}
+    const personel = db.prepare('SELECT * FROM personel WHERE kullanici_adi = ? AND aktif = 1').get(String(kullanici_adi || '')) as any
     const bcryptjs = require('bcryptjs')
-    if (!bcryptjs.compareSync(sifre, personel.sifre_hash)) {
-      return res.status(401).json({ hata: 'Hatalı şifre' })
+    if (!personel || typeof sifre !== 'string' || !bcryptjs.compareSync(sifre, personel.sifre_hash)) {
+      pinGirisLimiti.hatali(anahtar)
+      return res.status(401).json({ hata: 'Kullanıcı adı veya şifre hatalı' })
     }
 
+    pinGirisLimiti.basarili(anahtar)
     const token = jwt.sign({ id: personel.id, rol: personel.rol }, JWT_SECRET, { expiresIn: '12h' })
-    const { sifre_hash, ...guvenli } = personel
-    res.json({ personel: guvenli, token })
+    res.json({ personel: personelGuvenli(personel), token })
   })
 
   // ===== BOSS MODÜLÜ (salt okunur patron paneli) =====
@@ -477,128 +359,60 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     }
   }
 
-  // Sipariş gönder
+  function garsonHataYaniti(res: any, hata: any) {
+    if (hata instanceof IslemHatasi) return res.status(400).json({ hata: hata.message })
+    console.error('❌ Garson API hatası:', hata)
+    return res.status(500).json({ hata: 'İşlem sırasında beklenmeyen bir hata oluştu' })
+  }
+
+  // Sipariş gönder — fiyatlar sunucuda ürün/varyant/opsiyon kayıtlarından hesaplanır
   app.post('/api/garson/siparis', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
-    const { masa_id, siparisler } = req.body
+    const masaId = Number(req.body?.masa_id)
+    const siparisler = req.body?.siparisler
     const personelId = req.kullanici.id
 
     try {
-      // Masada açık hesap var mı kontrol et
-      let hesap = db.prepare("SELECT id FROM hesap WHERE masa_id = ? AND durum = 'acik'").get(masa_id) as any
-      const masa = db.prepare("SELECT numara FROM masa WHERE id = ?").get(masa_id) as any
-      const masaNo = masa ? masa.numara : '?'
+      const masa = db.prepare('SELECT numara FROM masa WHERE id = ? AND aktif = 1').get(masaId) as any
+      if (!masa) throw new IslemHatasi('Masa bulunamadı')
 
-      if (!hesap) {
-        // Yeni hesap aç
-        const tarih = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-        const hesapNo = `HSP-${tarih}-${Date.now().toString(36)}`
-        const sonuc = db.prepare(`
-          INSERT INTO hesap (masa_id, hesap_no, hesap_tipi, personel_id) VALUES (?, ?, 'masa', ?)
-        `).run(masa_id, hesapNo, personelId)
-        hesap = { id: Number(sonuc.lastInsertRowid) }
-        db.prepare("UPDATE masa SET durum = 'dolu' WHERE id = ?").run(masa_id)
-      }
-
-      const yazdirSiparisler: any[] = []
-
-      // Siparişleri ekle
-      for (const sip of siparisler) {
-        const urun = db.prepare('SELECT ad, fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
-        if (!urun) continue
-
-        const isKg = sip.secilenSatisTuru === 'kg'
-        const birimFiyat = sip.birim_fiyat !== undefined ? Number(sip.birim_fiyat) : urun.fiyat
-        const porsiyon = isKg ? 1 : (sip.porsiyon || 1)
-        const toplamFiyat = sip.toplam_fiyat !== undefined ? Number(sip.toplam_fiyat) : (birimFiyat * (sip.miktar || 1) * porsiyon)
-        const urunGosterimAdi = isKg && sip.gramaj ? `${sip.gramaj} KG ${urun.ad}` : urun.ad
-
-        yazdirSiparisler.push({
-          urun_adi: urunGosterimAdi,
-          miktar: sip.miktar || 1,
-          notlar: sip.notlar || '',
-          ikram: sip.ikram || false,
-          porsiyon: porsiyon
-        })
-
-        const sonuc = db.prepare(`
-          INSERT INTO siparis (hesap_id, urun_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, yazici_grup, ikram, ikram_onaylayan_id, porsiyon)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          hesap.id,
-          sip.urun_id,
-          sip.miktar || 1,
-          birimFiyat,
-          toplamFiyat,
-          personelId,
-          sip.notlar || null,
-          urun.yazici_grup,
-          sip.ikram ? 1 : 0,
-          sip.ikram ? personelId : null,
-          porsiyon
-        )
-
-        const yeniSiparisId = Number(sonuc.lastInsertRowid)
-
-        // Otomatik stok düşümü ve reçete maliyet hesabı
-        siparisStokDusVeMaliyetHesapla(db, {
-          siparisId: yeniSiparisId,
-          urunId: sip.urun_id,
-          miktar: sip.miktar || 1,
-          porsiyon: porsiyon,
-          personelId: personelId,
-          hesapId: hesap.id,
-          urunAdi: urun.ad,
-        })
-      }
-
-      // Hesap toplamını güncelle
-      const toplam = db.prepare("SELECT COALESCE(SUM(toplam_fiyat), 0) as t FROM siparis WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0").get(hesap.id) as any
-      db.prepare('UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?').run(toplam.t, toplam.t, hesap.id)
+      const ikramIzinli = yetkiVarMi(db, req.kullanici.rol, 'pos', 'ikram')
+      const { hesapId, kalemler } = db.transaction(() => {
+        const hesapId = masaHesabiniGetirVeyaAc(db, masaId, personelId)
+        return { hesapId, kalemler: siparisleriEkle(db, hesapId, personelId, siparisler, { ikramIzinli }) }
+      })()
 
       // Tüm ekranlara (Masa listesi, POS vb.) anlık yenileme sinyali gönder
       broadcastToWindows('masalar:guncellendi')
-      broadcastToWindows('siparis:guncellendi', hesap.id, masa_id)
+      broadcastToWindows('siparis:guncellendi', hesapId, masaId)
       broadcastToWindows('mutfak:yeni-siparis') // Kitchen screen
 
-      // Mutfak yazıcısı için özel istek (Eğer eklenen kalem varsa)
-      if (yazdirSiparisler.length > 0) {
-        broadcastToWindows('mutfak:yazdir-istek', yazdirSiparisler, masaNo, [])
-      }
+      // Mutfak yazıcısı için özel istek
+      broadcastToWindows('mutfak:yazdir-istek', kalemler.map(k => ({
+        urun_adi: k.urun_adi,
+        miktar: k.miktar,
+        notlar: k.notlar,
+        ikram: k.ikram,
+        porsiyon: k.porsiyon,
+      })), masa.numara, [])
 
-      res.json({ basarili: true, hesap_id: hesap.id })
+      res.json({ basarili: true, hesap_id: hesapId })
     } catch (hata: any) {
-      res.status(500).json({ hata: hata.message })
+      garsonHataYaniti(res, hata)
     }
   })
 
-  // Sipariş iptal et
+  // Sipariş iptal et — yetki tablosunda pos/iptal izni gerekir
   app.post('/api/garson/siparis-iptal', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
-    const { siparis_id, iptal_nedeni } = req.body
+    const siparisId = Number(req.body?.siparis_id)
+    const iptalNedeni = req.body?.iptal_nedeni
 
     try {
-      const siparis = db.prepare(`
-        SELECT s.hesap_id, s.miktar, s.notlar, u.ad as urun_adi, h.masa_id, m.numara as masa_numara 
-        FROM siparis s
-        JOIN urun u ON u.id = s.urun_id
-        JOIN hesap h ON h.id = s.hesap_id
-        JOIN masa m ON m.id = h.masa_id
-        WHERE s.id = ?
-      `).get(siparis_id) as any
-
-      if (!siparis) {
-        return res.status(404).json({ hata: 'Sipariş bulunamadı' })
+      if (!yetkiVarMi(db, req.kullanici.rol, 'pos', 'iptal')) {
+        return res.status(403).json({ hata: 'Sipariş iptali için yetkiniz yok — yöneticiye başvurun' })
       }
-
-      // Stoğa iade et
-      siparisStokGeriYukle(db, siparis_id)
-
-      db.prepare("UPDATE siparis SET durum = 'iptal', iptal_nedeni = ? WHERE id = ?").run(iptal_nedeni || 'Garson tarafından iptal', siparis_id)
-
-      // Hesap toplamını güncelle
-      const toplam = db.prepare("SELECT COALESCE(SUM(toplam_fiyat), 0) as t FROM siparis WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0").get(siparis.hesap_id) as any
-      db.prepare('UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?').run(toplam.t, toplam.t, siparis.hesap_id)
+      const siparis = siparisIptalEt(db, siparisId, iptalNedeni || 'Garson tarafından iptal', req.kullanici.id)
 
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
@@ -606,50 +420,37 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       broadcastToWindows('mutfak:yeni-siparis')
 
       // İptal fişini mutfağa yazdır
-      const yazdirIptal = [{
+      broadcastToWindows('mutfak:yazdir-istek', [], siparis.masa_numara, [{
         urun_adi: siparis.urun_adi,
         miktar: siparis.miktar,
-        notlar: iptal_nedeni ? `İPTAL NEDENİ: ${iptal_nedeni}` : 'Garson İptali'
-      }]
-      broadcastToWindows('mutfak:yazdir-istek', [], siparis.masa_numara, yazdirIptal)
+        notlar: iptalNedeni ? `İPTAL NEDENİ: ${iptalNedeni}` : 'Garson İptali'
+      }])
 
       res.json({ basarili: true })
     } catch (hata: any) {
-      res.status(500).json({ hata: hata.message })
+      garsonHataYaniti(res, hata)
     }
   })
 
-  // Sipariş ikram durumunu değiştir
+  // Sipariş ikram durumunu değiştir — yetki tablosunda pos/ikram izni gerekir
   app.post('/api/garson/siparis-ikram', jwtDogrula, (req: any, res) => {
     const db = veritabaniGetir()
-    const { siparis_id, ikram } = req.body
-    const personelId = req.kullanici.id
+    const siparisId = Number(req.body?.siparis_id)
 
     try {
-      const siparis = db.prepare(`
-        SELECT s.hesap_id, h.masa_id 
-        FROM siparis s
-        JOIN hesap h ON h.id = s.hesap_id
-        WHERE s.id = ?
-      `).get(siparis_id) as any
-      if (!siparis) {
-        return res.status(404).json({ hata: 'Sipariş bulunamadı' })
+      if (!yetkiVarMi(db, req.kullanici.rol, 'pos', 'ikram')) {
+        return res.status(403).json({ hata: 'İkram için yetkiniz yok — yöneticiye başvurun' })
       }
-
-      db.prepare('UPDATE siparis SET ikram = ?, ikram_onaylayan_id = ? WHERE id = ?').run(ikram ? 1 : 0, ikram ? personelId : null, siparis_id)
-
-      // Hesap toplamını güncelle
-      const toplam = db.prepare("SELECT COALESCE(SUM(toplam_fiyat), 0) as t FROM siparis WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0").get(siparis.hesap_id) as any
-      db.prepare('UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?').run(toplam.t, toplam.t, siparis.hesap_id)
+      const sonuc = siparisIkramAyarla(db, siparisId, Boolean(req.body?.ikram), req.kullanici.id)
 
       // Anlık arayüz güncellemeleri
       broadcastToWindows('masalar:guncellendi')
-      broadcastToWindows('siparis:guncellendi', siparis.hesap_id, siparis.masa_id)
+      broadcastToWindows('siparis:guncellendi', sonuc.hesap_id, sonuc.masa_id)
       broadcastToWindows('mutfak:yeni-siparis')
 
       res.json({ basarili: true })
     } catch (hata: any) {
-      res.status(500).json({ hata: hata.message })
+      garsonHataYaniti(res, hata)
     }
   })
 
@@ -673,6 +474,12 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
   })
 
   // ===== İKİNCİ KASA / LAN IPC KÖPRÜSÜ =====
+  // Yalnızca yerel ağdan doğrudan erişilir; Cloudflare tüneli vb. vekiller üzerinden kapalıdır.
+  app.use(['/api/ipc', '/api/kasa'], (req, res, next) => {
+    if (vekilIstegiMi(req)) return res.status(403).json({ basarili: false, hata: 'Bu servis yalnızca yerel ağdan kullanılabilir' })
+    next()
+  })
+
   app.get('/api/kasa/ping', (_req, res) => {
     const t = terminalAyarYukle()
     let isletme = 'ETİBOL POS'
@@ -697,14 +504,19 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
     if (t.egitim) {
       return res.status(503).json({ basarili: false, hata: 'Ana kasa eğitim modunda. İkinci kasa bağlanamaz.' })
     }
+    const anahtar = 'lan:' + istemciAdresi(req)
+    const izin = lanJetonLimiti.izinVarMi(anahtar)
+    if (!izin.izinli) return res.status(429).json({ basarili: false, hata: `Çok fazla hatalı jeton. ${izin.beklemeSn} sn bekleyin` })
+
     const { kanal, args, token } = req.body || {}
-    if (!token || token !== t.lanToken) {
+    if (!guvenliEsitMi(token, t.lanToken)) {
+      lanJetonLimiti.hatali(anahtar)
       return res.status(401).json({ basarili: false, hata: 'LAN jetonu hatalı' })
     }
     if (!kanal || typeof kanal !== 'string') {
       return res.status(400).json({ basarili: false, hata: 'Kanal gerekli' })
     }
-    if (yerelKanalMi(kanal)) {
+    if (!uzakKanalIzinliMi(kanal)) {
       return res.status(403).json({ basarili: false, hata: 'Bu kanal uzaktan çağrılamaz' })
     }
     try {
@@ -712,6 +524,20 @@ export async function apiSunucusunuBaslat(port: number = 3847): Promise<void> {
       res.json(sonuc)
     } catch (hata: any) {
       res.status(500).json({ basarili: false, hata: hata?.message || 'IPC hatası' })
+    }
+  })
+
+  // ===== SOCKET.IO KİMLİK DOĞRULAMA =====
+  // Canlı sipariş olaylarını yalnızca giriş yapmış garson / patron telefonları alır
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token
+    try {
+      const kullanici = jwt.verify(String(token || ''), JWT_SECRET) as any
+      const aktif = veritabaniGetir().prepare('SELECT 1 FROM personel WHERE id = ? AND aktif = 1').get(kullanici?.id)
+      if (!aktif) return next(new Error('yetkisiz'))
+      next()
+    } catch {
+      next(new Error('yetkisiz'))
     }
   })
 

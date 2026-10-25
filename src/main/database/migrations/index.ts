@@ -15,6 +15,7 @@ import { migration008 } from './008_add_gramaj_and_satis_birim_to_siparis'
 import { migration009 } from './009_add_porsiyon_and_kilo_fiyati_to_urun'
 import { migration010 } from './010_add_category_order'
 import { migration011 } from './011_operations_modules'
+import { migration013 } from './013_payment_change_and_discount_rule'
 
 export interface Migration {
   /** Benzersiz sürüm numarası (sıralı artan) */
@@ -40,4 +41,5 @@ export const migrations: Migration[] = [
   migration009,
   migration010,
   migration011,
+  migration013,
 ]

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Crop, Move, RotateCcw, ZoomIn } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import { Modal } from '../../../components/ui/Modal'
+import { ipcInvoke } from '../../../hooks/useIPC'
+import { MENU_KANALLARI } from '../../../../common/ipc-channels'
 
 const ORAN = 16 / 9
 const CIKTI_GENISLIK = 1280
@@ -40,14 +42,11 @@ const kaynakDogrula = (kaynak: string) => {
 }
 
 const proxyIleGorselHazirla = async (kaynak: string, signal: AbortSignal): Promise<string> => {
-  const cevap = await fetch('http://localhost:3847/api/upload/from-url', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: kaynak }),
-    signal
+  const iptal = new Promise<never>((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(new Error('Görsel hazırlanırken zaman aşımı oluştu.')), { once: true })
   })
-  const veri = await cevap.json().catch(() => null)
-  if (!cevap.ok || !veri?.basarili || typeof veri.image !== 'string' || !veriUrlGecerliMi(veri.image)) {
+  const veri = await Promise.race([ipcInvoke<any>(MENU_KANALLARI.RESIM_URL_GETIR, kaynak), iptal])
+  if (!veri?.basarili || typeof veri.image !== 'string' || !veriUrlGecerliMi(veri.image)) {
     throw new Error(veri?.hata || 'Görsel sunucuda hazırlanamadı.')
   }
   return veri.image

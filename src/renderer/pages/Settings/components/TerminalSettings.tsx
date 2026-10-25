@@ -14,6 +14,7 @@ export default function TerminalSettings() {
   const [anaUrl, setAnaUrl] = useState('')
   const [lanToken, setLanToken] = useState('')
   const [egitim, setEgitim] = useState(false)
+  const [gpu, setGpu] = useState<'otomatik' | 'acik' | 'kapali'>('otomatik')
   const [yerelIp, setYerelIp] = useState('')
   const [testSonuc, setTestSonuc] = useState('')
 
@@ -24,6 +25,7 @@ export default function TerminalSettings() {
     setAnaUrl(t.anaUrl || '')
     setLanToken(t.lanToken || '')
     setEgitim(Boolean(t.egitim))
+    setGpu(t.gpu || 'otomatik')
     try {
       const ipRes = await ipcInvoke<any>(AG_KANALLARI.YEREL_IP_GETIR)
       setYerelIp(ipRes?.ip || '')
@@ -40,7 +42,7 @@ export default function TerminalSettings() {
       return
     }
     const res = await ipcInvoke<any>(TERMINAL_KANALLARI.KAYDET, {
-      rol, anaUrl, lanToken, egitim: rol === 'ikinci' ? false : egitim, yenidenBaslat,
+      rol, anaUrl, lanToken, egitim: rol === 'ikinci' ? false : egitim, gpu, yenidenBaslat,
     })
     if (!res?.basarili) return error('Hata', res?.hata)
     await storeYukle()
@@ -125,6 +127,22 @@ export default function TerminalSettings() {
           />
           Eğitim modunu aç {rol === 'ikinci' && <span className="text-surface-500">(ikinci kasada yok)</span>}
         </label>
+      </div>
+
+      <div className="bg-[#110F0C] border border-[#322C26] rounded-xl p-4">
+        <div className="font-semibold">Donanım hızlandırma (ekran kartı)</div>
+        <p className="text-xs text-surface-400 mt-1">
+          Otomatik: Windows 7/8’de kapalı, Windows 10/11’de açık. Ekran beyaz/siyah kalıyorsa “Kapalı” seçin. Yeniden başlatma gerekir.
+        </p>
+        <select
+          value={gpu}
+          onChange={(e) => setGpu(e.target.value as 'otomatik' | 'acik' | 'kapali')}
+          className="mt-3 h-10 px-3 rounded-lg bg-[#0B0A08] border border-[#322C26] text-sm"
+        >
+          <option value="otomatik">Otomatik</option>
+          <option value="acik">Açık</option>
+          <option value="kapali">Kapalı</option>
+        </select>
       </div>
 
       <div className="flex gap-2">

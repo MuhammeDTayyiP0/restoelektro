@@ -2,6 +2,16 @@ import { ipcInvoke } from '../hooks/useIPC'
 import { YAZICI_KANALLARI, AYAR_KANALLARI } from '../../common/ipc-channels'
 import { formatPara } from './formatters'
 
+/** Fiş HTML'ine basılan metinleri kaçırır (telefondan gelen sipariş notları dahil) */
+function htmlKacir(deger: unknown): string {
+  return String(deger ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export interface MutfakSablonConfig {
   fontSize: 'small' | 'normal' | 'large';
   paperWidth: '58mm' | '80mm';
@@ -100,7 +110,7 @@ export function generateMutfakHtml(
   const smallSize = getFontSizePx(config.fontSize, 'small_text');
 
   const tarih = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  const baslik = (masaNo && config.showTable) ? `MASA ${masaNo}` : 'YENI SIPARIS';
+  const baslik = (masaNo && config.showTable) ? `MASA ${htmlKacir(masaNo)}` : 'YENI SIPARIS';
 
   let html = `
     <html>
@@ -132,16 +142,16 @@ export function generateMutfakHtml(
   if (siparisler && siparisler.length > 0) {
     html += `<div class="section-title">[ YENİ SİPARİŞLER ]</div>`;
     for (const siparis of siparisler) {
-      const urunAdi = siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün';
+      const urunAdi = htmlKacir(siparis.urun?.ad || siparis.urun_adi || 'Bilinmeyen Ürün');
       const miktarStr = formatMiktarBirim(siparis);
-      const varyantAd = siparis.varyant?.ad || siparis.varyant_adi || '';
+      const varyantAd = htmlKacir(siparis.varyant?.ad || siparis.varyant_adi || '');
       
       let opsiyonHTML = '';
       const opsiyonlar = siparis.opsiyonlar || [];
       if (opsiyonlar.length > 0) {
-        opsiyonHTML = opsiyonlar.map((o: any) => `<div class="option">+ ${o.ad || o.opsiyon_adi}</div>`).join('');
+        opsiyonHTML = opsiyonlar.map((o: any) => `<div class="option">+ ${htmlKacir(o.ad || o.opsiyon_adi)}</div>`).join('');
       }
-      const not = siparis.notlar || '';
+      const not = htmlKacir(siparis.notlar || '');
 
       html += `
         <div class="item">
@@ -160,14 +170,14 @@ export function generateMutfakHtml(
   if (iptaller && iptaller.length > 0) {
     html += `<div class="section-title" style="color: #000; background: #eee;">[ İPTAL EDİLENLER ]</div>`;
     for (const iptal of iptaller) {
-      const urunAdi = iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün';
+      const urunAdi = htmlKacir(iptal.urun?.ad || iptal.urun_adi || 'Bilinmeyen Ürün');
       const miktarStr = formatMiktarBirim(iptal);
-      const varyantAd = iptal.varyant?.ad || iptal.varyant_adi || '';
+      const varyantAd = htmlKacir(iptal.varyant?.ad || iptal.varyant_adi || '');
       
       let opsiyonHTML = '';
       const opsiyonlar = iptal.opsiyonlar || [];
       if (opsiyonlar.length > 0) {
-        opsiyonHTML = opsiyonlar.map((o: any) => `<div class="option cancelled-item">+ ${o.ad || o.opsiyon_adi}</div>`).join('');
+        opsiyonHTML = opsiyonlar.map((o: any) => `<div class="option cancelled-item">+ ${htmlKacir(o.ad || o.opsiyon_adi)}</div>`).join('');
       }
 
       html += `
@@ -237,10 +247,10 @@ export function generateAdisyonHtml(
       </head>
       <body>
         <div class="header text-center">
-          ${config.showRestoName ? `<h1 class="resto-name">${restoranBilgileri.ad || 'ETIBOL RESTO'}</h1>` : ''}
+          ${config.showRestoName ? `<h1 class="resto-name">${htmlKacir(restoranBilgileri.ad || 'ETIBOL RESTO')}</h1>` : ''}
           ${config.showRestoInfo ? `
-            ${restoranBilgileri.telefon ? `<div class="resto-info">Tel: ${restoranBilgileri.telefon}</div>` : ''}
-            ${restoranBilgileri.adres ? `<div class="resto-info">${restoranBilgileri.adres}</div>` : ''}
+            ${restoranBilgileri.telefon ? `<div class="resto-info">Tel: ${htmlKacir(restoranBilgileri.telefon)}</div>` : ''}
+            ${restoranBilgileri.adres ? `<div class="resto-info">${htmlKacir(restoranBilgileri.adres)}</div>` : ''}
           ` : ''}
           <div class="table-name">${baslik}</div>
           ${(config.showTime || config.showOrderNo) ? `
@@ -258,13 +268,13 @@ export function generateAdisyonHtml(
     const isIkram = siparis.ikram === 1;
     const fiyatStr = isIkram ? 'IKRAM' : formatPara(siparis.toplam_fiyat);
     const miktarStr = formatMiktarBirim(siparis);
-    const urunAdi = siparis.urun_adi || siparis.urun?.ad || 'Ürün';
+    const urunAdi = htmlKacir(siparis.urun_adi || siparis.urun?.ad || 'Ürün');
 
     html += `
       <div class="item">
         <div class="item-details">
           <span class="item-name"><span class="qty" style="display: inline-block; min-width: 68px; font-family: monospace; font-weight: bold;">${miktarStr}</span> ${urunAdi}</span>
-          ${siparis.varyant_adi ? `<span class="item-sub">[${siparis.varyant_adi}]</span>` : ''}
+          ${siparis.varyant_adi ? `<span class="item-sub">[${htmlKacir(siparis.varyant_adi)}]</span>` : ''}
         </div>
         ${config.showPrices ? `
         <div class="item-price" ${isIkram ? 'style="text-decoration: line-through"' : ''}>
@@ -457,7 +467,7 @@ export function generateThermalQRHtml(
       subTag = 'Mobil Ciro & Masa Takibi';
     }
 
-    const masaLabel = item.masaNo ? `MASA: ${item.masaNo}` : item.title;
+    const masaLabel = htmlKacir(item.masaNo ? `MASA: ${item.masaNo}` : item.title);
     const bolumText = item.bolumAdi ? `(${item.bolumAdi})` : '';
 
     itemsHtml += `
@@ -567,7 +577,7 @@ export function generateStandardQRHtml(
       subTag = 'Mobil Ciro Takibi İçin Okutunuz';
     }
 
-    const masaLabel = item.masaNo ? `MASA: ${item.masaNo}` : item.title;
+    const masaLabel = htmlKacir(item.masaNo ? `MASA: ${item.masaNo}` : item.title);
     const bolumText = item.bolumAdi ? item.bolumAdi : '';
 
     cardsHtml += `

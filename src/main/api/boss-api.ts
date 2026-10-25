@@ -6,13 +6,9 @@
 
 import jwt from 'jsonwebtoken'
 import { veritabaniGetir } from '../database/connection'
+import { istemciAdresi, pinGirisLimiti } from './giris-limiti'
 
 const PATRON_ROLLER = new Set(['admin', 'mudur'])
-const PIN_MAX_HATA = 5
-const PIN_KILIT_MS = 90_000
-
-type PinKilit = { hatali: number; kilitBitis: number }
-const pinKilitleri = new Map<string, PinKilit>()
 
 function bugunYerel(): string {
   const d = new Date()
@@ -30,13 +26,6 @@ function tarihAralik(req: any): { baslangic: string; bitis: string } {
   return { baslangic, bitis }
 }
 
-function istemciIp(req: any): string {
-  const cf = req.headers?.['cf-connecting-ip']
-  if (typeof cf === 'string' && cf.trim()) return cf.trim()
-  const xff = req.headers?.['x-forwarded-for']
-  if (typeof xff === 'string' && xff.trim()) return xff.split(',')[0].trim()
-  return String(req.ip || req.socket?.remoteAddress || 'local')
-}
 
 function vardiyaOzet(db: any, vardiya: any) {
   const bas = vardiya.acilis_zamani
@@ -255,10 +244,13 @@ export function bossRotalariniKaydet(app: any, jwtSecret: string): void {
     if (!token) return res.status(401).json({ hata: 'Yetkilendirme gerekli' })
     try {
       const kullanici = jwt.verify(token, jwtSecret) as any
-      if (!PATRON_ROLLER.has(String(kullanici?.rol || ''))) {
+      // Rol ve aktiflik token'dan değil güncel personel kaydından okunur
+      const guncel = veritabaniGetir().prepare('SELECT rol FROM personel WHERE id = ? AND aktif = 1').get(kullanici?.id) as any
+      if (!guncel) return res.status(401).json({ hata: 'Oturum geçersiz' })
+      if (!PATRON_ROLLER.has(String(guncel.rol))) {
         return res.status(403).json({ hata: 'Bu panel yalnızca yönetici ve müdür içindir' })
       }
-      req.kullanici = kullanici
+      req.kullanici = { ...kullanici, rol: guncel.rol }
       next()
     } catch {
       res.status(401).json({ hata: 'Geçersiz token' })
@@ -266,12 +258,10 @@ export function bossRotalariniKaydet(app: any, jwtSecret: string): void {
   }
 
   app.post('/api/boss/pin-giris', (req: any, res: any) => {
-    const ip = istemciIp(req)
-    const kilit = pinKilitleri.get(ip)
-    const simdi = Date.now()
-    if (kilit && kilit.kilitBitis > simdi) {
-      const sn = Math.ceil((kilit.kilitBitis - simdi) / 1000)
-      return res.status(429).json({ hata: `Çok fazla deneme. ${sn} sn sonra tekrar deneyin` })
+    const anahtar = 'boss:' + istemciAdresi(req)
+    const izin = pinGirisLimiti.izinVarMi(anahtar)
+    if (!izin.izinli) {
+      return res.status(429).json({ hata: `Çok fazla deneme. ${izin.beklemeSn} sn sonra tekrar deneyin` })
     }
 
     const pin_kodu = String(req.body?.pin_kodu || '').trim()
@@ -284,26 +274,20 @@ export function bossRotalariniKaydet(app: any, jwtSecret: string): void {
       ).get(pin_kodu) as any
 
       if (!personel || !PATRON_ROLLER.has(String(personel.rol))) {
-        const onceki = pinKilitleri.get(ip) || { hatali: 0, kilitBitis: 0 }
-        const hatali = (onceki.kilitBitis && onceki.kilitBitis < simdi) ? 1 : onceki.hatali + 1
-        const kayit: PinKilit = {
-          hatali,
-          kilitBitis: hatali >= PIN_MAX_HATA ? simdi + PIN_KILIT_MS : 0,
-        }
-        pinKilitleri.set(ip, kayit)
-        if (kayit.kilitBitis) {
-          return res.status(429).json({ hata: 'Çok fazla hatalı deneme. 90 saniye kilitlendi' })
+        const kilitSn = pinGirisLimiti.hatali(anahtar)
+        if (kilitSn) {
+          return res.status(429).json({ hata: `Çok fazla hatalı deneme. ${kilitSn} saniye kilitlendi` })
         }
         return res.status(401).json({ hata: 'Geçersiz yönetici PIN kodu' })
       }
 
-      pinKilitleri.delete(ip)
+      pinGirisLimiti.basarili(anahtar)
       const token = jwt.sign(
         { id: personel.id, rol: personel.rol, ad: personel.ad, soyad: personel.soyad },
         jwtSecret,
         { expiresIn: '12h' }
       )
-      const { sifre_hash, ...guvenli } = personel
+      const { sifre_hash, pin_kodu: _pin, ...guvenli } = personel
       res.json({ personel: guvenli, token })
     } catch (hata: any) {
       res.status(500).json({ hata: hata.message || 'Giriş yapılamadı' })

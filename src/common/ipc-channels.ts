@@ -30,6 +30,7 @@ export const MENU_KANALLARI = {
   URUN_SIL: 'menu:urun-sil',
   URUN_ARA: 'menu:urun-ara',
   RESIM_YUKLE: 'menu:resim-yukle',
+  RESIM_URL_GETIR: 'menu:resim-url-getir',
   TOPLU_FIYAT_GUNCELLE: 'menu:toplu-fiyat-guncelle',
 } as const
 
@@ -189,6 +190,8 @@ export const UYGULAMA_KANALLARI = {
   VERITABANI_YEDEKLER: 'uygulama:veritabani-yedekler',
   OTOMATIK_BASLATMA_DURUM: 'uygulama:otomatik-baslatma-durum',
   OTOMATIK_BASLATMA_AYARLA: 'uygulama:otomatik-baslatma-ayarla',
+  HARICI_YEDEK_KLASORU: 'uygulama:harici-yedek-klasoru',
+  HARICI_YEDEK_KLASORU_SEC: 'uygulama:harici-yedek-klasoru-sec',
   PENRECEDEN_GIZLE: 'uygulama:gizle',
   PENRECEDEN_GOSTER: 'uygulama:goster',
 } as const

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { formatPara } from '../../../utils/formatters'
@@ -228,6 +228,8 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
   // Durum Yönetimi
   const [girilenTutar, setGirilenTutar] = useState<string>('')
   const [odemeIslemi, setOdemeIslemi] = useState(false)
+  // State render'dan önce güncellenmez; çift Enter / çift dokunmayı anında kesmek için ref
+  const odemeDevamEdiyor = useRef(false)
   const [seciliMiktarlar, setSeciliMiktarlar] = useState<Record<number, number>>({})
   const [indirimModalAcik, setIndirimModalAcik] = useState(false)
   const [aktifSiparisMiktar, setAktifSiparisMiktar] = useState<any>(null)
@@ -359,6 +361,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
 
   // Ödeme Alma
   const odemeAl = useCallback(async (tip: 'nakit' | 'kredi_karti') => {
+    if (odemeDevamEdiyor.current) return
     if (!aktifHesap) {
       error('Hata', 'Ödeme alınacak aktif bir hesap yok!')
       return
@@ -375,6 +378,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
       .filter(([, miktar]) => miktar > 0)
       .map(([id, miktar]) => ({ id: Number(id), miktar: Number(miktar) }));
 
+    odemeDevamEdiyor.current = true
     setOdemeIslemi(true)
     try {
       const response = await ipcInvoke<any>(HESAP_KANALLARI.ODEME_AL, [
@@ -406,6 +410,7 @@ export const OdemeModal = React.memo(function OdemeModal({ isOpen, onClose, topl
     } catch (err: any) {
       error('Hata', err.message)
     } finally {
+      odemeDevamEdiyor.current = false
       setOdemeIslemi(false)
     }
   }, [aktifHesap, gecerliTutar, odenecekHedefTutar, seciliMiktarlar, personel?.id, success, error, onClose, hesapAyarla, navigate])

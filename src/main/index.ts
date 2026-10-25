@@ -16,7 +16,7 @@ import {
   pencereyiGoster,
   trayKucultmeBildirimiGoster,
 } from './services/tray.service'
-import { terminalAyarYukle, ikinciKasaMi } from './services/terminal.service'
+import { terminalAyarYukle, terminalAyarKaydet, ikinciKasaMi, gpuKapaliMi } from './services/terminal.service'
 
 // Uygulama adı — userData yolunun tutarlılığı için
 app.name = 'ETİBOL POS'
@@ -26,6 +26,15 @@ let anaPencere: BrowserWindow | null = null
 
 // Uygulamanın tamamen kapatılıp kapatılmadığını kontrol eden bayrak
 let isAppQuitting = false
+
+// Kapanış yedeği bir kez alınır; ardından gerçek çıkış yapılır
+let kapanisHazir = false
+
+// Windows açılışında "--hidden" ile başlatıldıysa pencere tepside bekler
+const gizliBaslat = process.argv.includes('--hidden')
+
+// Windows 7/8 veya kullanıcı tercihi: GPU kapalıysa animasyonlar da azaltılır
+const gpuKapali = gpuKapaliMi()
 
 /**
  * Ana pencere referansını dışa aktarır
@@ -91,6 +100,7 @@ function pencereOlustur(): void {
       nodeIntegration: false,
       // Dokunmatik ekran desteği
       zoomFactor: 1.0,
+      additionalArguments: gpuKapali ? ['--etibol-az-hareket'] : [],
     },
     // Uygulama ikonu
     icon: icoYolu,
@@ -99,7 +109,7 @@ function pencereOlustur(): void {
 
   // Pencere hazır olduğunda göster (beyaz ekran gösterme)
   anaPencere.on('ready-to-show', () => {
-    anaPencere?.show()
+    if (!gizliBaslat) anaPencere?.show()
     // Geliştirme modunda DevTools aç
     if (is.dev) {
       anaPencere?.webContents.openDevTools({ mode: 'detach' })
@@ -167,27 +177,27 @@ async function uygulamaBaslat(): Promise<void> {
   }
 }
 
-// Windows 7 ve eski POS cihazlarındaki GPU (Ekran Kartı) hatalarını/beyaz ekran sorununu engeller
-app.disableHardwareAcceleration()
+// Windows 7/8 ve sorunlu sürücülerde GPU kaynaklı beyaz ekranı engeller.
+// Windows 10+ cihazlarda hızlandırma açık kalır; GPU süreci çökerse kalıcı olarak kapatılıp yeniden başlatılır.
+if (gpuKapali) {
+  app.disableHardwareAcceleration()
+}
+
+app.on('child-process-gone', (_event, detay) => {
+  if (detay.type === 'GPU' && detay.reason !== 'clean-exit' && !gpuKapali) {
+    console.warn(`⚠️ GPU süreci sonlandı (${detay.reason}) — donanım hızlandırma kapatılıp yeniden başlatılıyor`)
+    terminalAyarKaydet({ gpu: 'kapali' })
+    app.relaunch()
+    tamamenCikisYap()
+  }
+})
 
 // Electron hazır olduğunda uygulamayı başlat
 app.whenReady().then(uygulamaBaslat)
 
-// Tüm pencereler kapandığında
-app.on('window-all-closed', async () => {
-  if (isAppQuitting) {
-    try {
-      if (!ikinciKasaMi()) {
-        const db = veritabaniGetir()
-        await otomatikYedekAl(db, 'kapanis')
-      }
-    } catch {
-      // sessizce devam et
-    }
-    try { veritabaniKapat() } catch { /* ikinci kasada db yok */ }
-    trayYokEt()
-    app.quit()
-  }
+// Tüm pencereler kapandığında (yedek ve DB kapanışı before-quit içinde yapılır)
+app.on('window-all-closed', () => {
+  if (isAppQuitting) app.quit()
 })
 
 // macOS: dock ikonuna tıklandığında pencere yoksa yeniden oluştur
@@ -199,19 +209,26 @@ app.on('activate', () => {
   }
 })
 
-// Uygulama kapanırken veritabanını kapat
-app.on('before-quit', async () => {
+// Uygulama kapanırken: çıkışı ertele → kapanış yedeğini bekle → DB'yi kapat → gerçekten çık.
+// Electron async dinleyicileri beklemediği için preventDefault ile sıralı hale getirilir.
+app.on('before-quit', (event) => {
   isAppQuitting = true
-  try {
-    if (!ikinciKasaMi()) {
-      const db = veritabaniGetir()
-      await otomatikYedekAl(db, 'kapanis')
+  if (kapanisHazir) return
+  event.preventDefault()
+  kapanisHazir = true
+
+  void (async () => {
+    try {
+      if (!ikinciKasaMi()) {
+        await otomatikYedekAl(veritabaniGetir(), 'kapanis')
+      }
+    } catch {
+      // yedek alınamasa da çıkış engellenmez
     }
-  } catch {
-    // sessizce devam et
-  }
-  try { veritabaniKapat() } catch { /* ikinci kasada db yok */ }
-  trayYokEt()
+    try { veritabaniKapat() } catch { /* ikinci kasada db yok */ }
+    trayYokEt()
+    app.quit()
+  })()
 })
 
 // Tam ekran IPC — dokunmatik POS için

@@ -1094,6 +1094,11 @@ export function qrMenuHTML(): string {
       return categoryIcons['default'];
     }
 
+    // HTML'e basılan menü verisi kaçırılır
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     // ══════════════════════════════════════════════════════════
     // MENÜ VERİSİNİ YÜKLE (API çağrısı — korunuyor)
     // ══════════════════════════════════════════════════════════
@@ -1172,7 +1177,7 @@ export function qrMenuHTML(): string {
         btn.className = 'cat-pill' + (menuState.aktifKategoriId === k.id ? ' active' : '');
         btn.innerHTML = \`
           <span class="cat-pill-icon">\${icon}</span>
-          <span>\${k.ad}</span>
+          <span>\${esc(k.ad)}</span>
           <span class="cat-pill-count">\${urunSayisi}</span>
         \`;
         btn.onclick = () => {
@@ -1242,7 +1247,7 @@ export function qrMenuHTML(): string {
 
         groupDiv.innerHTML = \`
           <div class="category-header">
-            <div class="category-title">\${kat.ad}</div>
+            <div class="category-title">\${esc(kat.ad)}</div>
             <div class="category-count">\${katUrunler.length} çeşit</div>
           </div>
         \`;
@@ -1264,15 +1269,15 @@ export function qrMenuHTML(): string {
 
             card.innerHTML = \`
               <div class="dish-thumb">
-                <img src="\${urun.resim_yolu}" alt="\${urun.ad}" loading="lazy">
+                <img src="\${esc(urun.resim_yolu)}" alt="\${esc(urun.ad)}" loading="lazy">
               </div>
               <div class="dish-card-info">
                 <div>
-                  <div class="dish-card-title">\${urun.ad}</div>
-                  \${descText ? '<div class="dish-card-desc">' + descText + '</div>' : ''}
+                  <div class="dish-card-title">\${esc(urun.ad)}</div>
+                  \${descText ? '<div class="dish-card-desc">' + esc(descText) + '</div>' : ''}
                 </div>
                 <div class="dish-card-footer">
-                  <span class="dish-card-price">\${formatSatisTurleri(urun)}</span>
+                  <span class="dish-card-price">\${esc(formatSatisTurleri(urun))}</span>
                 </div>
               </div>
             \`;
@@ -1289,11 +1294,11 @@ export function qrMenuHTML(): string {
 
             row.innerHTML = \`
               <div class="dish-row-top">
-                <span class="dish-name">\${urun.ad}</span>
+                <span class="dish-name">\${esc(urun.ad)}</span>
                 <span class="dish-dots"></span>
-                <span class="dish-price">\${formatSatisTurleri(urun)}</span>
+                <span class="dish-price">\${esc(formatSatisTurleri(urun))}</span>
               </div>
-              \${descText ? '<div class="dish-desc">' + descText + '</div>' : ''}
+              \${descText ? '<div class="dish-desc">' + esc(descText) + '</div>' : ''}
             \`;
 
             listDiv.appendChild(row);
@@ -1310,7 +1315,7 @@ export function qrMenuHTML(): string {
       footer.className = 'menu-footer animate-in';
       footer.style.animationDelay = (globalIndex * 0.03 + 0.2) + 's';
       footer.innerHTML = \`
-        <div class="footer-brand">\${menuState.isletme_adi}</div>
+        <div class="footer-brand">\${esc(menuState.isletme_adi)}</div>
         <div class="footer-sub">Dijital Menü</div>
       \`;
       container.appendChild(footer);
@@ -1350,7 +1355,7 @@ export function qrMenuHTML(): string {
       // Fotoğraf
       const imgWrap = document.getElementById('detailImgWrap');
       if (urun.resim_yolu) {
-        imgWrap.innerHTML = '<img src="' + urun.resim_yolu + '" alt="' + urun.ad + '">';
+        imgWrap.innerHTML = '<img src="' + esc(urun.resim_yolu) + '" alt="' + esc(urun.ad) + '">';
         imgWrap.style.display = 'block';
       } else {
         imgWrap.style.display = 'none';

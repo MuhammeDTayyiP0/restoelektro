@@ -21,50 +21,24 @@ import { kasaIPCKaydet } from './kasa.ipc'
 import { rezervasyonIPCKaydet } from './reservation.ipc'
 import { denetimIPCKaydet } from './audit.ipc'
 import { terminalIPCKaydet } from './terminal.ipc'
-import { ipcHandleSar, yerelKanalMi } from './ipc-registry'
+import { ipcHandleSar } from './ipc-registry'
+import { uzakKanalListesi } from './uzak-kanallar'
+import { otomatikBaslatmaIPCKaydet } from './app.ipc'
 import { terminalAyarYukle } from '../services/terminal.service'
 import { httpJson } from '../services/http-json'
 import { varsayilanYerelIpGetir } from '../services/network.service'
 import { tamamenCikisYap } from '../index'
-import {
-  PERSONEL_KANALLARI,
-  MENU_KANALLARI,
-  MASA_KANALLARI,
-  HESAP_KANALLARI,
-  MUTFAK_KANALLARI,
-  STOK_KANALLARI,
-  MUSTERI_KANALLARI,
-  RAPOR_KANALLARI,
-  KASA_KANALLARI,
-  REZERVASYON_KANALLARI,
-  DENETIM_KANALLARI,
-  AYAR_KANALLARI,
-  FATURA_KANALLARI,
-  UYGULAMA_KANALLARI,
-} from '../../common/ipc-channels'
+import { UYGULAMA_KANALLARI } from '../../common/ipc-channels'
 
-function uzakKanalListesi(): string[] {
-  return [
-    ...Object.values(PERSONEL_KANALLARI),
-    ...Object.values(MENU_KANALLARI),
-    ...Object.values(MASA_KANALLARI),
-    ...Object.values(HESAP_KANALLARI),
-    ...Object.values(MUTFAK_KANALLARI),
-    ...Object.values(STOK_KANALLARI),
-    ...Object.values(MUSTERI_KANALLARI),
-    ...Object.values(RAPOR_KANALLARI),
-    ...Object.values(KASA_KANALLARI),
-    ...Object.values(REZERVASYON_KANALLARI),
-    ...Object.values(DENETIM_KANALLARI),
-    ...Object.values(AYAR_KANALLARI),
-    ...Object.values(FATURA_KANALLARI),
-    UYGULAMA_KANALLARI.VERITABANI_YEDEKLE,
-    UYGULAMA_KANALLARI.VERITABANI_BILGISI,
-    UYGULAMA_KANALLARI.VERITABANI_OPTIMIZE,
-    UYGULAMA_KANALLARI.VERITABANI_YEDEKLER,
-    UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_DURUM,
-    UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_AYARLA,
-  ].filter((k) => !yerelKanalMi(k))
+/** İkinci kasada yerel veritabanı yoktur; bakım ekranı anlaşılır bir mesaj alır */
+function ikinciKasaVeritabaniKanallariniKaydet(ipcMain: IpcMain): void {
+  const mesaj = { basarili: false, hata: 'İkinci kasada yerel veritabanı yok; yedekleme ve bakım ana kasadan yapılır' }
+  ipcMain.handle(UYGULAMA_KANALLARI.VERITABANI_YEDEKLE, async () => mesaj)
+  ipcMain.handle(UYGULAMA_KANALLARI.VERITABANI_BILGISI, async () => mesaj)
+  ipcMain.handle(UYGULAMA_KANALLARI.VERITABANI_OPTIMIZE, async () => mesaj)
+  ipcMain.handle(UYGULAMA_KANALLARI.VERITABANI_YEDEKLER, async () => ({ basarili: true, yedekler: [] }))
+  ipcMain.handle(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU, async () => mesaj)
+  ipcMain.handle(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU_SEC, async () => mesaj)
 }
 
 function uzakIpcKaydet(ipcMain: IpcMain): void {
@@ -102,6 +76,8 @@ export function ipcHandlerlariniKaydet(ipcMain: IpcMain, mod: 'ana' | 'ikinci' =
 
   if (mod === 'ikinci') {
     uzakIpcKaydet(ipcMain)
+    otomatikBaslatmaIPCKaydet(ipcMain)
+    ikinciKasaVeritabaniKanallariniKaydet(ipcMain)
     ipcMain.handle(UYGULAMA_KANALLARI.SURUM_BILGISI, async () => ({
       surum: app.getVersion(),
       electron: process.versions.electron,

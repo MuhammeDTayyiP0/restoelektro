@@ -68,7 +68,8 @@ export default function StaffSettings() {
         const data: any = { ad, soyad, rol, pin_kodu: pinKodu }
         if (sifre) data.sifre = sifre // Sadece yazıldıysa güncelle
         
-        await ipcInvoke(PERSONEL_KANALLARI.GUNCELLE, duzenlenenPersonel.id, data)
+        const res = await ipcInvoke<any>(PERSONEL_KANALLARI.GUNCELLE, duzenlenenPersonel.id, data)
+        if (res?.basarili === false) return error('Kaydedilemedi', res.hata)
         success('Başarılı', 'Personel bilgileri güncellendi.')
       } else {
         // Ekle
@@ -76,9 +77,10 @@ export default function StaffSettings() {
           error('Uyarı', 'Yeni personel için şifre zorunludur!')
           return
         }
-        await ipcInvoke(PERSONEL_KANALLARI.EKLE, {
+        const res = await ipcInvoke<any>(PERSONEL_KANALLARI.EKLE, {
           ad, soyad, kullanici_adi: kullaniciAdi, sifre, rol, pin_kodu: pinKodu
         })
+        if (res?.basarili === false) return error('Kaydedilemedi', res.hata)
         success('Başarılı', 'Yeni personel kaydedildi.')
       }
       setModalAcik(false)

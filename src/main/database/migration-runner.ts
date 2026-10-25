@@ -19,7 +19,8 @@ export function sutunVarMi(db: Database.Database, tabloAdi: string, sutunAdi: st
 }
 
 /**
- * Tabloya sütun yoksa güvenli bir şekilde ekler (ALTER TABLE)
+ * Tabloya sütun yoksa ekler (ALTER TABLE).
+ * Hata yutulmaz: migration transaction'ı geri alınır ve sürüm "uygulandı" diye işaretlenmez.
  */
 export function sutunYoksaEkle(
   db: Database.Database,
@@ -27,17 +28,10 @@ export function sutunYoksaEkle(
   sutunAdi: string,
   sutunTanimi: string
 ): boolean {
-  if (!sutunVarMi(db, tabloAdi, sutunAdi)) {
-    try {
-      db.exec(`ALTER TABLE ${tabloAdi} ADD COLUMN ${sutunAdi} ${sutunTanimi}`)
-      console.log(`➕ [Migration] Sütun eklendi: ${tabloAdi}.${sutunAdi}`)
-      return true
-    } catch (err) {
-      console.warn(`⚠️ [Migration] Sütun eklenirken uyarı (${tabloAdi}.${sutunAdi}):`, err)
-      return false
-    }
-  }
-  return false
+  if (sutunVarMi(db, tabloAdi, sutunAdi)) return false
+  db.exec(`ALTER TABLE ${tabloAdi} ADD COLUMN ${sutunAdi} ${sutunTanimi}`)
+  console.log(`➕ [Migration] Sütun eklendi: ${tabloAdi}.${sutunAdi}`)
+  return true
 }
 
 /**
@@ -84,7 +78,14 @@ function migrationTablosunuHazirla(db: Database.Database): void {
  * Daha önce çalıştırılmış migration sürümlerini döndürür
  */
 function uygulanmisSurumleriGetir(db: Database.Database): Set<number> {
-  const kayitlar = db.prepare(`SELECT version FROM _migrations ORDER BY version ASC`).all() as Array<{ version: number }>
+  const kayitlar = db.prepare(`SELECT version, name FROM _migrations ORDER BY version ASC`).all() as Array<{ version: number; name: string }>
+  // Aynı numara başka bir adla kayıtlıysa o migration bu veritabanında hiç çalışmayacaktır — görünür olsun
+  for (const k of kayitlar) {
+    const kod = migrations.find(m => m.version === k.version)
+    if (kod && kod.name !== k.name) {
+      console.warn(`⚠️ [Migration v${k.version}] veritabanında '${k.name}' olarak kayıtlı, koddaki '${kod.name}' çalıştırılmayacak`)
+    }
+  }
   return new Set(kayitlar.map(k => k.version))
 }
 

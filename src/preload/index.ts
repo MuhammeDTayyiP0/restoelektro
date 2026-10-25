@@ -23,6 +23,11 @@ export interface RestoElektroAPI {
     goster: () => Promise<boolean>
     tamamenKapat: () => Promise<void>
   }
+  // Ana işlemden gelen çalışma ortamı bilgisi
+  sistem: {
+    /** Donanım hızlandırma kapalı (Windows 7/8) — ağır animasyonlar azaltılır */
+    azHareket: boolean
+  }
 }
 
 // İzin verilen IPC kanalları — güvenlik için filtreleme
@@ -34,7 +39,7 @@ const izinliKanallar = [
   // Menü
   'menu:kategoriler', 'menu:kategori-ekle', 'menu:kategori-guncelle', 'menu:kategori-sil',
   'menu:urunler', 'menu:urun-detay', 'menu:urun-ekle', 'menu:urun-guncelle', 'menu:urun-sil',
-  'menu:urun-ara', 'menu:resim-yukle', 'menu:toplu-fiyat-guncelle',
+  'menu:urun-ara', 'menu:resim-yukle', 'menu:resim-url-getir', 'menu:toplu-fiyat-guncelle',
   // Masa
   'masa:bolumler', 'masa:bolum-ekle', 'masa:bolum-guncelle', 'masa:masalar', 'masa:masa-ekle',
   'masa:toplu-ekle', 'masa:masa-guncelle', 'masa:durumu', 'masa:birlestir', 'masa:tasi',
@@ -81,6 +86,7 @@ const izinliKanallar = [
   'uygulama:tam-ekran', 'uygulama:veritabani-yedekle', 'uygulama:veritabani-bilgisi',
   'uygulama:veritabani-optimize', 'uygulama:veritabani-yedekler',
   'uygulama:otomatik-baslatma-durum', 'uygulama:otomatik-baslatma-ayarla',
+  'uygulama:harici-yedek-klasoru', 'uygulama:harici-yedek-klasoru-sec',
   'uygulama:gizle', 'uygulama:goster',
   // Güncelleme
   'guncelleme:kontrol-et', 'guncelleme:indir', 'guncelleme:yukle-ve-baslat', 'guncelleme:durum-getir',
@@ -139,5 +145,9 @@ contextBridge.exposeInMainWorld('api', {
     gizle: () => ipcRenderer.invoke('uygulama:gizle'),
     goster: () => ipcRenderer.invoke('uygulama:goster'),
     tamamenKapat: () => ipcRenderer.invoke('uygulama:kapat'),
+  },
+
+  sistem: {
+    azHareket: process.argv.includes('--etibol-az-hareket'),
   },
 } satisfies RestoElektroAPI)

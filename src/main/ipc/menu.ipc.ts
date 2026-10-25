@@ -3,21 +3,14 @@
 // Kategori ve ürün CRUD işlemleri
 // =====================================================
 
-import { IpcMain, app as electronApp } from 'electron'
+import { IpcMain } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { MENU_KANALLARI } from '../../common/ipc-channels'
 import type { YeniKategori, YeniUrun, TopluFiyatGuncellemeIstegi } from '../../common/types/menu.types'
-import { sutunYoksaEkle } from '../database/migration-runner'
-import path from 'path'
-import fs from 'fs'
+import { gorselKaydet, uzakGorselIndir } from '../services/gorsel.service'
 
 export function menuIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
-
-  // Sütunların varlığını garanti altına al
-  sutunYoksaEkle(db, 'urun', 'porsiyon_fiyati', 'REAL DEFAULT NULL')
-  sutunYoksaEkle(db, 'urun', 'kilo_fiyati', 'REAL DEFAULT NULL')
-  sutunYoksaEkle(db, 'kategori', 'sira_no', 'INTEGER DEFAULT 999')
 
   // Kategorileri listele
   ipcMain.handle(MENU_KANALLARI.KATEGORILER, async () => {
@@ -197,45 +190,23 @@ export function menuIPCKaydet(ipcMain: IpcMain): void {
   })
 
   // Ürün görseli yükle (IPC üzerinden base64/buffer)
-  ipcMain.handle(MENU_KANALLARI.RESIM_YUKLE, async (_event, veri: { base64: string; dosyaAdi?: string; uzanti?: string }) => {
+  // Dosya imzası doğrulanır; SVG ve görsel olmayan içerik reddedilir
+  ipcMain.handle(MENU_KANALLARI.RESIM_YUKLE, async (_event, veri: { base64: string }) => {
     try {
-      const isDev = !electronApp.isPackaged
-      const baseDir = isDev ? process.cwd() : electronApp.getPath('userData')
-      const uploadsDir = path.join(baseDir, 'public', 'uploads', 'products')
-      
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
-      }
-
-      let rawBase64 = veri.base64
-      let ext = veri.uzanti || '.jpg'
-
-      if (rawBase64.startsWith('data:image/')) {
-        const match = rawBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/)
-        if (match) {
-          ext = '.' + (match[1] === 'jpeg' ? 'jpg' : match[1])
-          rawBase64 = match[2]
-        }
-      }
-
-      const safeExt = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext.toLowerCase()) ? ext.toLowerCase() : '.jpg'
-      const filename = `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${safeExt}`
-      const hedefYol = path.join(uploadsDir, filename)
-      const buffer = Buffer.from(rawBase64, 'base64')
-      
-      fs.writeFileSync(hedefYol, buffer)
-
-      const resimYolu = `/uploads/products/${filename}`
-      return {
-        basarili: true,
-        resim_yolu: resimYolu,
-        url: resimYolu,
-        dosya_adi: filename,
-        boyut: buffer.length
-      }
+      const sonuc = gorselKaydet(veri?.base64)
+      return { basarili: true, ...sonuc, url: sonuc.resim_yolu }
     } catch (err: any) {
       console.error('IPC Resim yükleme hatası:', err)
       return { basarili: false, hata: err.message || 'Görsel kaydedilemedi' }
+    }
+  })
+
+  // URL'den görsel al: kırpma ekranı için data URL döndürür (kalıcı kayıt RESIM_YUKLE ile yapılır)
+  ipcMain.handle(MENU_KANALLARI.RESIM_URL_GETIR, async (_event, url: string) => {
+    try {
+      return { basarili: true, ...(await uzakGorselIndir(url)) }
+    } catch (err: any) {
+      return { basarili: false, hata: err?.message || 'Görsel bağlantısından indirilemedi' }
     }
   })
 

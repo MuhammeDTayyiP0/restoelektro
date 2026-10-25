@@ -458,7 +458,7 @@ export function bossMobilHTML(): string {
   function qs(){ var a=aralik(); return '?baslangic='+encodeURIComponent(a.baslangic)+'&bitis='+encodeURIComponent(a.bitis); }
   function para(n){ return Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₺'; }
   function para0(n){ return Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺'; }
-  function esc(s){ return String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function saatKisa(iso){
     if (!iso) return '';
     var d = new Date(String(iso).replace(' ','T'));
@@ -562,9 +562,21 @@ export function bossMobilHTML(): string {
     sayfa(aktif);
     if (timer) clearInterval(timer);
     timer = setInterval(function(){ if (aktif==='ozet' || aktif==='masalar') yenile(false); }, 12000);
+    soketBaglan();
+  }
+  /* Canlı olaylar yalnızca token ile alınır */
+  var socket = null;
+  function soketBaglan(){
+    try {
+      if (socket) socket.disconnect();
+      socket = io({ auth: { token: token } });
+      socket.on('masalar:guncellendi', function(){ if (aktif==='ozet'||aktif==='masalar') yenile(false); });
+      socket.on('siparis:guncellendi', function(){ if (aktif==='ozet'||aktif==='masalar') yenile(false); });
+    } catch(e) {}
   }
   function cikis(){
     token=''; kullanici=null; pin='';
+    if (socket) { socket.disconnect(); socket = null; }
     localStorage.removeItem('etibol_boss_token');
     document.getElementById('app').classList.remove('on');
     document.getElementById('login').style.display='flex';
@@ -1027,12 +1039,6 @@ export function bossMobilHTML(): string {
     var el=document.getElementById('saat');
     if (el) el.textContent = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   }, 1000);
-
-  try {
-    var socket = io();
-    socket.on('masalar:guncellendi', function(){ if (aktif==='ozet'||aktif==='masalar') yenile(false); });
-    socket.on('siparis:guncellendi', function(){ if (aktif==='ozet'||aktif==='masalar') yenile(false); });
-  } catch(e) {}
 
   numpadKur();
   ozelBas = bugun(); ozelBit = bugun();

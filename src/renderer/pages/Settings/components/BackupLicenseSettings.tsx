@@ -36,8 +36,39 @@ export default function BackupLicenseSettings() {
     }
   }
 
+  // Harici yedek klasörü: USB bellek veya OneDrive / Google Drive senkron klasörü
+  const [hariciKlasor, setHariciKlasor] = useState<string | null>(null)
+  const loadHariciKlasor = async () => {
+    try {
+      const res = (await ipcInvoke(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU)) as any
+      if (res?.basarili) setHariciKlasor(res.klasor || null)
+    } catch {
+      // sessizce devam et
+    }
+  }
+
+  const handleHariciKlasor = async (temizle = false) => {
+    try {
+      const res = (await ipcInvoke(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU_SEC, temizle)) as any
+      if (res?.iptal) return
+      if (!res?.basarili) throw new Error(res?.hata || 'Klasör ayarlanamadı')
+      setHariciKlasor(res.klasor || null)
+      if (temizle) {
+        info('Harici Kopya Kapatıldı', 'Yedekler yalnızca bu bilgisayarda tutulacak.')
+      } else if (res.ilkYedek?.hariciHata) {
+        error('Harici Klasöre Yazılamadı', res.ilkYedek.hariciHata)
+      } else {
+        success('Harici Kopya Açık', 'Her yedek bu klasöre de kopyalanacak.')
+        loadDbInfo()
+      }
+    } catch (err: any) {
+      error('Harici Yedek', err.message)
+    }
+  }
+
   React.useEffect(() => {
     loadDbInfo()
+    loadHariciKlasor()
   }, [])
 
   const handleBackup = async () => {
@@ -47,7 +78,11 @@ export default function BackupLicenseSettings() {
       if (res && res.basarili) {
         const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
         setLastBackupTime(`Bugün, ${now}`)
-        success('Yedekleme Tamamlandı', 'Veritabanı anlık yedeği userData/backups/ altına güvenli şekilde kaydedildi.')
+        if (res.hariciHata) {
+          error('Harici Kopya Alınamadı', `Yerel yedek tamam, ancak: ${res.hariciHata}`)
+        } else {
+          success('Yedekleme Tamamlandı', 'Veritabanı anlık yedeği userData/backups/ altına güvenli şekilde kaydedildi.')
+        }
         loadDbInfo()
       } else {
         throw new Error(res?.hata || 'Yedekleme başarısız oldu')
@@ -123,6 +158,25 @@ export default function BackupLicenseSettings() {
                 <span className="font-mono text-surface-400 text-[11px] truncate max-w-[200px]" title={dbInfo.userDataPath ? `${dbInfo.userDataPath}\\backups` : 'userData/backups/'}>
                   {dbInfo.userDataPath ? 'userData/backups/' : 'userData/backups/'} ({dbInfo.toplamYedekSayisi || 0} adet)
                 </span>
+              </div>
+              <div className="flex justify-between items-center gap-3 py-1.5 border-t border-[#1E1A16]">
+                <span className="text-surface-400 shrink-0">Harici Kopya</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={`font-mono text-[11px] truncate max-w-[160px] ${hariciKlasor ? 'text-emerald-400' : 'text-amber-400'}`}
+                    title={hariciKlasor || 'Yedekler yalnızca bu diskte — disk arızasında kaybolur'}
+                  >
+                    {hariciKlasor || 'Kapalı (önerilmez)'}
+                  </span>
+                  <button type="button" onClick={() => handleHariciKlasor(false)} className="text-[11px] text-brand-400 hover:text-brand-300 font-semibold shrink-0">
+                    {hariciKlasor ? 'Değiştir' : 'Klasör Seç'}
+                  </button>
+                  {hariciKlasor && (
+                    <button type="button" onClick={() => handleHariciKlasor(true)} className="text-[11px] text-surface-500 hover:text-surface-300 shrink-0">
+                      Kaldır
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

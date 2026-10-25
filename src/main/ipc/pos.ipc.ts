@@ -1,123 +1,41 @@
 // =====================================================
 // POS & Hesap IPC Handler'ları
 // Hesap açma/kapama, sipariş, ödeme, indirim, bölme
+// İş kuralları services/siparis.service.ts içindedir
 // =====================================================
 
 import { IpcMain, BrowserWindow } from 'electron'
 import { veritabaniGetir } from '../database/connection'
 import { HESAP_KANALLARI } from '../../common/ipc-channels'
-import { v4 as uuidv4 } from 'uuid'
 import type { YeniSiparis, YeniOdeme, IndirimBilgisi, HesapBolme } from '../../common/types/pos.types'
-import { siparisStokDusVeMaliyetHesapla, siparisStokGeriYukle } from '../services/stock-recipe.service'
-import { sutunYoksaEkle } from '../database/migration-runner'
 import { denetimYaz } from '../services/audit.service'
+import {
+  IslemHatasi,
+  hesapAc,
+  siparisleriEkle,
+  siparisIptalEt,
+  siparisIkramAyarla,
+  indirimUygula,
+  odemeAl,
+  hesapBol,
+  hesapIptalEt,
+} from '../services/siparis.service'
+
+function hataYaniti(hata: any): { basarili: false; hata: string } {
+  if (!(hata instanceof IslemHatasi)) console.error('❌ POS işlemi hatası:', hata)
+  return { basarili: false, hata: hata?.message || 'İşlem başarısız' }
+}
 
 export function hesapIPCKaydet(ipcMain: IpcMain): void {
   const db = veritabaniGetir()
 
-  // Sütunların varlığını garanti altına al
-  sutunYoksaEkle(db, 'siparis', 'satis_birim', "TEXT DEFAULT 'porsiyon'")
-  sutunYoksaEkle(db, 'siparis', 'gramaj', 'REAL DEFAULT NULL')
-  sutunYoksaEkle(db, 'hesap', 'teslimat_durumu', 'TEXT')
-  sutunYoksaEkle(db, 'hesap', 'teslimat_telefon', 'TEXT')
-  sutunYoksaEkle(db, 'hesap', 'teslimat_adres', 'TEXT')
-  sutunYoksaEkle(db, 'hesap', 'teslimat_musteri', 'TEXT')
-  sutunYoksaEkle(db, 'hesap', 'kurye', 'TEXT')
-
-  // Hesap numarası oluştur
-  function hesapNoOlustur(): string {
-    const tarih = new Date()
-    const year = tarih.getFullYear()
-    const month = String(tarih.getMonth() + 1).padStart(2, '0')
-    const day = String(tarih.getDate()).padStart(2, '0')
-    const gun = `${year}${month}${day}`
-    
-    const sonHesap = db.prepare(
-      "SELECT hesap_no FROM hesap WHERE hesap_no LIKE ? ORDER BY id DESC LIMIT 1"
-    ).get(`HSP-${gun}-%`) as any
-
-    let sira = 1
-    if (sonHesap) {
-      const parcalar = sonHesap.hesap_no.split('-')
-      if (parcalar.length >= 3) {
-        const parsed = parseInt(parcalar[2], 10)
-        if (!isNaN(parsed)) {
-          sira = parsed + 1
-        }
-      }
-    }
-    
-    let yeniNo = `HSP-${gun}-${sira.toString().padStart(3, '0')}`
-    // Çakışmayı önlemek için veritabanında kontrol et ve gerekirse artır
-    while (db.prepare("SELECT 1 FROM hesap WHERE hesap_no = ?").get(yeniNo)) {
-      sira++
-      yeniNo = `HSP-${gun}-${sira.toString().padStart(3, '0')}`
-    }
-    
-    return yeniNo
-  }
-
-  // Hesap toplamını yeniden hesapla
-  function hesapToplamiGuncelle(hesapId: number): void {
-    const toplam = db.prepare(`
-      SELECT COALESCE(SUM(toplam_fiyat), 0) as toplam
-      FROM siparis
-      WHERE hesap_id = ? AND durum != 'iptal' AND ikram = 0
-    `).get(hesapId) as any
-
-    const hesap = db.prepare('SELECT indirim_tutar FROM hesap WHERE id = ?').get(hesapId) as any
-    const netTutar = Math.max(0, toplam.toplam - (hesap?.indirim_tutar || 0))
-
-    db.prepare(`
-      UPDATE hesap SET toplam_tutar = ?, net_tutar = ? WHERE id = ?
-    `).run(toplam.toplam, netTutar, hesapId)
-  }
-
   // Yeni hesap aç
   ipcMain.handle(HESAP_KANALLARI.AC, async (_event, masaId: number | null, personelId: number, hesapTipi: string = 'masa', kisiSayisi: number = 1, ekstra: any = null) => {
     try {
-      const hesapNo = hesapNoOlustur()
-      const tip = hesapTipi || 'masa'
-
-      if (masaId) {
-        const mevcutHesap = db.prepare(
-          "SELECT id FROM hesap WHERE masa_id = ? AND durum = 'acik'"
-        ).get(masaId) as any
-        if (mevcutHesap) {
-          return { basarili: false, hata: 'Bu masada zaten açık bir hesap var', hesap_id: mevcutHesap.id }
-        }
-      }
-
-      const teslimatDurumu = (tip === 'paket' || tip === 'gel_al')
-        ? (ekstra?.teslimat_durumu || 'bekliyor')
-        : null
-
-      const sonuc = db.prepare(`
-        INSERT INTO hesap (masa_id, hesap_no, hesap_tipi, personel_id, kisi_sayisi, musteri_id,
-          teslimat_telefon, teslimat_adres, teslimat_musteri, teslimat_durumu, kurye, notlar)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        masaId,
-        hesapNo,
-        tip,
-        personelId,
-        kisiSayisi || 1,
-        ekstra?.musteri_id || null,
-        ekstra?.teslimat_telefon || null,
-        ekstra?.teslimat_adres || null,
-        ekstra?.teslimat_musteri || null,
-        teslimatDurumu,
-        ekstra?.kurye || null,
-        ekstra?.notlar || null
-      )
-
-      if (masaId) {
-        db.prepare("UPDATE masa SET durum = 'dolu' WHERE id = ?").run(masaId)
-      }
-
-      return { basarili: true, hesap_id: sonuc.lastInsertRowid, hesap_no: hesapNo }
+      const sonuc = hesapAc(db, { masaId, personelId, hesapTipi, kisiSayisi, ekstra })
+      return { basarili: true, ...sonuc }
     } catch (hata: any) {
-      return { basarili: false, hata: hata.message }
+      return { ...hataYaniti(hata), hesap_id: hata?.hesap_id }
     }
   })
 
@@ -170,99 +88,26 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
     `).all()
   })
 
-  // Sipariş ekle
+  // Sipariş ekle — fiyatlar istemciden alınmaz, sunucuda yeniden hesaplanır
   ipcMain.handle(HESAP_KANALLARI.SIPARIS_EKLE, async (_event, hesapId: number, personelId: number, siparisler: YeniSiparis[]) => {
     try {
-      const ekle = db.transaction(() => {
-        const eklenenler: number[] = []
-
-        for (const sip of siparisler) {
-          // Ürün fiyatını al
-          const urun = db.prepare('SELECT ad, fiyat, yazici_grup FROM urun WHERE id = ?').get(sip.urun_id) as any
-          if (!urun) continue
-
-          // Varyant fiyat farkını hesapla
-          const isKg = sip.secilenSatisTuru === 'kg' || (sip as any).satisBirim === 'kg' || (sip as any).satisBirim === 'kilo' || (sip.gramaj !== undefined && Number(sip.gramaj) > 0)
-          const satisBirim = isKg ? 'kg' : 'porsiyon'
-          const gramaj = (sip.gramaj !== undefined && Number(sip.gramaj) > 0) ? Number(sip.gramaj) : null
-
-          let birimFiyat = sip.birim_fiyat !== undefined ? Number(sip.birim_fiyat) : urun.fiyat
-          if (sip.varyant_id && sip.birim_fiyat === undefined) {
-            const varyant = db.prepare('SELECT fiyat_farki FROM urun_varyant WHERE id = ?').get(sip.varyant_id) as any
-            if (varyant) birimFiyat += varyant.fiyat_farki
-          }
-
-          const porsiyon = isKg ? 1 : (sip.porsiyon || 1)
-          const toplamFiyat = sip.toplam_fiyat !== undefined ? Number(sip.toplam_fiyat) : (birimFiyat * sip.miktar * porsiyon)
-
-          const sonuc = db.prepare(`
-            INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, personel_id, notlar, ikram, yazici_grup, porsiyon, satis_birim, gramaj)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(
-            hesapId, sip.urun_id, sip.varyant_id || null, sip.miktar,
-            birimFiyat, toplamFiyat, personelId, sip.notlar || null,
-            sip.ikram ? 1 : 0, urun.yazici_grup, porsiyon,
-            satisBirim, gramaj
-          )
-
-          const yeniSiparisId = Number(sonuc.lastInsertRowid)
-          eklenenler.push(yeniSiparisId)
-
-          // Opsiyonları ekle
-          if (sip.opsiyon_idleri && sip.opsiyon_idleri.length > 0) {
-            for (const opsiyonId of sip.opsiyon_idleri) {
-              db.prepare('INSERT INTO siparis_opsiyonlari (siparis_id, opsiyon_id) VALUES (?, ?)').run(yeniSiparisId, opsiyonId)
-            }
-          }
-
-          // Reçete maliyetini hesapla, cost_price'a kaydet ve hammadde stoklarını dinamik düş
-          siparisStokDusVeMaliyetHesapla(db, {
-            siparisId: yeniSiparisId,
-            urunId: sip.urun_id,
-            miktar: sip.miktar,
-            porsiyon: porsiyon,
-            satisBirim: satisBirim,
-            gramaj: gramaj !== null ? gramaj : undefined,
-            personelId: personelId,
-            hesapId: hesapId,
-            urunAdi: urun.ad,
-          })
-        }
-
-        // Hesap toplamını güncelle
-        hesapToplamiGuncelle(hesapId)
-
-        return eklenenler
-      })
-
-      const ids = ekle()
+      const kalemler = siparisleriEkle(db, hesapId, personelId, siparisler as any)
 
       // Mutfak ekranına bildirim gönder
-      const pencereler = BrowserWindow.getAllWindows()
-      for (const pencere of pencereler) {
+      for (const pencere of BrowserWindow.getAllWindows()) {
         pencere.webContents.send('mutfak:yeni-siparis', { hesap_id: hesapId })
       }
 
-      return { basarili: true, siparis_idleri: ids }
+      return { basarili: true, siparis_idleri: kalemler.map((k) => k.siparis_id) }
     } catch (hata: any) {
-      return { basarili: false, hata: hata.message }
+      return hataYaniti(hata)
     }
   })
 
   // Sipariş iptal
   ipcMain.handle(HESAP_KANALLARI.SIPARIS_IPTAL, async (_event, siparisId: number, iptalNedeni: string, onaylayanId: number) => {
     try {
-      // Düşülen hammadde stoklarını geri iade et
-      siparisStokGeriYukle(db, siparisId, onaylayanId)
-
-      db.prepare(`
-        UPDATE siparis SET durum = 'iptal', iptal_nedeni = ?, ikram_onaylayan_id = ? WHERE id = ?
-      `).run(iptalNedeni, onaylayanId, siparisId)
-
-      // Hesap toplamını güncelle
-      const siparis = db.prepare('SELECT hesap_id FROM siparis WHERE id = ?').get(siparisId) as any
-      if (siparis) hesapToplamiGuncelle(siparis.hesap_id)
-
+      const siparis = siparisIptalEt(db, siparisId, iptalNedeni, onaylayanId)
       denetimYaz(db, {
         personel_id: onaylayanId,
         islem: 'siparis_iptal',
@@ -270,155 +115,54 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
         hedef_tip: 'siparis',
         hedef_id: siparisId,
         ozet: `Sipariş iptal #${siparisId} — ${iptalNedeni || ''}`,
-        detay: { iptalNedeni, hesap_id: siparis?.hesap_id },
+        detay: { iptalNedeni, hesap_id: siparis.hesap_id },
       })
-
       return { basarili: true }
-    } catch (err: any) {
-      return { basarili: false, hata: err.message }
+    } catch (hata: any) {
+      return hataYaniti(hata)
     }
   })
 
   // Sipariş İkram Toggle
   ipcMain.handle(HESAP_KANALLARI.SIPARIS_IKRAM_TOGGLE, async (_event, siparisId: number, onaylayanId: number) => {
     try {
-      const siparis = db.prepare('SELECT ikram, hesap_id FROM siparis WHERE id = ?').get(siparisId) as any
-      if (!siparis) throw new Error('Sipariş bulunamadı')
-
-      const yeniIkramDurumu = siparis.ikram === 1 ? 0 : 1
-
-      db.prepare(`
-        UPDATE siparis SET ikram = ?, ikram_onaylayan_id = ? WHERE id = ?
-      `).run(yeniIkramDurumu, onaylayanId, siparisId)
-
-      // Hesap toplamını güncelle
-      hesapToplamiGuncelle(siparis.hesap_id)
-
+      const sonuc = siparisIkramAyarla(db, siparisId, null, onaylayanId)
       denetimYaz(db, {
         personel_id: onaylayanId,
-        islem: yeniIkramDurumu === 1 ? 'ikram' : 'ikram_kaldir',
+        islem: sonuc.ikram ? 'ikram' : 'ikram_kaldir',
         modul: 'pos',
         hedef_tip: 'siparis',
         hedef_id: siparisId,
-        ozet: yeniIkramDurumu === 1 ? `İkram uygulandı #${siparisId}` : `İkram kaldırıldı #${siparisId}`,
+        ozet: sonuc.ikram ? `İkram uygulandı #${siparisId}` : `İkram kaldırıldı #${siparisId}`,
       })
-
-      return { basarili: true, yeniIkram: yeniIkramDurumu }
+      return { basarili: true, yeniIkram: sonuc.ikram ? 1 : 0 }
     } catch (hata: any) {
-      return { basarili: false, hata: hata.message }
+      return hataYaniti(hata)
     }
   })
 
   // İndirim uygula
   ipcMain.handle(HESAP_KANALLARI.INDIRIM_UYGULA, async (_event, indirim: IndirimBilgisi) => {
-    const hesap = db.prepare('SELECT toplam_tutar FROM hesap WHERE id = ?').get(indirim.hesap_id) as any
-    if (!hesap) return { basarili: false, hata: 'Hesap bulunamadı' }
-
-    let indirimTutar = 0
-    if (indirim.indirim_tipi === 'yuzde') {
-      indirimTutar = hesap.toplam_tutar * (indirim.deger / 100)
-    } else {
-      indirimTutar = indirim.deger
+    try {
+      const sonuc = indirimUygula(db, indirim as any)
+      denetimYaz(db, {
+        islem: 'indirim',
+        modul: 'pos',
+        hedef_tip: 'hesap',
+        hedef_id: indirim.hesap_id,
+        ozet: `İndirim ${indirim.indirim_tipi} ${indirim.deger} → ${sonuc.indirim_tutar.toFixed(2)} ₺`,
+        detay: indirim,
+      })
+      return { basarili: true, ...sonuc }
+    } catch (hata: any) {
+      return hataYaniti(hata)
     }
-
-    const netTutar = Math.max(0, hesap.toplam_tutar - indirimTutar)
-
-    db.prepare(`
-      UPDATE hesap SET indirim_tutar = ?, net_tutar = ?, notlar = COALESCE(notlar, '') || ? WHERE id = ?
-    `).run(indirimTutar, netTutar, `\nİndirim: ${indirim.aciklama || ''}`, indirim.hesap_id)
-
-    denetimYaz(db, {
-      islem: 'indirim',
-      modul: 'pos',
-      hedef_tip: 'hesap',
-      hedef_id: indirim.hesap_id,
-      ozet: `İndirim ${indirim.indirim_tipi} ${indirim.deger} → ${indirimTutar.toFixed(2)} ₺`,
-      detay: indirim,
-    })
-
-    return { basarili: true, indirim_tutar: indirimTutar, net_tutar: netTutar }
   })
 
   // Ödeme al
   ipcMain.handle(HESAP_KANALLARI.ODEME_AL, async (_event, odemeler: YeniOdeme[]) => {
     try {
-      const islem = db.transaction(() => {
-        const hesapId = odemeler[0].hesap_id
-        let toplamOdeme = 0
-
-        for (const odeme of odemeler) {
-          db.prepare(`
-            INSERT INTO odeme (hesap_id, odeme_tipi, tutar, personel_id, referans_no, notlar)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(odeme.hesap_id, odeme.odeme_tipi, odeme.tutar, odeme.personel_id || null, odeme.referans_no || null, odeme.notlar || null)
-          toplamOdeme += odeme.tutar
-
-          // Sipariş bazlı (Alman Usulü) ödeme varsa siparişleri böl ve 'odendi' olarak işaretle
-          if (odeme.odenen_siparisler && odeme.odenen_siparisler.length > 0) {
-            for (const item of odeme.odenen_siparisler) {
-              const siparis = db.prepare(`SELECT miktar, toplam_fiyat, cost_price FROM siparis WHERE id = ? AND durum != 'iptal'`).get(item.id) as any;
-              if (siparis && siparis.miktar > 0) {
-                const birimCost = (siparis.cost_price || 0) / siparis.miktar;
-                if (item.miktar < siparis.miktar) {
-                  // Siparişi böl (kalan miktar güncellenir)
-                  const birimFiyat = siparis.toplam_fiyat / siparis.miktar;
-                  const yeniMiktar = siparis.miktar - item.miktar;
-                  const yeniToplamFiyat = yeniMiktar * birimFiyat;
-                  const yeniCostPrice = yeniMiktar * birimCost;
-                  db.prepare('UPDATE siparis SET miktar = ?, toplam_fiyat = ?, cost_price = ? WHERE id = ?').run(yeniMiktar, yeniToplamFiyat, yeniCostPrice, item.id);
-                  
-                  // Ödenen kısmı yeni satır olarak 'odendi' durumuyla ekle
-                  const odenenToplamFiyat = item.miktar * birimFiyat;
-                  const odenenCostPrice = item.miktar * birimCost;
-                  db.prepare(`
-                    INSERT INTO siparis (hesap_id, urun_id, varyant_id, miktar, birim_fiyat, toplam_fiyat, cost_price, durum, siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup, satis_birim, gramaj)
-                    SELECT hesap_id, urun_id, varyant_id, ?, birim_fiyat, ?, ?, 'odendi', siparis_zamani, hazir_zamani, personel_id, notlar, ikram, porsiyon, yazici_grup, satis_birim, gramaj 
-                    FROM siparis WHERE id = ?
-                  `).run(item.miktar, odenenToplamFiyat, odenenCostPrice, item.id);
-                } else {
-                  // Tamamı ödendi
-                  db.prepare(`UPDATE siparis SET durum = 'odendi' WHERE id = ?`).run(item.id);
-                }
-              }
-            }
-          }
-        }
-
-        // Hesap net tutarını kontrol et
-        const hesap = db.prepare('SELECT net_tutar, masa_id FROM hesap WHERE id = ?').get(hesapId) as any
-        
-        // Önceki ödemeleri de dahil ederek toplam ödenen miktarı bul (yukarıda insert ettiklerimiz dahil)
-        const yapilanOdemeler = db.prepare('SELECT COALESCE(SUM(tutar), 0) as toplam FROM odeme WHERE hesap_id = ?').get(hesapId) as any
-
-        if (yapilanOdemeler.toplam >= hesap.net_tutar) {
-          // Hesabı kapat
-          db.prepare(`
-            UPDATE hesap SET durum = 'odendi', kapanis_zamani = CURRENT_TIMESTAMP WHERE id = ?
-          `).run(hesapId)
-
-          // Masayı boşalt
-          if (hesap.masa_id) {
-            db.prepare("UPDATE masa SET durum = 'bos' WHERE id = ?").run(hesap.masa_id)
-          }
-
-          // Kalan açık siparişleri "teslim" yap (iptal veya zaten ödenmiş olanlar hariç)
-          db.prepare(`
-            UPDATE siparis SET durum = 'teslim' WHERE hesap_id = ? AND durum != 'iptal' AND durum != 'odendi'
-          `).run(hesapId)
-
-          // Kasa hareketi ekle
-          db.prepare(`
-            INSERT INTO kasa_hareket (kasa_id, islem_tipi, tutar, aciklama, hesap_id)
-            VALUES (1, 'satis', ?, ?, ?)
-          `).run(hesap.net_tutar, `Hesap #${hesapId} kapatıldı`, hesapId)
-
-          return { kapandi: true, para_ustu: yapilanOdemeler.toplam - hesap.net_tutar }
-        }
-
-        return { kapandi: false, kalan: hesap.net_tutar - yapilanOdemeler.toplam }
-      })
-
-      const sonuc = islem()
+      const sonuc = odemeAl(db, odemeler as any)
       try {
         const hesapId = odemeler[0]?.hesap_id
         denetimYaz(db, {
@@ -430,76 +174,41 @@ export function hesapIPCKaydet(ipcMain: IpcMain): void {
           ozet: sonuc.kapandi
             ? `Hesap kapatıldı #${hesapId}`
             : `Kısmi ödeme #${hesapId} — kalan ${sonuc.kalan}`,
-          detay: odemeler.map((o) => ({ tip: o.odeme_tipi, tutar: o.tutar })),
+          detay: odemeler.map((o) => ({ tip: o.odeme_tipi, alinan: o.tutar })),
         })
       } catch {
         // denetim hatası ödemeyi bozmasın
       }
       return { basarili: true, ...sonuc }
     } catch (hata: any) {
-      return { basarili: false, hata: hata.message }
+      return hataYaniti(hata)
     }
   })
 
   // Hesap bölme
   ipcMain.handle(HESAP_KANALLARI.HESAP_BOL, async (_event, bolme: HesapBolme) => {
     try {
-      const islem = db.transaction(() => {
-        // Kaynak hesaptan personel bilgisini al
-        const kaynakHesap = db.prepare('SELECT personel_id, hesap_tipi FROM hesap WHERE id = ?').get(bolme.kaynak_hesap_id) as any
-        if (!kaynakHesap) throw new Error('Kaynak hesap bulunamadı')
-
-        // Yeni hesap oluştur
-        const yeniHesapNo = hesapNoOlustur()
-        const yeniHesap = db.prepare(`
-          INSERT INTO hesap (masa_id, hesap_no, hesap_tipi, personel_id)
-          VALUES (?, ?, ?, ?)
-        `).run(bolme.yeni_masa_id || null, yeniHesapNo, kaynakHesap.hesap_tipi, kaynakHesap.personel_id)
-
-        const yeniHesapId = Number(yeniHesap.lastInsertRowid)
-
-        // Seçili siparişleri yeni hesaba taşı
-        for (const siparisId of bolme.siparis_idleri) {
-          db.prepare('UPDATE siparis SET hesap_id = ? WHERE id = ?').run(yeniHesapId, siparisId)
-        }
-
-        // Her iki hesabın toplamını güncelle
-        hesapToplamiGuncelle(bolme.kaynak_hesap_id)
-        hesapToplamiGuncelle(yeniHesapId)
-
-        return { yeni_hesap_id: yeniHesapId, yeni_hesap_no: yeniHesapNo }
-      })
-
-      const sonuc = islem()
-      return { basarili: true, ...sonuc }
+      return { basarili: true, ...hesapBol(db, bolme as any) }
     } catch (hata: any) {
-      return { basarili: false, hata: hata.message }
+      return hataYaniti(hata)
     }
   })
 
   // Hesap iptal
   ipcMain.handle(HESAP_KANALLARI.IPTAL, async (_event, hesapId: number) => {
-    const hesap = db.prepare('SELECT masa_id FROM hesap WHERE id = ?').get(hesapId) as any
-    
-    // İptal edilen hesaba ait aktif siparişlerin hammadde stoklarını geri iade et
-    const aktifSiparisler = db.prepare("SELECT id FROM siparis WHERE hesap_id = ? AND durum != 'iptal'").all(hesapId) as Array<{ id: number }>
-    for (const s of aktifSiparisler) {
-      siparisStokGeriYukle(db, s.id)
+    try {
+      hesapIptalEt(db, hesapId)
+      denetimYaz(db, {
+        islem: 'hesap_iptal',
+        modul: 'pos',
+        hedef_tip: 'hesap',
+        hedef_id: hesapId,
+        ozet: `Hesap iptal #${hesapId}`,
+      })
+      return { basarili: true }
+    } catch (hata: any) {
+      return hataYaniti(hata)
     }
-
-    db.prepare("UPDATE hesap SET durum = 'iptal', kapanis_zamani = CURRENT_TIMESTAMP WHERE id = ?").run(hesapId)
-    db.prepare("UPDATE siparis SET durum = 'iptal' WHERE hesap_id = ?").run(hesapId)
-    if (hesap?.masa_id) {
-      db.prepare("UPDATE masa SET durum = 'bos' WHERE id = ?").run(hesap.masa_id)
-    }
-    denetimYaz(db, {
-      islem: 'hesap_iptal',
-      modul: 'pos',
-      hedef_tip: 'hesap',
-      hedef_id: hesapId,
-      ozet: `Hesap iptal #${hesapId}`,
-    })
-    return { basarili: true }
   })
 
   ipcMain.handle(HESAP_KANALLARI.PAKET_LISTELE, async (_event, filtre: any = {}) => {

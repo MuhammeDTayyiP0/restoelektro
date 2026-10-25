@@ -5,6 +5,9 @@
 
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { getUrunSatisTurleri, getUrunKiloFiyati, getUrunPorsiyonFiyati, kalemFiyatiHesapla } from '../../common/fiyat'
+
+export { getUrunSatisTurleri, getUrunKiloFiyati, getUrunPorsiyonFiyati }
 
 /**
  * SQLite DATETIME / CURRENT_TIMESTAMP değerini doğru Date'e çevirir.
@@ -42,38 +45,6 @@ export function formatPara(tutar: number | undefined | null): string {
   }).format(tutar)
 }
 
-/**
- * Ürünün satış türleri dizisini döndürür
- */
-export function getUrunSatisTurleri(urun: any): Array<{ birim: string; fiyat: number }> {
-  if (!urun) return []
-  let turler: Array<{ birim: string; fiyat: number }> = []
-
-  if (typeof urun.satis_turleri === 'string') {
-    try {
-      turler = JSON.parse(urun.satis_turleri)
-    } catch {
-      turler = []
-    }
-  } else if (Array.isArray(urun.satis_turleri)) {
-    turler = urun.satis_turleri
-  }
-
-  // Geriye dönük uyumluluk
-  if ((!turler || turler.length === 0) && (urun.porsiyon_fiyati || urun.kilo_fiyati)) {
-    turler = []
-    if (urun.porsiyon_fiyati) turler.push({ birim: 'porsiyon', fiyat: Number(urun.porsiyon_fiyati) })
-    if (urun.kilo_fiyati) turler.push({ birim: 'kg', fiyat: Number(urun.kilo_fiyati) })
-  }
-
-  if (!turler || turler.length === 0) {
-    const birim = (urun.birim || 'porsiyon').toLowerCase()
-    turler = [{ birim: birim === 'kg' ? 'kg' : (birim === 'adet' ? 'adet' : 'porsiyon'), fiyat: Number(urun.fiyat) || 0 }]
-  }
-
-  return turler.filter(t => t && t.fiyat !== undefined && t.fiyat !== null)
-}
-
 const TARTILI_BIRIMLER = ['kg', 'kilo', 'gram', 'gr', 'litre', 'lt', 'l']
 
 export function isTartiliBirim(birim?: string | null): boolean {
@@ -106,39 +77,8 @@ export function hasCokluSatisTuru(urun: any): boolean {
 }
 
 /**
- * Ürünün Kilo / KG birim fiyatını döndürür
- */
-export function getUrunKiloFiyati(urun: any): number {
-  if (!urun) return 0
-  if (urun.kilo_fiyati) return Number(urun.kilo_fiyati)
-  const turler = getUrunSatisTurleri(urun)
-  const kgTur = turler.find(t => {
-    const b = (t.birim || '').trim().toLowerCase()
-    return b === 'kg' || b === 'kilo'
-  })
-  if (kgTur) return Number(kgTur.fiyat)
-  if ((urun.birim || '').trim().toLowerCase() === 'kg') return Number(urun.fiyat) || 0
-  return Number(urun.fiyat) || 0
-}
-
-/**
- * Ürünün Porsiyon / Adet birim fiyatını döndürür
- */
-export function getUrunPorsiyonFiyati(urun: any): number {
-  if (!urun) return 0
-  if (urun.porsiyon_fiyati) return Number(urun.porsiyon_fiyati)
-  const turler = getUrunSatisTurleri(urun)
-  const porsTur = turler.find(t => {
-    const b = (t.birim || '').trim().toLowerCase()
-    return b === 'porsiyon' || b === 'adet' || b === 'pors'
-  })
-  if (porsTur) return Number(porsTur.fiyat)
-  return Number(urun.fiyat) || 0
-}
-
-/**
- * Sepet Kalemi için birim fiyat ve toplam tutarı kurallara göre hesaplar:
- * Eğer seçilen tür 'kg' ise birim fiyatı kilo_fiyati baz alınır ve sepet kalem tutarı (kilo_fiyati * gramaj) * adet olarak hesaplanır.
+ * Sepet Kalemi için birim fiyat ve toplam tutarı kurallara göre hesaplar.
+ * Formül ana işlemle ortaktır (common/fiyat) — sunucu aynı tutarı yeniden hesaplar.
  */
 export function hesaplaKalemTutari(kalem: any): { birimHesapliFiyat: number; toplamKalemFiyat: number; kiloFiyati: number; isKg: boolean } {
   if (!kalem || !kalem.urun) {
@@ -150,19 +90,15 @@ export function hesaplaKalemTutari(kalem: any): { birimHesapliFiyat: number; top
   const varyantFark = (kalem.varyant?.fiyat_farki ?? kalem.varyant?.ek_fiyat ?? 0)
   const opsiyonlarFark = (kalem.opsiyonlar || []).reduce((t: number, o: any) => t + (o.fiyat ?? o.ek_fiyat ?? 0), 0)
 
-  if (isKg) {
-    const kiloFiyati = getUrunKiloFiyati(kalem.urun) + varyantFark + opsiyonlarFark
-    const gramaj = kalem.gramaj && kalem.gramaj > 0 ? kalem.gramaj : 1
-    const birimHesapliFiyat = kiloFiyati * gramaj
-    const toplamKalemFiyat = birimHesapliFiyat * (kalem.miktar || 1)
-    return { birimHesapliFiyat, toplamKalemFiyat, kiloFiyati, isKg: true }
-  } else {
-    const porsiyonFiyati = getUrunPorsiyonFiyati(kalem.urun) + varyantFark + opsiyonlarFark
-    const porsiyon = kalem.porsiyon || 1
-    const birimHesapliFiyat = porsiyonFiyati * porsiyon
-    const toplamKalemFiyat = birimHesapliFiyat * (kalem.miktar || 1)
-    return { birimHesapliFiyat, toplamKalemFiyat, kiloFiyati: getUrunKiloFiyati(kalem.urun), isKg: false }
-  }
+  const { birimFiyat, toplamFiyat } = kalemFiyatiHesapla(kalem.urun, {
+    isKg,
+    miktar: kalem.miktar || 1,
+    porsiyon: kalem.porsiyon || 1,
+    gramaj: kalem.gramaj,
+    ekFiyat: varyantFark + opsiyonlarFark,
+  })
+  const kiloFiyati = isKg ? getUrunKiloFiyati(kalem.urun) + varyantFark + opsiyonlarFark : getUrunKiloFiyati(kalem.urun)
+  return { birimHesapliFiyat: birimFiyat, toplamKalemFiyat: toplamFiyat, kiloFiyati, isKg }
 }
 
 /**

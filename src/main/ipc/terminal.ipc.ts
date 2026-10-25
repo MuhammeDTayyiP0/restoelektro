@@ -72,6 +72,7 @@ export function terminalIPCKaydet(ipcMain: IpcMain): void {
       }
       guncelle.egitim = Boolean(veri.egitim)
     }
+    if (['otomatik', 'acik', 'kapali'].includes(veri?.gpu)) guncelle.gpu = veri.gpu
 
     const kayit = terminalAyarKaydet(guncelle)
     const yenidenBaslat = Boolean(veri?.yenidenBaslat)

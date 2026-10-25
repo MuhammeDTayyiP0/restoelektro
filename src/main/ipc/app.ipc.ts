@@ -3,11 +3,11 @@
 // Yedekleme, bakım, optimize etme, otomatik başlatma ve sistem kanalları
 // =====================================================
 
-import { IpcMain, app } from 'electron'
+import { IpcMain, app, dialog, BrowserWindow } from 'electron'
 import { existsSync, statSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { veritabaniGetir, veritabaniYoluGetir } from '../database/connection'
-import { otomatikYedekAl, yedekleriListele } from '../database/backup'
+import { otomatikYedekAl, yedekleriListele, hariciYedekKlasoruGetir } from '../database/backup'
 import { varsayilanYerelIpGetir } from '../services/network.service'
 import { UYGULAMA_KANALLARI } from '../../common/ipc-channels'
 import { tamamenCikisYap } from '../index'
@@ -140,6 +140,59 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
     }
   })
 
+  otomatikBaslatmaIPCKaydet(ipcMain)
+
+  // 8. Harici yedek klasörü (USB bellek, OneDrive/Google Drive klasörü vb.)
+  ipcMain.handle(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU, async () => {
+    try {
+      return { basarili: true, klasor: hariciYedekKlasoruGetir(veritabaniGetir()) }
+    } catch (error: any) {
+      return { basarili: false, hata: error?.message || 'Ayar okunamadı' }
+    }
+  })
+
+  ipcMain.handle(UYGULAMA_KANALLARI.HARICI_YEDEK_KLASORU_SEC, async (event, temizle?: boolean) => {
+    try {
+      const db = veritabaniGetir()
+      if (temizle) {
+        db.prepare('INSERT OR REPLACE INTO ayar (anahtar, deger) VALUES (?, ?)').run('harici_yedek_klasoru', '')
+        return { basarili: true, klasor: null }
+      }
+      const pencere = BrowserWindow.fromWebContents(event.sender) || undefined
+      const secim = await dialog.showOpenDialog(pencere as BrowserWindow, {
+        title: 'Yedeklerin ayrıca kopyalanacağı klasörü seçin',
+        properties: ['openDirectory', 'createDirectory'],
+      })
+      if (secim.canceled || !secim.filePaths[0]) return { basarili: false, iptal: true }
+      const klasor = secim.filePaths[0]
+      db.prepare('INSERT OR REPLACE INTO ayar (anahtar, deger) VALUES (?, ?)').run('harici_yedek_klasoru', klasor)
+      // Seçimi hemen bir yedekle doğrula
+      const sonuc = await otomatikYedekAl(db, 'manuel')
+      return { basarili: true, klasor, ilkYedek: sonuc }
+    } catch (error: any) {
+      return { basarili: false, hata: error?.message || 'Klasör ayarlanamadı' }
+    }
+  })
+
+  // 9. Uygulamayı Tamamen Kapat
+  ipcMain.handle(UYGULAMA_KANALLARI.KAPAT, async () => {
+    tamamenCikisYap()
+    return { basarili: true }
+  })
+
+  // 10. Uygulamayı Yeniden Başlat
+  ipcMain.handle(UYGULAMA_KANALLARI.YENIDEN_BASLAT, async () => {
+    app.relaunch()
+    tamamenCikisYap()
+    return { basarili: true }
+  })
+}
+
+/**
+ * Windows açılışında başlatma — bu makineye ait ayar (ikinci kasada da yerel çalışır).
+ * Veritabanı yoksa yalnızca Electron'un login item kaydı kullanılır.
+ */
+export function otomatikBaslatmaIPCKaydet(ipcMain: IpcMain): void {
   // 6. Windows Başlangıcında Otomatik Başlatma Durumu
   ipcMain.handle(UYGULAMA_KANALLARI.OTOMATIK_BASLATMA_DURUM, async () => {
     try {
@@ -206,18 +259,5 @@ export function appIPCKaydet(ipcMain: IpcMain): void {
         hata: error?.message || 'Ayar kaydedilemedi',
       }
     }
-  })
-
-  // 8. Uygulamayı Tamamen Kapat
-  ipcMain.handle(UYGULAMA_KANALLARI.KAPAT, async () => {
-    tamamenCikisYap()
-    return { basarili: true }
-  })
-
-  // 9. Uygulamayı Yeniden Başlat
-  ipcMain.handle(UYGULAMA_KANALLARI.YENIDEN_BASLAT, async () => {
-    app.relaunch()
-    tamamenCikisYap()
-    return { basarili: true }
   })
 }

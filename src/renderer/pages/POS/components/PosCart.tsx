@@ -919,7 +919,7 @@ export const PosCart = React.memo(function PosCart() {
                       hesapAyarla(null, null)
                       navigate(siparisTipi === 'paket' || siparisTipi === 'gel_al' ? '/delivery' : '/tables')
                     } else {
-                      error('Hata', 'Hesap iptal edilemedi.')
+                      error('Hata', res?.hata || 'Hesap iptal edilemedi.')
                     }
                   } catch (err: any) {
                     error('Hata', err.message)

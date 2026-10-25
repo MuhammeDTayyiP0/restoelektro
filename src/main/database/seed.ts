@@ -7,6 +7,7 @@
 import type Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
+import { uzakGorselIndir } from '../services/gorsel.service'
 
 export interface TohumUrunOpsiyon {
   ad: string
@@ -129,18 +130,15 @@ export async function gorseliIndirVeKaydet(url: string, dosyaAdi: string): Promi
     return `/uploads/products/${dosyaAdi}`
   }
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (res.ok) {
-      const buffer = Buffer.from(await res.arrayBuffer())
-      for (const d of hedefDizinler) {
-        try {
-          fs.writeFileSync(path.join(d, dosyaAdi), buffer)
-        } catch {}
-      }
-      console.log(`📥 [Seed] ${dosyaAdi} başarıyla indirildi (${buffer.length} byte)`)
-    } else {
-      console.warn(`⚠️ [Seed] Görsel indirme başarısız (${dosyaAdi}): HTTP ${res.status}`)
+    // Electron 22 ana işleminde (Node 16) global fetch yok — http/https tabanlı indirici kullanılır
+    const { image } = await uzakGorselIndir(url)
+    const buffer = Buffer.from(image.slice(image.indexOf(',') + 1), 'base64')
+    for (const d of hedefDizinler) {
+      try {
+        fs.writeFileSync(path.join(d, dosyaAdi), buffer)
+      } catch {}
     }
+    console.log(`📥 [Seed] ${dosyaAdi} başarıyla indirildi (${buffer.length} byte)`)
   } catch (err: any) {
     console.warn(`⚠️ [Seed] ${dosyaAdi} indirilirken hata:`, err.message)
   }
